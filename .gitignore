@@ -1,0 +1,14 @@
+# Dependências (o jogo não precisa de nenhuma, mas servidores locais criam isso)
+node_modules/
+package-lock.json
+
+# Sistema operacional / editores
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Build / cache de servidores estáticos
+.cache/
+dist/

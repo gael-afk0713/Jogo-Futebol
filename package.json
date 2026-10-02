@@ -1,0 +1,13 @@
+{
+  "name": "craque-do-zero",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Jogo de carreira de futebol no estilo BitLife, com partidas interativas. Roda no navegador, sem build.",
+  "type": "module",
+  "scripts": {
+    "start": "npx --yes serve .",
+    "dev": "python3 -m http.server 8000"
+  },
+  "keywords": ["futebol", "carreira", "jogo", "bitlife", "javascript"],
+  "license": "MIT"
+}
