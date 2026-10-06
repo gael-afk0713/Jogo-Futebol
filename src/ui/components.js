@@ -94,6 +94,20 @@ function hairTint(hex) {
   };
 }
 
+/**
+ * Sombra do cabelo sobre a pele: a silhueta do cabelo, escura, desfocada e
+ * um pouco abaixo, recortada pela própria pele (não cai no fundo azul).
+ */
+const HAIR_SHADOW_DEFS = `
+  <filter id="sombra-cabelo" x="-10%" y="-10%" width="120%" height="130%" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="0 0 0 0 0.12  0 0 0 0 0.07  0 0 0 0 0.04  0 0 0 0.42 0"/>
+    <feGaussianBlur stdDeviation="5"/>
+    <feOffset dy="9"/>
+  </filter>
+  <filter id="silhueta-branca" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0"/>
+  </filter>`;
+
 /** Barbas desenhadas no traço da ilustração, na cor do cabelo. */
 function beardMarkup(beard, color) {
   const line = 'stroke="#1b1d22" stroke-width="2" stroke-linejoin="round"';
@@ -122,8 +136,17 @@ export function avatarSvg(appearance = {}, { label = 'Retrato do jogador' } = {}
 
   return `
     <svg class="avatar" viewBox="0 0 ${AVATAR_W} ${AVATAR_H}" role="img" aria-label="${esc(label)}">
-      <defs>${tint.markup}</defs>
+      <defs>
+        ${tint.markup}
+        ${HAIR_SHADOW_DEFS}
+        <mask id="pele-${skin}-mascara" maskUnits="userSpaceOnUse" x="0" y="0" width="${AVATAR_W}" height="${AVATAR_H}">
+          <image href="${avatarAsset(`pele-${skin}`)}" width="${AVATAR_W}" height="${AVATAR_H}" filter="url(#silhueta-branca)"/>
+        </mask>
+      </defs>
       <image href="${avatarAsset(`pele-${skin}`)}" width="${AVATAR_W}" height="${AVATAR_H}"/>
+      <g mask="url(#pele-${skin}-mascara)">
+        <image href="${avatarAsset(`cabelo-${hair}`)}" width="${AVATAR_W}" height="${AVATAR_H}" filter="url(#sombra-cabelo)"/>
+      </g>
       ${beardMarkup(appearance.beard, hairColor)}
       <image href="${avatarAsset(`cabelo-${hair}`)}" width="${AVATAR_W}" height="${AVATAR_H}" filter="url(#${tint.id})"/>
       ${accessory === 'fita' ? '<path d="M128 168 Q220 132 312 168 L314 186 Q220 152 126 186 Z" fill="#ffffff" stroke="#1b1d22" stroke-width="2"/>' : ''}
