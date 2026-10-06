@@ -101,6 +101,13 @@ export default {
               <span>${esc(position.name)}, ${esc(nation.name)}, camisa <span class="num" data-live="kit">${esc(form.appearance.kitNumber)}</span></span>
               <span>Overall inicial <strong class="num">${player.overall}</strong></span>
             </div>
+            <div class="create__bar">
+              <p data-live="status" aria-live="polite">${ready ? 'Tudo pronto.' : `Falta: ${esc(missing.join(', '))}.`}</p>
+              <div class="actions">
+                <button class="btn btn--quiet" data-action="back-auth">Voltar</button>
+                <button class="btn btn--primary" data-action="confirm-create" ${ready ? '' : 'disabled'}>Começar carreira ${icon('arrow-right')}</button>
+              </div>
+            </div>
           </aside>
 
           <div class="stack stack--lg">
@@ -258,13 +265,6 @@ export default {
           </div>
         </div>
 
-        <div class="create__bar">
-          <p data-live="status" aria-live="polite">${ready ? 'Tudo pronto.' : `Falta: ${esc(missing.join(', '))}.`}</p>
-          <div class="actions">
-            <button class="btn btn--quiet" data-action="back-auth">Voltar</button>
-            <button class="btn btn--primary" data-action="confirm-create" ${ready ? '' : 'disabled'}>Começar carreira ${icon('arrow-right')}</button>
-          </div>
-        </div>
       </div>`;
   },
 

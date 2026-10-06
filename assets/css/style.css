@@ -2748,17 +2748,11 @@ code {
 }
 
 .create__bar {
-  position: sticky;
-  bottom: 0;
-  z-index: var(--z-sticky);
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
-  margin: 0 -16px -72px;
   background: var(--sheet);
-  border-top: 1px solid var(--rule);
 }
 
 .create__bar p {
@@ -2766,12 +2760,36 @@ code {
   color: var(--ink-3);
 }
 
-@media (min-width: 760px) {
+/* Celular e tablet: a ação fica presa ao rodapé, com espaço reservado no fim. */
+@media (max-width: 979px) {
   .create__bar {
-    margin: 0;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-sticky);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--rule);
+  }
+
+  .create {
+    padding-bottom: 88px;
+  }
+}
+
+/* Computador: a ação vive na coluna da figurinha e nunca cobre o formulário. */
+@media (min-width: 980px) {
+  .create__bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
     border-radius: var(--r-surface);
-    border: 1px solid var(--rule);
-    bottom: 16px;
+    box-shadow: var(--shadow-panel);
+  }
+
+  .create__bar .actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
   }
 }
 
