@@ -1,6 +1,6 @@
 // Capa do álbum: entrar, continuar ou começar uma carreira.
 
-import { esc, qs, toast } from '../dom.js';
+import { esc, qs } from '../dom.js';
 import { createRng } from '../../core/rng.js';
 import { createPlayer } from '../../engine/player.js';
 import {
@@ -11,7 +11,6 @@ import {
   signInWithGoogle,
   signUpWithEmail,
 } from '../../firebase/firebase.js';
-import { localMeta } from '../../core/storage.js';
 import { icon, playerSticker } from '../components.js';
 
 const ui = { mode: 'login', busy: false, error: null };
@@ -29,10 +28,56 @@ function coverStickers() {
   ).join('')}</div>`;
 }
 
-function savedCareer() {
-  const meta = localMeta();
-  if (!meta?.playerName) return null;
-  return meta;
+const when = (timestamp) =>
+  timestamp ? new Date(timestamp).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+
+/** Uma carreira salva é uma figurinha no álbum. */
+function careerCard(career, index) {
+  const card = career.card ?? {};
+  const name = `${card.firstName ?? ''} ${card.lastName ?? ''}`.trim() || 'Carreira';
+  const where = career.local && career.remote ? 'Nuvem e navegador' : career.remote ? 'Na nuvem' : 'Neste navegador';
+  const whereIcon = career.remote ? 'cloud-check' : 'floppy-disk';
+  return `
+    <article class="career is-new" style="--i:${index}" data-new-key="carreira-${esc(career.id)}">
+      ${playerSticker(card, { size: 'sm', meta: career.retired ? 'Aposentado' : (career.clubName ?? 'Sem clube') })}
+      <div class="career__body">
+        <h3 class="career__name">${esc(name)}</h3>
+        <p class="career__facts">
+          <span>${esc(card.age ?? '?')} anos${career.year ? `, temporada ${esc(career.year)}` : ''}</span>
+          ${career.retired ? '<span class="tag">Carreira encerrada</span>' : ''}
+        </p>
+        <p class="career__where">${icon(whereIcon)}${where} · ${esc(when(career.updatedAt))}</p>
+        <div class="career__actions">
+          <button class="btn btn--sm" data-action="open-career" data-id="${esc(career.id)}" aria-label="${esc(`${career.retired ? 'Ver o álbum de' : 'Jogar com'} ${name}`)}">${career.retired ? 'Ver álbum' : 'Jogar'}</button>
+          <button class="iconbtn iconbtn--quiet" data-action="delete-career" data-id="${esc(career.id)}" data-name="${esc(name)}" aria-label="${esc(`Apagar a carreira de ${name}`)}" title="Apagar carreira">${icon('x')}</button>
+        </div>
+      </div>
+    </article>`;
+}
+
+function careersSection(ctx) {
+  const { list, loading, cloudError } = ctx.careers;
+  const max = ctx.maxCareers;
+  if (loading && !list.length) {
+    return `<section class="section" aria-busy="true"><h2>Suas carreiras</h2><p class="muted">Abrindo o álbum...</p></section>`;
+  }
+  const free = Math.max(0, max - list.length);
+  const slots = Array.from({ length: free }, (_, index) => {
+    const number = list.length + index + 1;
+    return index === 0
+      ? `<button class="slot slot--action" data-action="new-career"><span class="slot__number num">${number}</span>${icon('plus')}<span class="slot__label">Nova carreira</span></button>`
+      : `<div class="slot" aria-hidden="true"><span class="slot__number num">${number}</span><span class="slot__label">Espaço livre</span></div>`;
+  }).join('');
+  return `
+    <section class="section" aria-labelledby="carreiras-titulo">
+      <div class="section__head">
+        <h2 id="carreiras-titulo">Suas carreiras</h2>
+        <p class="num">${list.length} de ${max}</p>
+      </div>
+      ${cloudError ? `<div class="notice notice--warn">${icon('cloud-slash')}<div>Não consegui ler a nuvem: ${esc(authErrorMessage(cloudError))} Mostrando o que está salvo neste navegador.</div></div>` : ''}
+      <div class="careers">${list.map(careerCard).join('')}${slots}</div>
+      ${free === 0 ? '<p class="muted">O álbum está cheio. Apague uma carreira para começar outra.</p>' : ''}
+    </section>`;
 }
 
 function loginBox(ctx) {
@@ -41,10 +86,10 @@ function loginBox(ctx) {
     return `
       <section class="sheet section">
         <h2>Conta</h2>
-        <p class="lede">Conectado como <strong>${esc(user.isAnonymous ? 'convidado' : user.email ?? 'usuário')}</strong>. A carreira é salva na nuvem.</p>
+        <p class="lede">Conectado como <strong>${esc(user.isAnonymous ? 'convidado' : (user.email ?? 'usuário'))}</strong>. Todas as suas carreiras ficam salvas na nuvem e aparecem em qualquer aparelho em que você entrar.</p>
+        ${user.isAnonymous ? '<p class="muted">Conta de convidado: se você sair, não dá para voltar a ela. Crie uma conta com e-mail para não perder as carreiras.</p>' : ''}
         <div class="actions">
-          <button class="btn btn--primary" data-action="enter-game">Jogar ${icon('arrow-right')}</button>
-          <button class="btn btn--quiet" data-action="sign-out">Sair da conta</button>
+          <button class="btn" data-action="sign-out">Sair da conta</button>
         </div>
       </section>`;
   }
@@ -80,9 +125,11 @@ export default {
   id: 'auth',
 
   render(state, ctx) {
-    const saved = savedCareer();
     const cloud = firebaseAvailable();
-    const when = saved?.updatedAt ? new Date(saved.updatedAt).toLocaleDateString('pt-BR') : '';
+    const { list, lastId } = ctx.careers;
+    const last = list.find((career) => career.id === lastId && !career.retired) ?? list.find((career) => !career.retired);
+    const lastName = last ? (last.card?.nickname || last.card?.firstName || 'sua carreira') : '';
+    const full = list.length >= ctx.maxCareers;
 
     return `
       <div class="screen">
@@ -92,20 +139,20 @@ export default {
             <p class="cover__lede">Monte um jogador de 16 anos sem clube e cole a carreira inteira no álbum: treinos, escolhas fora de campo, lances que você decide e propostas que chegam pelo seu desempenho.</p>
             <div class="actions cover__actions">
               ${
-                saved
-                  ? `<button class="btn btn--primary" data-action="continue-local">Continuar carreira ${icon('arrow-right')}</button>
-                     <button class="btn btn--quiet cover__secondary" data-action="play-offline">Começar outra</button>`
-                  : `<button class="btn btn--primary" data-action="play-offline">Começar carreira ${icon('arrow-right')}</button>`
+                last
+                  ? `<button class="btn btn--primary" data-action="open-career" data-id="${esc(last.id)}">Continuar com ${esc(lastName)} ${icon('arrow-right')}</button>
+                     ${full ? '' : '<button class="btn btn--quiet cover__secondary" data-action="new-career">Nova carreira</button>'}`
+                  : full
+                    ? ''
+                    : `<button class="btn btn--primary" data-action="new-career">Começar carreira ${icon('arrow-right')}</button>`
               }
             </div>
-            ${
-              saved
-                ? `<p class="cover__saved"><strong>${esc(saved.playerName)}</strong>, overall <span class="num">${esc(saved.overall ?? '?')}</span>, ${esc(saved.age ?? '?')} anos. Salvo em ${esc(when)}.</p>`
-                : ''
-            }
+            ${cloud && !ctx.auth.user ? '<p class="cover__saved">Sem conta, as carreiras ficam só neste navegador. Entre para salvar na nuvem.</p>' : ''}
           </div>
           ${coverStickers()}
         </section>
+
+        ${careersSection(ctx)}
 
         <div class="entry ${cloud ? '' : 'entry--single'}">
           ${cloud ? loginBox(ctx) : ''}
@@ -115,7 +162,8 @@ export default {
               <li><span>Cada semana</span><strong>Treino, vida, partida</strong></li>
               <li><span>Nas partidas</span><strong>Você decide os lances</strong></li>
               <li><span>No fim do ano</span><strong>Propostas pelo desempenho</strong></li>
-              <li><span>Seu progresso</span><strong>${cloud ? 'Navegador ou nuvem' : 'Salvo neste navegador'}</strong></li>
+              <li><span>Carreiras</span><strong>Até ${ctx.maxCareers} ao mesmo tempo</strong></li>
+              <li><span>Seu progresso</span><strong>${cloud ? 'Navegador e nuvem' : 'Salvo neste navegador'}</strong></li>
             </ul>
             <p class="entry__note">Nomes de clubes e competições aparecem só como referência de fã, sem vínculo oficial.</p>
           </section>
@@ -184,30 +232,20 @@ export default {
 
     'sign-out': async (ctx) => {
       await ctx.signOut();
-      toast('Você saiu da conta.', 'info');
     },
 
-    'play-offline': async (ctx) => {
-      if (savedCareer()) {
-        const ok = await ctx.confirm({
-          title: 'Começar outra carreira?',
-          text: 'A carreira salva neste navegador será apagada. Não dá para desfazer.',
-          confirmLabel: 'Apagar e começar',
-          danger: true,
-        });
-        if (!ok) return;
-        await ctx.save.deleteAll();
-        ctx.game.reset();
-      }
-      ctx.startOffline();
-    },
+    'new-career': (ctx) => ctx.newCareer(),
 
-    'enter-game': (ctx) => {
-      ctx.enterGame();
-    },
+    'open-career': (ctx, dataset) => ctx.openCareer(dataset.id),
 
-    'continue-local': (ctx) => {
-      ctx.continueLocal();
+    'delete-career': async (ctx, dataset) => {
+      const ok = await ctx.confirm({
+        title: 'Apagar esta carreira?',
+        text: `A carreira de ${dataset.name} será apagada${ctx.auth.user ? ' do navegador e da nuvem' : ' deste navegador'}. Não dá para desfazer.`,
+        confirmLabel: 'Apagar carreira',
+        danger: true,
+      });
+      if (ok) await ctx.deleteCareer(dataset.id);
     },
   },
 };

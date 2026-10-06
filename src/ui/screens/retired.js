@@ -90,23 +90,13 @@ export default {
         </div>
 
         <div class="actions">
-          <button class="btn btn--primary" data-action="new-career">Começar um álbum novo ${icon('arrow-right')}</button>
+          <button class="btn btn--primary" data-action="new-career">Começar outra carreira ${icon('arrow-right')}</button>
+          <button class="btn" data-action="go-album">Ver todas as carreiras</button>
         </div>
       </div>`;
   },
 
   actions: {
-    'new-career': async (ctx) => {
-      const ok = await ctx.confirm({
-        title: 'Nova carreira',
-        text: 'Isso apaga o save atual e começa tudo de novo.',
-        confirmLabel: 'Começar de novo',
-        danger: true,
-      });
-      if (!ok) return;
-      await ctx.save.deleteAll();
-      ctx.game.reset();
-      ctx.game.startCreation();
-    },
+    'new-career': (ctx) => ctx.newCareer(),
   },
 };

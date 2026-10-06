@@ -4,8 +4,8 @@ import { confirmDialog, esc, mount, toast } from './dom.js';
 import { icon } from './components.js';
 import { Motion } from './motion.js';
 import { game, SCREENS } from '../core/game.js';
-import { SaveManager, loadLocal } from '../core/storage.js';
-import { firebaseAvailable, onAuthChange, signOutUser } from '../firebase/firebase.js';
+import { MAX_CAREERS, SaveManager } from '../core/storage.js';
+import { authErrorMessage, firebaseAvailable, onAuthChange, signOutUser } from '../firebase/firebase.js';
 
 import authScreen from './screens/auth.js';
 import createScreen from './screens/create.js';
@@ -44,7 +44,9 @@ export class App {
     this.root = root;
     this.game = game;
     this.save = new SaveManager(game);
-    this.auth = { user: null, offline: false, ready: false };
+    this.auth = { user: null, ready: false };
+    this.careers = { list: [], lastId: null, loading: true, cloudError: null };
+    this.adoptedFor = null;
     this.rendering = false;
     this.motion = new Motion();
 
@@ -61,11 +63,13 @@ export class App {
       rerender: () => this.render(),
       motion: this.motion,
       confirm: confirmDialog,
+      careers: this.careers,
+      maxCareers: MAX_CAREERS,
       onSignedIn: (user) => this.handleSignedIn(user),
       signOut: () => this.handleSignOut(),
-      startOffline: () => this.startOffline(),
-      enterGame: () => this.resumeOrCreate(),
-      continueLocal: () => this.continueLocal(),
+      openCareer: (id) => this.openCareer(id),
+      newCareer: () => this.newCareer(),
+      deleteCareer: (id) => this.deleteCareer(id),
     };
   }
 
@@ -75,22 +79,85 @@ export class App {
 
     if (!firebaseAvailable()) {
       this.auth.ready = true;
-      this.render();
+      await this.refreshCareers();
       return;
     }
 
     try {
-      await onAuthChange((user) => {
-        this.auth.user = user;
-        this.auth.ready = true;
-        this.save.setUser(user?.uid ?? null);
-        this.render();
-      });
+      await onAuthChange((user) => this.handleAuthState(user));
     } catch (error) {
       console.warn('[app] Firebase indisponível, seguindo offline:', error);
       this.auth.ready = true;
-      this.render();
+      await this.refreshCareers();
     }
+  }
+
+  /** Login, logout ou volta de redirecionamento: sincroniza e mostra o álbum. */
+  async handleAuthState(user) {
+    const changed = (user?.uid ?? null) !== this.save.uid;
+    this.auth.user = user;
+    this.auth.ready = true;
+    if (changed) {
+      if (this.game.state.player) await this.save.saveNow();
+      this.save.setUser(user?.uid ?? null);
+      if (this.game.state.player) this.game.reset();
+    }
+    if (user && this.adoptedFor !== user.uid) {
+      this.adoptedFor = user.uid;
+      const moved = await this.save.adoptAfterSignIn();
+      if (moved) toast(`${moved === 1 ? 'Uma carreira foi enviada' : `${moved} carreiras foram enviadas`} para a sua conta.`, 'good');
+    }
+    await this.refreshCareers();
+  }
+
+  /** Recarrega a lista de carreiras (navegador + nuvem). */
+  async refreshCareers() {
+    this.careers.loading = true;
+    this.render();
+    const { careers, lastId, cloudError } = await this.save.list();
+    Object.assign(this.careers, { list: careers, lastId, cloudError, loading: false });
+    this.render();
+  }
+
+  async openCareer(id) {
+    const state = await this.save.open(id).catch(() => null);
+    if (state && this.game.load(state) && this.game.state.player) {
+      this.restoreScreen();
+      return true;
+    }
+    toast('Não consegui abrir essa carreira. O save pode ser de uma versão antiga do jogo.', 'warn');
+    return false;
+  }
+
+  async newCareer() {
+    if (this.game.state.player) await this.save.saveNow();
+    const { careers } = await this.save.list();
+    if (careers.length >= MAX_CAREERS) {
+      toast(`O álbum comporta ${MAX_CAREERS} carreiras. Apague uma para começar outra.`, 'warn');
+      this.goAlbum();
+      return;
+    }
+    this.save.startNew();
+    this.game.reset();
+    this.game.startCreation();
+  }
+
+  async deleteCareer(id) {
+    try {
+      await this.save.remove(id);
+      toast('Carreira apagada.', 'info');
+    } catch (error) {
+      toast(authErrorMessage(error), 'warn');
+    }
+    await this.refreshCareers();
+  }
+
+  /** Guarda a carreira atual e volta para a capa com todas as carreiras. */
+  async goAlbum() {
+    if (this.game.state.player) await this.save.saveNow();
+    this.save.activeId = null;
+    this.game.reset();
+    await this.refreshCareers();
   }
 
   // ------------------------------------------------------------------ eventos
@@ -123,24 +190,13 @@ export class App {
         await this.save.saveNow();
         toast(this.save.uid ? 'Carreira salva na nuvem.' : 'Carreira salva no navegador.', 'good');
       },
-      'go-auth': () => this.game.setScreen(SCREENS.AUTH),
+      'go-auth': () => this.goAlbum(),
+      'go-album': () => this.goAlbum(),
       'toggle-fast': () => {
         this.game.toggleFastMode();
         toast(this.game.state.settings.fastMode ? 'Modo rápido ligado.' : 'Modo rápido desligado.', 'info');
       },
       'app-sign-out': () => this.handleSignOut(),
-      'new-game': async () => {
-        const ok = await confirmDialog({
-          title: 'Nova carreira',
-          text: 'O save atual será apagado. Tem certeza?',
-          confirmLabel: 'Apagar e começar',
-          danger: true,
-        });
-        if (!ok) return;
-        await this.save.deleteAll();
-        this.game.reset();
-        this.game.startCreation();
-      },
     };
 
     const screen = SCREEN_MAP[this.game.state.screen];
@@ -153,49 +209,16 @@ export class App {
   }
 
   // --------------------------------------------------------------- navegação
-  async handleSignedIn(user) {
-    this.auth.user = user;
-    this.save.setUser(user.uid);
-    toast('Login feito. Sincronizando carreira...', 'good');
-    await this.resumeOrCreate();
+  handleSignedIn(user) {
+    // O resto (sincronizar, migrar, listar) acontece em handleAuthState.
+    if (user) toast('Login feito. Sincronizando suas carreiras...', 'good');
   }
 
   async handleSignOut() {
+    await this.save.saveNow();
     await signOutUser();
-    this.auth.user = null;
-    this.save.setUser(null);
-    this.game.setScreen(SCREENS.AUTH);
-  }
-
-  startOffline() {
-    this.auth.offline = true;
-    const saved = loadLocal();
-    if (saved && this.game.load(saved) && this.game.state.player) {
-      this.restoreScreen();
-      toast('Carreira carregada do navegador.', 'good');
-    } else {
-      this.game.startCreation();
-    }
-  }
-
-  continueLocal() {
-    const saved = loadLocal();
-    if (saved && this.game.load(saved) && this.game.state.player) {
-      this.restoreScreen();
-      toast('Carreira carregada.', 'good');
-    } else {
-      toast('Não encontrei um save válido. Começando uma nova carreira.', 'warn');
-      this.game.startCreation();
-    }
-  }
-
-  async resumeOrCreate() {
-    const saved = await this.save.loadBest();
-    if (saved && this.game.load(saved) && this.game.state.player) {
-      this.restoreScreen();
-    } else {
-      this.game.startCreation();
-    }
+    if (!firebaseAvailable()) await this.handleAuthState(null);
+    toast('Você saiu da conta.', 'info');
   }
 
   /** Garante que a tela restaurada faz sentido com o estado carregado. */
@@ -236,7 +259,7 @@ export class App {
               ? `<button class="iconbtn" data-action="save-now" aria-label="Salvar agora" title="Salvar agora">${icon('floppy-disk')}</button>
                  <button class="iconbtn ${state.settings.fastMode ? 'is-active' : ''}" data-action="toggle-fast"
                    aria-pressed="${state.settings.fastMode}" aria-label="Modo rápido: menos eventos de vida" title="Modo rápido: menos eventos de vida">${icon('fast-forward')}</button>
-                 <button class="iconbtn" data-action="new-game" aria-label="Começar nova carreira" title="Começar nova carreira">${icon('arrow-counter-clockwise')}</button>`
+                 <button class="iconbtn" data-action="go-album" aria-label="Minhas carreiras" title="Minhas carreiras">${icon('book-open-text')}</button>`
               : ''
           }
           ${user ? `<button class="iconbtn" data-action="app-sign-out" aria-label="Sair da conta" title="Sair da conta">${icon('sign-out')}</button>` : ''}
@@ -247,14 +270,16 @@ export class App {
   render() {
     if (this.rendering) return;
     this.rendering = true;
-    const screen = SCREEN_MAP[this.game.state.screen] ?? authScreen;
     const screenChanged = this.lastScreen !== this.game.state.screen;
     this.lastScreen = this.game.state.screen;
     const scroll = screenChanged ? 0 : window.scrollY;
-    const screenId = this.game.state.screen;
-    const markup = `${this.topBar()}<main class="app__main" id="conteudo" tabindex="-1" data-screen="${esc(screenId)}">${screen.render(this.game.state, this.ctx)}</main>`;
+    // O HTML é montado na hora da troca: com transição, a troca acontece um
+    // instante depois, e nesse meio tempo o estado pode ter mudado.
     this.motion.swap(
       () => {
+        const screenId = this.game.state.screen;
+        const current = SCREEN_MAP[screenId] ?? authScreen;
+        const markup = `${this.topBar()}<main class="app__main" id="conteudo" tabindex="-1" data-screen="${esc(screenId)}">${current.render(this.game.state, this.ctx)}</main>`;
         mount(this.root, markup);
         this.motion.settle(this.root, screenId);
         window.scrollTo({ top: scroll, behavior: 'instant' });

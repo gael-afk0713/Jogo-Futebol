@@ -2805,6 +2805,135 @@ code {
   }
 }
 
+/* -------------------------------------------------- carreiras salvas */
+.careers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.career {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 12px;
+  border-radius: var(--r-surface);
+  background: var(--sheet);
+  box-shadow: var(--shadow-panel);
+}
+
+.career .sticker {
+  --sticker-w: 104px;
+}
+
+.career__body {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.career__name {
+  font-family: var(--font-cond);
+  font-weight: 800;
+  font-size: 1.3rem;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.career__facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  color: var(--ink-2);
+  font-size: 0.92rem;
+}
+
+.career__where {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-3);
+  font-size: 0.85rem;
+}
+
+.career__where .icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.career__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.iconbtn--quiet {
+  color: var(--ink-3);
+}
+
+.iconbtn--quiet:hover {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
+.careers .slot {
+  min-height: 150px;
+  padding-top: 28px;
+}
+
+.slot--action {
+  font: inherit;
+  cursor: pointer;
+  border-style: dashed;
+  border-color: var(--cover);
+  color: var(--cover);
+  transition: background-color 160ms var(--ease-out), transform 160ms var(--ease-press);
+}
+
+.slot--action .slot__number,
+.slot--action .icon {
+  color: var(--cover);
+}
+
+.slot--action:hover {
+  background: var(--info-soft);
+}
+
+.slot--action:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-color-scheme: dark) {
+  .slot--action,
+  .slot--action .slot__number,
+  .slot--action .icon {
+    color: var(--ink);
+    border-color: var(--ink-2);
+  }
+}
+
+@media (max-width: 520px) {
+  .careers {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .careers .slot:not(.slot--action) {
+    display: none;
+  }
+
+  .careers .slot--action {
+    min-height: 0;
+    flex-direction: row;
+    justify-content: center;
+    padding: 16px;
+    gap: 10px;
+  }
+}
+
 /* --------------------------------------------------------- ofertas */
 .offers {
   display: grid;

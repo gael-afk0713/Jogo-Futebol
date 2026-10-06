@@ -13,7 +13,7 @@ import { ACCESSORIES, BEARD_STYLES, HAIR_COLORS, HAIR_STYLES, SKIN_TONES, icon, 
 
 const MAX_TRAITS = 2;
 
-const form = {
+const blankForm = () => ({
   seed: Math.floor(Math.random() * 2 ** 31),
   firstName: '',
   lastName: '',
@@ -26,7 +26,18 @@ const form = {
   appearance: { skin: 3, hair: 'curto', hairColor: '#3d2314', beard: 'nenhuma', accessory: 'nenhum', kitNumber: 10 },
   traits: [],
   groupPoints: {},
-};
+});
+
+const form = blankForm();
+let formFor = null;
+
+/** Cada carreira nova começa com o formulário limpo. */
+function ensureFreshForm(state) {
+  const key = state.seed;
+  if (formFor === key) return;
+  formFor = key;
+  Object.assign(form, blankForm());
+}
 
 const previewPlayer = () => createPlayer(form, createRng(form.seed));
 
@@ -73,7 +84,8 @@ function refreshLive() {
 export default {
   id: 'create',
 
-  render() {
+  render(state) {
+    ensureFreshForm(state);
     const player = previewPlayer();
     const spent = groupPointsSpent(form.groupPoints);
     const remaining = CREATION_POINT_POOL - spent;

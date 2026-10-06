@@ -75,8 +75,17 @@ export async function signInAsGuest() {
 export async function signInWithGoogle() {
   const context = await initFirebase();
   const provider = new context.authModule.GoogleAuthProvider();
-  const credential = await context.authModule.signInWithPopup(context.auth, provider);
-  return credential.user;
+  try {
+    const credential = await context.authModule.signInWithPopup(context.auth, provider);
+    return credential.user;
+  } catch (error) {
+    // Navegadores que bloqueiam janelas (comum no celular): login por redirecionamento.
+    if (error?.code === 'auth/popup-blocked' || error?.code === 'auth/operation-not-supported-in-this-environment') {
+      await context.authModule.signInWithRedirect(context.auth, provider);
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function signOutUser() {
@@ -87,42 +96,74 @@ export async function signOutUser() {
 
 export const currentUser = () => auth?.currentUser ?? null;
 
-/** Salva o estado da carreira na nuvem. */
-export async function saveToCloud(uid, state) {
+// --------------------------------------------------------------- carreiras
+// Cada conta guarda várias carreiras em users/{uid}/careers/{careerId}.
+// O documento leva a ficha (para listar sem abrir) e o estado completo.
+
+function careersCollection(context, uid) {
+  return context.storeModule.collection(context.db, 'users', uid, 'careers');
+}
+
+/** Salva uma carreira na nuvem. */
+export async function saveCareerToCloud(uid, careerId, state, meta) {
   const context = await initFirebase();
   const { storeModule } = context;
-  const reference = storeModule.doc(context.db, 'careers', uid);
+  const reference = storeModule.doc(careersCollection(context, uid), careerId);
   await storeModule.setDoc(reference, {
+    meta,
     state: JSON.stringify(state),
+    clientUpdatedAt: meta.updatedAt,
     updatedAt: storeModule.serverTimestamp(),
-    playerName: state?.player ? `${state.player.firstName} ${state.player.lastName}` : null,
-    overall: state?.player?.overall ?? null,
-    age: state?.player?.age ?? null,
-    club: state?.player?.club ?? null,
   });
 }
 
-/** Lê o estado salvo na nuvem. Retorna null se não existir. */
-export async function loadFromCloud(uid) {
+/** Lista as fichas das carreiras da conta, sem desempacotar os estados. */
+export async function listCloudCareers(uid) {
+  const context = await initFirebase();
+  const snapshot = await context.storeModule.getDocs(careersCollection(context, uid));
+  return snapshot.docs.map((item) => ({ ...(item.data().meta ?? {}), id: item.id, updatedAt: item.data().clientUpdatedAt ?? 0 }));
+}
+
+/** Lê o estado completo de uma carreira. Retorna null se não existir. */
+export async function loadCareerFromCloud(uid, careerId) {
   const context = await initFirebase();
   const { storeModule } = context;
-  const reference = storeModule.doc(context.db, 'careers', uid);
-  const snapshot = await storeModule.getDoc(reference);
+  const snapshot = await storeModule.getDoc(storeModule.doc(careersCollection(context, uid), careerId));
   if (!snapshot.exists()) return null;
-  const data = snapshot.data();
   try {
-    return typeof data.state === 'string' ? JSON.parse(data.state) : data.state ?? null;
+    const data = snapshot.data();
+    return typeof data.state === 'string' ? JSON.parse(data.state) : (data.state ?? null);
   } catch (error) {
     console.warn('[firebase] save corrompido na nuvem:', error);
     return null;
   }
 }
 
-/** Apaga o save da nuvem. */
-export async function deleteCloudSave(uid) {
+/** Apaga uma carreira da nuvem. */
+export async function deleteCareerFromCloud(uid, careerId) {
   const context = await initFirebase();
   const { storeModule } = context;
-  await storeModule.deleteDoc(storeModule.doc(context.db, 'careers', uid));
+  await storeModule.deleteDoc(storeModule.doc(careersCollection(context, uid), careerId));
+}
+
+/**
+ * Save do formato antigo (uma carreira por conta, em careers/{uid}).
+ * Lido uma vez para migrar e depois apagado.
+ */
+export async function takeLegacyCloudSave(uid) {
+  const context = await initFirebase();
+  const { storeModule } = context;
+  const reference = storeModule.doc(context.db, 'careers', uid);
+  const snapshot = await storeModule.getDoc(reference);
+  if (!snapshot.exists()) return null;
+  let state = null;
+  try {
+    const data = snapshot.data();
+    state = typeof data.state === 'string' ? JSON.parse(data.state) : (data.state ?? null);
+  } catch {
+    state = null;
+  }
+  return { state, discard: () => storeModule.deleteDoc(reference) };
 }
 
 /** Mensagens de erro do Firebase em português. */
@@ -141,6 +182,11 @@ export function authErrorMessage(error) {
     'auth/operation-not-allowed': 'Esse método de login não está habilitado no Firebase.',
     'auth/admin-restricted-operation': 'Login anônimo não está habilitado no Firebase.',
     'auth/network-request-failed': 'Sem conexão com o Firebase.',
+    'auth/unauthorized-domain': 'Este endereço não está autorizado no Firebase. Adicione o domínio em Authentication > Settings > Authorized domains.',
+    'auth/configuration-not-found': 'O login ainda não foi ativado no Firebase (Authentication > Sign-in method).',
+    'auth/invalid-api-key': 'A apiKey em src/firebase/config.js está errada.',
+    'permission-denied': 'O Firestore recusou o acesso. Publique as regras de firestore.rules no console do Firebase.',
+    unavailable: 'Firestore fora do ar ou sem internet. A carreira continua salva no navegador.',
   };
   return messages[code] ?? error?.message ?? 'Não foi possível completar a ação.';
 }

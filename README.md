@@ -112,7 +112,18 @@ classificação que vai de *Sonho interrompido* a **Lenda eterna**.
 
 ---
 
-## Firebase (opcional)
+## Várias carreiras
+
+O álbum guarda até **6 carreiras ao mesmo tempo**. Na capa aparecem todas, cada
+uma como uma figurinha, com o botão de jogar e o de apagar; os espaços livres
+ficam numerados. O botão de álbum na barra de cima salva a carreira atual e volta
+para a lista.
+
+Sem conta, as carreiras ficam no navegador. Com login, ficam também na nuvem e
+aparecem em qualquer aparelho em que você entrar. Ao fazer login, as carreiras
+que você criou sem conta naquele navegador sobem para a sua conta.
+
+## Firebase (login e save na nuvem)
 
 Sem configurar nada, o jogo salva no `localStorage` do navegador. Para ter login
 e save na nuvem:
@@ -136,16 +147,21 @@ export const firebaseConfig = {
 };
 ```
 
-6. Publique as regras de segurança de [`firestore.rules`](firestore.rules) para
-   que cada pessoa só leia e escreva a própria carreira.
+6. **Firestore Database → Regras**: cole o conteúdo de
+   [`firestore.rules`](firestore.rules) e clique em *Publicar*. Sem isso o
+   Firestore recusa os saves (o jogo avisa com "O Firestore recusou o acesso").
 7. Em **Authentication → Settings → Authorized domains**, adicione o domínio onde
-   o jogo vai rodar (ex: `seu-usuario.github.io`).
+   o jogo vai rodar (ex: `seu-usuario.github.io`). `localhost` já vem autorizado.
 
-> A `apiKey` do Firebase Web é pública por natureza — ela só identifica o projeto.
+> A `apiKey` do Firebase Web é pública por natureza: ela só identifica o projeto.
 > A segurança real vem das regras do Firestore.
 
-O jogo salva sozinho a cada ação (local na hora, nuvem com um atraso para não
-escrever a cada clique). O 💾 na barra de cima força o save imediato.
+Cada carreira fica em `users/{uid}/careers/{id}`, e as regras só deixam o dono
+ler e escrever. O jogo salva sozinho a cada ação (no navegador na hora, na nuvem
+com um atraso para não escrever a cada clique). O disquete na barra de cima força
+o save imediato. Ao abrir uma carreira, vale a cópia mais recente entre nuvem e
+navegador. Saves do formato antigo (uma carreira por conta) são migrados sozinhos
+no primeiro login.
 
 ---
 
@@ -170,7 +186,7 @@ src/
   core/
     game.js                controlador: estado, ações, loop semanal, fim de temporada
     rng.js                 aleatoriedade com semente (save reproduzível)
-    storage.js             save local + nuvem com debounce
+    storage.js             várias carreiras: navegador + nuvem, migração
     utils.js               helpers (dinheiro, clamp, logística, datas)
   data/                    conteúdo do jogo, separado das regras
     attributes.js          34 atributos em 7 grupos
