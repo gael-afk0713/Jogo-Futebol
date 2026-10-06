@@ -2805,6 +2805,105 @@ code {
   }
 }
 
+/* --------------------------------------------------------------- loja */
+.shoplist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shop__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'icon text'
+    'icon buy';
+  gap: 8px 12px;
+  padding: 12px 8px;
+}
+
+.shoplist > li + li {
+  border-top: 1px solid var(--rule);
+}
+
+.shop__item .option__icon {
+  grid-area: icon;
+  align-self: start;
+}
+
+.shop__text {
+  grid-area: text;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.shop__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-weight: 600;
+}
+
+.shop__buy {
+  grid-area: buy;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.shop__buy strong {
+  font-family: var(--font-cond);
+  font-size: 1.05rem;
+}
+
+.shop__buy small {
+  color: var(--ink-3);
+  font-size: 0.82rem;
+}
+
+.shop__owned {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--good);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.shop__owned .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.shop__item.is-owned .option__icon {
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+@media (min-width: 760px) {
+  .shop__item {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'icon text buy';
+    align-items: center;
+  }
+
+  .shop__buy {
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    min-width: 140px;
+  }
+}
+
+@media (min-width: 980px) {
+  .train__groups.shop__groups {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* ------------------------------------------------------------- treino */
 .train__tip {
   display: flex;

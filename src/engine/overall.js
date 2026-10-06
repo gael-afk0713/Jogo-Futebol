@@ -4,13 +4,15 @@ import { clamp } from '../core/utils.js';
 import { ATTRIBUTE_IDS } from '../data/attributes.js';
 import { getPosition } from '../data/positions.js';
 import { traitAttributeBonus } from '../data/traits.js';
+import { itemEffects } from './shop.js';
 
 /** Atributos finais do jogador, já somando bônus de traços. */
 export function effectiveAttributes(player) {
   const bonus = traitAttributeBonus(player.traits);
+  const gear = itemEffects(player).attributes;
   const result = {};
   for (const id of ATTRIBUTE_IDS) {
-    result[id] = clamp(Math.round((player.attributes[id] ?? 40) + (bonus[id] ?? 0)), 1, 99);
+    result[id] = clamp(Math.round((player.attributes[id] ?? 40) + (bonus[id] ?? 0) + (gear[id] ?? 0)), 1, 99);
   }
   return result;
 }

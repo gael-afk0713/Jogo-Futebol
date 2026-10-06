@@ -3,13 +3,14 @@
 import { clamp, money } from '../core/utils.js';
 import { lifeModifier } from '../data/traits.js';
 import { adjustLife, hasFlag } from './player.js';
+import { weeklyStaffCost } from './shop.js';
 
 /** Gasto semanal com estilo de vida, proporcional à fama e aos luxos. */
 export function weeklyExpenses(player) {
   const base = 250 + player.life.fame * 22;
   const luxury = (hasFlag(player, 'carro_luxo') ? 900 : 0) + (hasFlag(player, 'casado') ? 600 : 0) + (hasFlag(player, 'filhos') ? 700 : 0);
   const agent = hasFlag(player, 'super_agente') ? (player.contract?.weeklySalary ?? 0) * 0.08 : (player.contract?.weeklySalary ?? 0) * 0.04;
-  return Math.round(base + luxury + agent);
+  return Math.round(base + luxury + agent + weeklyStaffCost(player));
 }
 
 /** Receita semanal de patrocínios. */

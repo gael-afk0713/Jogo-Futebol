@@ -13,6 +13,8 @@ import { attributeLabel } from '../../data/attributes.js';
 import { INVESTMENTS, invest, netWorth, weeklyExpenses, weeklySponsors } from '../../engine/finance.js';
 import { marketValue, getRole } from '../../engine/transfers.js';
 import { mainSquadRequirement } from '../../engine/national.js';
+import { ownsItem, shopItemsFor } from '../../engine/shop.js';
+import { TRAINING_OPTIONS } from '../../engine/training.js';
 import {
   attributeList,
   feed,
@@ -121,7 +123,7 @@ function trainingEffects(option) {
     .join('')}</span>`;
 }
 
-const RECOVERY = new Set(['descanso', 'livre']);
+const RECOVERY = new Set(['descanso', 'livre', 'crioterapia']);
 
 /** Quais atributos o treino trabalha, em palavras ("Força, Impulsão e mais 2"). */
 function trainingTargets(player, option) {
@@ -140,9 +142,11 @@ function trainingTargets(player, option) {
 function suggestedTraining(player, options) {
   const ids = new Set(options.map((option) => option.id));
   if (player.injury?.weeks > 0) return { id: 'descanso', why: 'Você está machucado.' };
+  if (player.life.fitness < 45 && ids.has('crioterapia')) return { id: 'crioterapia', why: 'Sua forma física está baixa.' };
   if (player.life.fitness < 45 && ids.has('descanso')) return { id: 'descanso', why: 'Sua forma física está baixa.' };
   if (player.life.happiness < 35 && ids.has('livre')) return { id: 'livre', why: 'Sua felicidade está baixa.' };
   if (player.life.managerRelation < 40 && ids.has('tatico')) return { id: 'tatico', why: 'O técnico anda desconfiado de você.' };
+  if (ids.has('mentor')) return { id: 'mentor', why: 'Corpo e cabeça em dia: aproveite o mentor.' };
   return { id: ids.has('goleiro') ? 'goleiro' : 'tecnico', why: 'Corpo e cabeça em dia: hora de evoluir.' };
 }
 
@@ -428,6 +432,81 @@ function weekTab(state, ctx) {
     </div>`;
 }
 
+/* ------------------------------------------------------------------- loja */
+
+const trainingName = (id) => TRAINING_OPTIONS.find((option) => option.id === id)?.label ?? id;
+
+/** O efeito do item em palavras, para a pessoa saber o que está comprando. */
+function itemEffectText(item) {
+  const effects = item.effects ?? {};
+  const parts = [];
+  const attrs = Object.entries(effects.attributes ?? {});
+  if (attrs.length) parts.push(attrs.map(([id, value]) => `${attributeLabel(id)} +${value}`).join(', '));
+  for (const [id, value] of Object.entries(effects.xp ?? {})) {
+    if (id === 'academia_casa') continue;
+    parts.push(`${trainingName(id)} rende +${Math.round((value - 1) * 100)}%`);
+  }
+  for (const id of effects.unlocks ?? []) parts.push(`Libera o treino ${trainingName(id)}`);
+  for (const [id, value] of Object.entries(effects.skillPoints ?? {})) parts.push(`+${plural(value, 'ponto', 'pontos')} no ${trainingName(id)}`);
+  if (effects.injuryRisk) parts.push(`Risco de lesão no treino -${Math.round((1 - effects.injuryRisk) * 100)}%`);
+  if (effects.weeklyFitness) parts.push(`Forma +${effects.weeklyFitness} por semana`);
+  if (effects.trainingFitness) parts.push(`Treino cansa ${effects.trainingFitness} a menos`);
+  if (effects.restBonus) parts.push(`Descanso recupera +${effects.restBonus}`);
+  if (effects.fasterHealing) parts.push('Lesões curam mais rápido');
+  return parts;
+}
+
+function shopRow(player, item) {
+  const owned = ownsItem(player, item.id);
+  const staff = item.kind === 'staff';
+  const upfront = staff ? item.weekly * 4 : item.price;
+  const afford = player.money >= upfront;
+  const price = staff ? `${money(item.weekly)} por semana` : money(item.price);
+  let action;
+  if (owned && staff) action = `<button class="btn btn--sm btn--quiet" data-action="dismiss-staff" data-item="${item.id}" aria-label="Dispensar ${esc(item.label)}">Dispensar</button>`;
+  else if (owned) action = `<span class="shop__owned">${icon('check')}Seu</span>`;
+  else
+    action = `<button class="btn btn--sm" data-action="buy-item" data-item="${item.id}" ${afford ? '' : 'disabled'}
+      aria-label="${esc(`${staff ? 'Contratar' : 'Comprar'} ${item.label} por ${staff ? `${money(upfront)} adiantados` : price}`)}">${staff ? 'Contratar' : 'Comprar'}</button>`;
+  return `<li class="shop__item ${owned ? 'is-owned' : ''}">
+    <span class="option__icon">${icon(item.icon)}</span>
+    <div class="shop__text">
+      <span class="shop__title">${esc(item.label)}${owned && staff ? '<span class="train__tag">Na equipe</span>' : ''}</span>
+      <span class="train__desc">${esc(item.description)}</span>
+      <span class="option__effects">${itemEffectText(item).map((text) => `<span class="effect--up">${esc(text)}</span>`).join('')}</span>
+    </div>
+    <div class="shop__buy">
+      <strong class="num">${esc(price)}</strong>
+      ${staff && !owned ? `<small>Contratar: ${esc(money(upfront))}</small>` : ''}
+      ${action}
+    </div>
+  </li>`;
+}
+
+function shopSection(player) {
+  const items = shopItemsFor(player);
+  const gear = items.filter((item) => item.kind === 'equip');
+  const staff = items.filter((item) => item.kind === 'staff');
+  return `
+    <section class="sheet section" aria-labelledby="loja-titulo">
+      <div class="section__head">
+        <h2 id="loja-titulo">Investir na evolução</h2>
+        <span class="points-pill"><strong class="num">${esc(money(player.money))}</strong> em conta</span>
+      </div>
+      <p class="lede">Equipamento é compra única e vale para sempre. A equipe pessoal cobra por semana (entra nos seus gastos) e pode ser dispensada.</p>
+      <div class="train__groups shop__groups">
+        <div>
+          <h3 class="train__group">Equipamento</h3>
+          <ul class="shoplist">${gear.map((item) => shopRow(player, item)).join('')}</ul>
+        </div>
+        <div>
+          <h3 class="train__group">Equipe pessoal</h3>
+          <ul class="shoplist">${staff.map((item) => shopRow(player, item)).join('')}</ul>
+        </div>
+      </div>
+    </section>`;
+}
+
 /* -------------------------------------------------------------- atributos */
 
 function profileTab(state) {
@@ -446,6 +525,7 @@ function profileTab(state) {
       </p>
     </section>
     ${attributeList(player, { spendable: true, skillPoints: player.skillPoints, costOf: upgradeCost, ceiling })}
+    ${shopSection(player)}
     <section class="section">
       <h3>Traços</h3>
       ${traitChips(player.traits)}
@@ -785,6 +865,26 @@ export default {
     'sim-season': (ctx) => {
       ctx.game.simulateRestOfSeason();
       ctx.save.schedule();
+    },
+    'buy-item': async (ctx, dataset) => {
+      const result = ctx.game.buyItem(dataset.item);
+      if (!result.ok) {
+        toast(result.reason, 'warn');
+        return;
+      }
+      toast(`${result.item.label}: ${result.item.kind === 'staff' ? 'contratado' : 'comprado'}.`, 'good');
+      ctx.save.schedule(300);
+    },
+    'dismiss-staff': async (ctx, dataset) => {
+      const ok = await ctx.confirm({
+        title: 'Dispensar?',
+        text: 'O efeito acaba agora. Para contratar de novo, você paga as quatro semanas adiantadas outra vez.',
+        confirmLabel: 'Dispensar',
+        danger: true,
+      });
+      if (!ok) return;
+      ctx.game.dismissStaff(dataset.item);
+      ctx.save.schedule(300);
     },
     'spend-point': (ctx, dataset) => {
       const result = ctx.game.spendPoint(dataset.attr);

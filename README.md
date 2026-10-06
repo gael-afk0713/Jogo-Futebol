@@ -86,6 +86,15 @@ lesão — e a sua nota da partida, que é a média da qualidade das suas decis�
   surpreender (ou cair se decepcionar)
 - Declínio a partir dos 32, começando por velocidade e resistência
 
+### 5b. Investir na evolução
+Na aba Atributos há uma loja para gastar o dinheiro da carreira:
+- **Equipamento** (compra única): chuteira ou luvas (bônus em atributos), colete
+  GPS (treino físico rende mais e machuca menos), academia em casa e centro de
+  recuperação (liberam treinos novos).
+- **Equipe pessoal** (custo semanal, pode dispensar): nutricionista, preparador
+  físico, analista de desempenho, fisioterapeuta e mentor ex-craque. Alguns
+  liberam treinos novos: *Análise de vídeo* e *Treino com o mentor*.
+
 ### 6. Mercado da bola
 No fim de cada temporada você recebe propostas de verdade, geradas a partir do
 seu overall, idade, potencial, nota da temporada, fama, reputação e disciplina.
@@ -197,6 +206,7 @@ src/
     nations.js             20 seleções
     traits.js              14 traços com efeitos em campo e fora
     lifeEvents.js          33 eventos de vida com condições e desfechos
+    shop.js                itens da loja: equipamento e equipe pessoal
     matchMoments.js        19 lances interativos de partida
     names.js               geradores de nome por país
   engine/                  regras puras, sem DOM
@@ -211,6 +221,7 @@ src/
     national.js            convocações e torneios de seleção
     awards.js              premiações e bônus
     finance.js             salário, gastos, investimentos
+    shop.js                compra, dispensa e efeitos dos itens
   ui/
     app.js                 roteador de telas e delegação de eventos
     components.js          figurinhas, avatar SVG, medidores, tabelas

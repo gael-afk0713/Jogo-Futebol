@@ -15,6 +15,7 @@ import {
 } from '../engine/player.js';
 import { playerOverall } from '../engine/overall.js';
 import { applyTraining, spendSkillPoint } from '../engine/training.js';
+import { buyItem, dismissStaff, itemEffects } from '../engine/shop.js';
 import { drawLifeEvent, resolveLifeOption, weeklyDrift, lifeContext, availableOptions } from '../engine/life.js';
 import {
   COMPETITIONS,
@@ -537,8 +538,11 @@ export class Game {
     weeklyDrift(player, this.rng);
     applyWeeklyFinance(player);
 
+    const gear = itemEffects(player);
+    if (gear.weeklyFitness) adjustLife(player, 'fitness', gear.weeklyFitness);
     if (player.injury) {
       player.injury.weeks -= 1;
+      if (gear.fasterHealing && player.injury.weeks > 0 && this.rng.chance(gear.fasterHealing)) player.injury.weeks -= 1;
       if (player.injury.weeks <= 0) {
         this.pushNews('Recuperado da lesão e liberado para treinar.', 'good', 'first-aid-kit');
         player.injury = null;
@@ -772,6 +776,30 @@ export class Game {
   }
 
   // -------------------------------------------------------------- evolução
+  /** Compra um item da loja ou contrata alguém da equipe pessoal. */
+  buyItem(itemId) {
+    const result = buyItem(this.player, itemId);
+    if (result.ok) {
+      this.player.overall = playerOverall(this.player);
+      this.pushNews(
+        result.item.kind === 'staff' ? `Você contratou: ${result.item.label}.` : `Você comprou: ${result.item.label}.`,
+        'good',
+        result.item.icon,
+      );
+      this.notify();
+    }
+    return result;
+  }
+
+  dismissStaff(itemId) {
+    const result = dismissStaff(this.player, itemId);
+    if (result.ok) {
+      this.pushNews(`Você dispensou: ${result.item.label}.`, 'info', result.item.icon);
+      this.notify();
+    }
+    return result;
+  }
+
   spendPoint(attributeId) {
     const result = spendSkillPoint(this.player, attributeId);
     if (result.ok) {
