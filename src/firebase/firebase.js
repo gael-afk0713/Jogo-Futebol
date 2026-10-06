@@ -88,6 +88,32 @@ export async function signInWithGoogle() {
   }
 }
 
+/**
+ * Convidado vira conta de verdade sem trocar de id: as carreiras salvas
+ * continuam no mesmo lugar.
+ */
+export async function upgradeGuestWithEmail(email, password) {
+  const context = await initFirebase();
+  const credential = context.authModule.EmailAuthProvider.credential(email, password);
+  const result = await context.authModule.linkWithCredential(context.auth.currentUser, credential);
+  return result.user;
+}
+
+export async function upgradeGuestWithGoogle() {
+  const context = await initFirebase();
+  const provider = new context.authModule.GoogleAuthProvider();
+  try {
+    const result = await context.authModule.linkWithPopup(context.auth.currentUser, provider);
+    return result.user;
+  } catch (error) {
+    if (error?.code === 'auth/popup-blocked' || error?.code === 'auth/operation-not-supported-in-this-environment') {
+      await context.authModule.linkWithRedirect(context.auth.currentUser, provider);
+      return null;
+    }
+    throw error;
+  }
+}
+
 export async function signOutUser() {
   const context = await initFirebase().catch(() => null);
   if (!context) return;
@@ -181,6 +207,9 @@ export function authErrorMessage(error) {
     'auth/popup-closed-by-user': 'A janela de login foi fechada.',
     'auth/operation-not-allowed': 'Esse método de login não está habilitado no Firebase.',
     'auth/admin-restricted-operation': 'Login anônimo não está habilitado no Firebase.',
+    'auth/credential-already-in-use': 'Essa conta Google já existe. Saia do convidado e entre com ela (as carreiras do convidado não passam para ela).',
+    'auth/provider-already-linked': 'Esta conta já está ligada a esse login.',
+    'auth/requires-recent-login': 'Por segurança, entre de novo e tente outra vez.',
     'auth/network-request-failed': 'Sem conexão com o Firebase.',
     'auth/unauthorized-domain': 'Este endereço não está autorizado no Firebase. Adicione o domínio em Authentication > Settings > Authorized domains.',
     'auth/configuration-not-found': 'O login ainda não foi ativado no Firebase (Authentication > Sign-in method).',

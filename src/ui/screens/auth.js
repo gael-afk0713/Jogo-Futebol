@@ -7,12 +7,30 @@ import {
   authErrorMessage,
   firebaseAvailable,
   signInWithEmail,
+  signInAsGuest,
   signInWithGoogle,
   signUpWithEmail,
+  upgradeGuestWithEmail,
+  upgradeGuestWithGoogle,
 } from '../../firebase/firebase.js';
 import { icon, playerSticker } from '../components.js';
 
 const ui = { mode: 'login', busy: false, error: null };
+
+/** Roda uma ação de login mostrando "Aguarde" e o erro em português. */
+async function busy(ctx, task) {
+  ui.busy = true;
+  ui.error = null;
+  ctx.rerender();
+  try {
+    await task();
+  } catch (error) {
+    ui.error = authErrorMessage(error);
+  } finally {
+    ui.busy = false;
+    ctx.rerender();
+  }
+}
 
 // Figurinhas de exemplo da capa: jogadores fictícios gerados pelo próprio jogo.
 const SAMPLES = [
@@ -79,6 +97,27 @@ function careersSection(ctx) {
     </section>`;
 }
 
+/** Convidado: guarda as carreiras numa conta de verdade, sem perder nada. */
+function guestUpgrade() {
+  return `
+    <div class="notice notice--warn">${icon('warning')}<div>Conta de convidado: se você sair ou limpar o navegador, perde o acesso às carreiras. Transforme em conta de verdade para guardar tudo.</div></div>
+    <form class="stack" novalidate>
+      <label class="field">
+        <span class="field__label">E-mail</span>
+        <input class="input" id="auth-email" type="email" autocomplete="email" placeholder="voce@email.com" />
+      </label>
+      <label class="field">
+        <span class="field__label">Senha</span>
+        <input class="input" id="auth-password" type="password" autocomplete="new-password" placeholder="Mínimo de 6 caracteres" />
+      </label>
+      ${ui.error ? `<p class="field__error" role="alert">${esc(ui.error)}</p>` : ''}
+      <button type="submit" class="btn btn--primary btn--block" data-action="guest-upgrade" ${ui.busy ? 'disabled' : ''}>${ui.busy ? 'Aguarde' : 'Guardar carreiras nesta conta'}</button>
+    </form>
+    <div class="actions">
+      <button class="btn btn--sm" data-action="guest-upgrade-google" ${ui.busy ? 'disabled' : ''}>Usar minha conta Google</button>
+    </div>`;
+}
+
 function loginBox(ctx) {
   const user = ctx.auth.user;
   if (user) {
@@ -86,9 +125,9 @@ function loginBox(ctx) {
       <section class="sheet section">
         <h2>Conta</h2>
         <p class="lede">Conectado como <strong>${esc(user.isAnonymous ? 'convidado' : (user.email ?? 'usuário'))}</strong>. Todas as suas carreiras ficam salvas na nuvem e aparecem em qualquer aparelho em que você entrar.</p>
-        ${user.isAnonymous ? '<p class="muted">Conta de convidado: se você sair, não dá para voltar a ela. Crie uma conta com e-mail para não perder as carreiras.</p>' : ''}
+        ${user.isAnonymous ? guestUpgrade() : ''}
         <div class="actions">
-          <button class="btn" data-action="sign-out">Sair da conta</button>
+          <button class="btn ${user.isAnonymous ? 'btn--quiet' : ''}" data-action="sign-out">Sair da conta</button>
         </div>
       </section>`;
   }
@@ -115,6 +154,7 @@ function loginBox(ctx) {
       </form>
       <div class="actions">
         <button class="btn btn--sm" data-action="auth-google" ${ui.busy ? 'disabled' : ''}>Entrar com Google</button>
+        <button class="btn btn--sm btn--quiet" data-action="auth-guest" ${ui.busy ? 'disabled' : ''}>Entrar como convidado</button>
       </div>
     </section>`;
 }
@@ -184,36 +224,44 @@ export default {
         ctx.rerender();
         return;
       }
-      ui.busy = true;
-      ui.error = null;
-      ctx.rerender();
-      try {
-        const user = ui.mode === 'login' ? await signInWithEmail(email, password) : await signUpWithEmail(email, password);
-        await ctx.onSignedIn(user);
-      } catch (error) {
-        ui.error = authErrorMessage(error);
-      } finally {
-        ui.busy = false;
-        ctx.rerender();
-      }
+      await busy(ctx, async () =>
+        ctx.onSignedIn(ui.mode === 'login' ? await signInWithEmail(email, password) : await signUpWithEmail(email, password)),
+      );
     },
 
     'auth-google': async (ctx) => {
-      ui.busy = true;
-      ui.error = null;
-      ctx.rerender();
-      try {
-        const user = await signInWithGoogle();
-        await ctx.onSignedIn(user);
-      } catch (error) {
-        ui.error = authErrorMessage(error);
-      } finally {
-        ui.busy = false;
+      await busy(ctx, async () => ctx.onSignedIn(await signInWithGoogle()));
+    },
+
+    'auth-guest': async (ctx) => {
+      await busy(ctx, async () => ctx.onSignedIn(await signInAsGuest()));
+    },
+
+    'guest-upgrade': async (ctx) => {
+      const email = qs('#auth-email')?.value.trim();
+      const password = qs('#auth-password')?.value ?? '';
+      if (!email || !password) {
+        ui.error = 'Preencha e-mail e senha.';
         ctx.rerender();
+        return;
       }
+      await busy(ctx, async () => ctx.onUpgraded(await upgradeGuestWithEmail(email, password)));
+    },
+
+    'guest-upgrade-google': async (ctx) => {
+      await busy(ctx, async () => ctx.onUpgraded(await upgradeGuestWithGoogle()));
     },
 
     'sign-out': async (ctx) => {
+      if (ctx.auth.user?.isAnonymous) {
+        const ok = await ctx.confirm({
+          title: 'Sair da conta de convidado?',
+          text: 'Conta de convidado não tem senha: depois de sair, não dá para voltar a ela nem às carreiras salvas nela.',
+          confirmLabel: 'Sair mesmo assim',
+          danger: true,
+        });
+        if (!ok) return;
+      }
       await ctx.signOut();
     },
 

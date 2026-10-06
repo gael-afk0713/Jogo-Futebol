@@ -8,7 +8,8 @@ import { getPosition } from '../../data/positions.js';
 import { WEEK_STEPS } from '../../core/game.js';
 import { standings } from '../../engine/season.js';
 import { trainingOptionsFor } from '../../engine/training.js';
-import { upgradeCost, attributeCeiling } from '../../engine/overall.js';
+import { upgradeCost, attributeCeiling, keyAttributesFor } from '../../engine/overall.js';
+import { attributeLabel } from '../../data/attributes.js';
 import { INVESTMENTS, invest, netWorth, weeklyExpenses, weeklySponsors } from '../../engine/finance.js';
 import { marketValue, getRole } from '../../engine/transfers.js';
 import { mainSquadRequirement } from '../../engine/national.js';
@@ -120,31 +121,70 @@ function trainingEffects(option) {
     .join('')}</span>`;
 }
 
+const RECOVERY = new Set(['descanso', 'livre']);
+
+/** Quais atributos o treino trabalha, em palavras ("Força, Impulsão e mais 2"). */
+function trainingTargets(player, option) {
+  const ids = option.targets === 'key' ? keyAttributesFor(player.position, 6) : (option.targets ?? []);
+  const gk = player.position === 'GOL';
+  const labels = ids.filter((id) => (id.startsWith('gk') ? gk : true)).map(attributeLabel);
+  if (!labels.length) return '';
+  const shown = labels.slice(0, 3).join(', ');
+  return labels.length > 3 ? `${shown} e mais ${labels.length - 3}` : shown;
+}
+
+/**
+ * Sugestão do preparador, a partir do estado real do jogador: corpo
+ * cansado pede descanso, cabeça cansada pede folga, o resto pede evolução.
+ */
+function suggestedTraining(player, options) {
+  const ids = new Set(options.map((option) => option.id));
+  if (player.injury?.weeks > 0) return { id: 'descanso', why: 'Você está machucado.' };
+  if (player.life.fitness < 45 && ids.has('descanso')) return { id: 'descanso', why: 'Sua forma física está baixa.' };
+  if (player.life.happiness < 35 && ids.has('livre')) return { id: 'livre', why: 'Sua felicidade está baixa.' };
+  if (player.life.managerRelation < 40 && ids.has('tatico')) return { id: 'tatico', why: 'O técnico anda desconfiado de você.' };
+  return { id: ids.has('goleiro') ? 'goleiro' : 'tecnico', why: 'Corpo e cabeça em dia: hora de evoluir.' };
+}
+
+function trainingRow(player, option, { blocked, suggested }) {
+  const targets = trainingTargets(player, option);
+  return `<li>
+    <button class="train ${suggested ? 'is-suggested' : ''}" data-action="choose-training" data-training="${option.id}" ${blocked ? 'disabled' : ''}
+      title="${esc(option.description)}">
+      <span class="option__icon">${icon(option.icon)}</span>
+      <span class="train__text">
+        <span class="train__title">${esc(option.label)}${suggested ? '<span class="train__tag">Sugerido</span>' : ''}</span>
+        <span class="train__desc">${targets ? `Treina ${esc(targets)}` : esc(option.description)}</span>
+      </span>
+      ${trainingEffects(option)}
+    </button>
+  </li>`;
+}
+
 function trainingStep(state) {
   const player = state.player;
   const injured = player.injury?.weeks > 0;
+  const options = trainingOptionsFor(player);
+  const tip = suggestedTraining(player, options);
+  const row = (option) => trainingRow(player, option, { blocked: injured && option.id !== 'descanso', suggested: option.id === tip.id });
+  const grow = options.filter((option) => !RECOVERY.has(option.id));
+  const rest = options.filter((option) => RECOVERY.has(option.id));
   return `
     <section class="sheet section" aria-labelledby="passo-titulo">
       <div class="section__head">
         <h2 id="passo-titulo">Treino da semana</h2>
       </div>
-      <ul class="optionlist optionlist--two">
-        ${trainingOptionsFor(player)
-          .map((option) => {
-            const blocked = injured && option.id !== 'descanso';
-            return `<li>
-              <button class="option" data-action="choose-training" data-training="${option.id}" ${blocked ? 'disabled' : ''}>
-                <span class="option__icon">${icon(option.icon)}</span>
-                <span class="option__text">
-                  <span class="option__title">${esc(option.label)}</span>
-                  <span class="option__desc">${esc(option.description)}</span>
-                  ${trainingEffects(option)}
-                </span>
-              </button>
-            </li>`;
-          })
-          .join('')}
-      </ul>
+      <p class="train__tip">${icon('clipboard-text')}<span><strong>Preparador:</strong> ${esc(tip.why)}</span></p>
+      <div class="train__groups">
+        <div>
+          <h3 class="train__group">Evoluir</h3>
+          <ul class="trainlist">${grow.map(row).join('')}</ul>
+        </div>
+        <div>
+          <h3 class="train__group">Recuperar</h3>
+          <ul class="trainlist">${rest.map(row).join('')}</ul>
+        </div>
+      </div>
       <div class="actions">
         <button class="btn btn--quiet" data-action="skip-training">Pular o treino</button>
       </div>

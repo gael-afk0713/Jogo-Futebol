@@ -119,9 +119,11 @@ uma como uma figurinha, com o botão de jogar e o de apagar; os espaços livres
 ficam numerados. O botão de álbum na barra de cima salva a carreira atual e volta
 para a lista.
 
-Sem conta, as carreiras ficam no navegador. Com login, ficam também na nuvem e
-aparecem em qualquer aparelho em que você entrar. Ao fazer login, as carreiras
-que você criou sem conta naquele navegador sobem para a sua conta.
+Sem conta, as carreiras ficam no navegador. Com login (e-mail, Google ou
+convidado), ficam também na nuvem e aparecem em qualquer aparelho em que você
+entrar. Ao fazer login, as carreiras que você criou sem conta naquele navegador
+sobem para a sua conta. Quem entra como convidado pode depois transformar a conta
+em e-mail ou Google sem perder nenhuma carreira.
 
 ## Firebase (login e save na nuvem)
 

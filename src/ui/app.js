@@ -66,6 +66,7 @@ export class App {
       careers: this.careers,
       maxCareers: MAX_CAREERS,
       onSignedIn: (user) => this.handleSignedIn(user),
+      onUpgraded: (user) => this.handleUpgraded(user),
       signOut: () => this.handleSignOut(),
       openCareer: (id) => this.openCareer(id),
       newCareer: () => this.newCareer(),
@@ -212,6 +213,14 @@ export class App {
   handleSignedIn(user) {
     // O resto (sincronizar, migrar, listar) acontece em handleAuthState.
     if (user) toast('Login feito. Sincronizando suas carreiras...', 'good');
+  }
+
+  /** Convidado virou conta de verdade: mesmo id, mesmas carreiras. */
+  handleUpgraded(user) {
+    if (!user) return;
+    this.auth.user = user;
+    toast('Pronto! Suas carreiras agora estão guardadas nesta conta.', 'good');
+    this.render();
   }
 
   async handleSignOut() {
