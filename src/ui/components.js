@@ -38,15 +38,7 @@ export const BEARD_STYLES = [
   { id: 'rala', label: 'Barba por fazer' },
   { id: 'bigode', label: 'Bigode' },
   { id: 'cavanhaque', label: 'Cavanhaque' },
-  { id: 'desenhada', label: 'Barba desenhada' },
   { id: 'cheia', label: 'Barba cheia' },
-];
-
-export const ACCESSORIES = [
-  { id: 'nenhum', label: 'Nenhum' },
-  { id: 'faixa', label: 'Faixa de capitão' },
-  { id: 'fita', label: 'Fita no cabelo' },
-  { id: 'cordao', label: 'Cordão' },
 ];
 
 export const HAIR_COLORS = [
@@ -113,13 +105,11 @@ const HAIR_SHADOW_DEFS = `
 
 /** Barba ilustrada, em cinza, pintada na cor do cabelo. "Por fazer" é a cheia mais leve. */
 function beardMarkup(beard, filterId) {
-  const layer = { cavanhaque: 'cavanhaque', desenhada: 'desenhada', cheia: 'cheia', bigode: 'bigode', rala: 'cheia' }[beard];
+  const layer = { cavanhaque: 'cavanhaque', cheia: 'cheia', bigode: 'bigode', rala: 'cheia' }[beard];
   if (!layer) return '';
   const opacity = beard === 'rala' ? ' opacity=".5"' : '';
   return `<image href="${avatarAsset(`barba-${layer}`)}" width="${AVATAR_W}" height="${AVATAR_H}" filter="url(#${filterId})"${opacity}/>`;
 }
-
-const ACCESSORY_LAYERS = { fita: 'fita', faixa: 'faixa', cordao: 'cordao' };
 
 /** Retrato do jogador: cabeça e ombros, como na foto da figurinha. */
 export function avatarSvg(appearance = {}, { label = 'Retrato do jogador' } = {}) {
@@ -128,7 +118,6 @@ export function avatarSvg(appearance = {}, { label = 'Retrato do jogador' } = {}
   const hairColor = appearance.hairColor ?? '#1b1210';
   const tint = hairTint(hairColor);
   const kitNumber = Number.parseInt(appearance.kitNumber, 10);
-  const accessory = appearance.accessory ?? 'nenhum';
 
   return `
     <svg class="avatar" viewBox="0 0 ${AVATAR_W} ${AVATAR_H}" role="img" aria-label="${esc(label)}">
@@ -145,7 +134,6 @@ export function avatarSvg(appearance = {}, { label = 'Retrato do jogador' } = {}
       </g>
       ${beardMarkup(appearance.beard, tint.id)}
       <image href="${avatarAsset(`cabelo-${hair}`)}" width="${AVATAR_W}" height="${AVATAR_H}" filter="url(#${tint.id})"/>
-      ${ACCESSORY_LAYERS[accessory] ? `<image href="${avatarAsset(`acessorio-${ACCESSORY_LAYERS[accessory]}`)}" width="${AVATAR_W}" height="${AVATAR_H}"/>` : ''}
       ${Number.isFinite(kitNumber) ? `<text class="avatar__kit" x="356" y="480" text-anchor="middle">${kitNumber}</text>` : ''}
     </svg>`;
 }

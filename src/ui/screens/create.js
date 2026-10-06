@@ -9,7 +9,7 @@ import { NATIONS, getNation } from '../../data/nations.js';
 import { TRAITS } from '../../data/traits.js';
 import { randomName, suggestNickname } from '../../data/names.js';
 import { CREATION_GROUP_CAP, CREATION_POINT_POOL, createPlayer, groupPointsSpent } from '../../engine/player.js';
-import { ACCESSORIES, BEARD_STYLES, HAIR_COLORS, HAIR_STYLES, SKIN_TONES, icon, pitch, playerSticker } from '../components.js';
+import { BEARD_STYLES, HAIR_COLORS, HAIR_STYLES, SKIN_TONES, icon, pitch, playerSticker } from '../components.js';
 
 const MAX_TRAITS = 2;
 
@@ -23,7 +23,7 @@ const blankForm = () => ({
   foot: 'direito',
   height: 178,
   weight: 72,
-  appearance: { skin: 3, hair: 'curto', hairColor: '#3d2314', beard: 'nenhuma', accessory: 'nenhum', kitNumber: 10 },
+  appearance: { skin: 3, hair: 'curto', hairColor: '#3d2314', beard: 'nenhuma', kitNumber: 10 },
   traits: [],
   groupPoints: {},
 });
@@ -217,10 +217,6 @@ export default {
                   <span class="field__label">Barba</span>
                   <select class="select" data-field="beard">${selectOptions(BEARD_STYLES, form.appearance.beard)}</select>
                 </label>
-                <label class="field">
-                  <span class="field__label">Acessório</span>
-                  <select class="select" data-field="accessory">${selectOptions(ACCESSORIES, form.appearance.accessory)}</select>
-                </label>
               </div>
             </section>
 
@@ -311,7 +307,6 @@ export default {
       }
       case 'hair':
       case 'beard':
-      case 'accessory':
         form.appearance[field] = value;
         break;
       default:

@@ -136,7 +136,6 @@ export function createPlayer(config, rng) {
       hair: appearance.hair ?? 'curto',
       hairColor: appearance.hairColor ?? '#2b1d14',
       beard: appearance.beard ?? 'nenhuma',
-      accessory: appearance.accessory ?? 'nenhum',
       kitNumber: appearance.kitNumber ?? 10,
     },
     traits: [...traits],
