@@ -2,14 +2,14 @@
 
 import { esc, toast } from '../dom.js';
 import { createRng } from '../../core/rng.js';
-import { clamp } from '../../core/utils.js';
+import { clamp, plural } from '../../core/utils.js';
 import { ATTRIBUTE_GROUPS } from '../../data/attributes.js';
 import { POSITIONS } from '../../data/positions.js';
 import { NATIONS, getNation } from '../../data/nations.js';
 import { TRAITS } from '../../data/traits.js';
 import { randomName, suggestNickname } from '../../data/names.js';
 import { CREATION_GROUP_CAP, CREATION_POINT_POOL, createPlayer, groupPointsSpent } from '../../engine/player.js';
-import { ACCESSORIES, BEARD_STYLES, HAIR_COLORS, HAIR_STYLES, SKIN_TONES, icon, playerSticker } from '../components.js';
+import { ACCESSORIES, BEARD_STYLES, HAIR_COLORS, HAIR_STYLES, SKIN_TONES, icon, pitch, playerSticker } from '../components.js';
 
 const MAX_TRAITS = 2;
 
@@ -40,7 +40,7 @@ function randomizeIdentity() {
 function missingSteps() {
   const missing = [];
   if (form.firstName.trim().length < 2 || form.lastName.trim().length < 2) missing.push('nome e sobrenome');
-  if (form.traits.length !== MAX_TRAITS) missing.push(`${MAX_TRAITS - form.traits.length} traço(s)`);
+  if (form.traits.length !== MAX_TRAITS) missing.push(plural(MAX_TRAITS - form.traits.length, 'traço', 'traços'));
   return missing;
 }
 
@@ -62,6 +62,8 @@ function refreshLive() {
   if (name) name.textContent = `${form.firstName || 'Nome'} ${form.lastName || 'Sobrenome'}`;
   const kit = document.querySelector('[data-live="kit"]');
   if (kit) kit.textContent = String(form.appearance.kitNumber);
+  const shirt = document.querySelector('.create__preview .avatar__kit');
+  if (shirt) shirt.textContent = String(form.appearance.kitNumber);
   const status = document.querySelector('[data-live="status"]');
   if (status) status.textContent = missing.length ? `Falta: ${missing.join(', ')}.` : 'Tudo pronto.';
   const button = document.querySelector('[data-action="confirm-create"]');
@@ -153,6 +155,7 @@ export default {
 
             <section class="sheet section" aria-labelledby="c-posicao">
               <h2 id="c-posicao">Posição</h2>
+              <div class="position-map">${pitch({ mode: 'positions', position: form.position, label: `Sua posição no campo: ${position.name}` })}</div>
               <div class="segmented" role="group" aria-label="Posição">
                 ${POSITIONS.map(
                   (item) => `

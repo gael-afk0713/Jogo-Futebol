@@ -2,6 +2,7 @@
 
 import { confirmDialog, esc, mount, toast } from './dom.js';
 import { icon } from './components.js';
+import { Motion } from './motion.js';
 import { game, SCREENS } from '../core/game.js';
 import { SaveManager, loadLocal } from '../core/storage.js';
 import { firebaseAvailable, onAuthChange, signOutUser } from '../firebase/firebase.js';
@@ -45,6 +46,7 @@ export class App {
     this.save = new SaveManager(game);
     this.auth = { user: null, offline: false, ready: false };
     this.rendering = false;
+    this.motion = new Motion();
 
     this.save.onStatus = () => this.renderStatus();
     this.game.subscribe(() => {
@@ -57,6 +59,7 @@ export class App {
       save: this.save,
       auth: this.auth,
       rerender: () => this.render(),
+      motion: this.motion,
       confirm: confirmDialog,
       onSignedIn: (user) => this.handleSignedIn(user),
       signOut: () => this.handleSignOut(),
@@ -248,9 +251,16 @@ export class App {
     const screenChanged = this.lastScreen !== this.game.state.screen;
     this.lastScreen = this.game.state.screen;
     const scroll = screenChanged ? 0 : window.scrollY;
-    const markup = `${this.topBar()}<main class="app__main" id="conteudo" tabindex="-1">${screen.render(this.game.state, this.ctx)}</main>`;
-    mount(this.root, markup);
-    window.scrollTo({ top: scroll, behavior: 'instant' });
+    const screenId = this.game.state.screen;
+    const markup = `${this.topBar()}<main class="app__main" id="conteudo" tabindex="-1" data-screen="${esc(screenId)}">${screen.render(this.game.state, this.ctx)}</main>`;
+    this.motion.swap(
+      () => {
+        mount(this.root, markup);
+        this.motion.settle(this.root, screenId);
+        window.scrollTo({ top: scroll, behavior: 'instant' });
+      },
+      { screenChanged },
+    );
     this.rendering = false;
   }
 

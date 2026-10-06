@@ -1,6 +1,6 @@
 // Premiações individuais de fim de temporada.
 
-import { clamp } from '../core/utils.js';
+import { clamp, plural } from '../core/utils.js';
 import { getLeague } from '../data/clubs.js';
 import { isGoalkeeper } from '../data/positions.js';
 import { adjustLife, seasonRating } from './player.js';
@@ -120,7 +120,7 @@ export function seasonPrizeMoney(player, { summary }) {
   const goalBonus = Math.round(weekly * 0.35 * player.season.goals);
   if (goalBonus > 0) {
     total += goalBonus;
-    lines.push({ label: `Bônus por ${player.season.goals} gol(s)`, value: goalBonus });
+    lines.push({ label: `Bônus por ${plural(player.season.goals, 'gol', 'gols')}`, value: goalBonus });
   }
 
   player.money += total;

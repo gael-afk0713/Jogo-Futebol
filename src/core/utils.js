@@ -24,6 +24,9 @@ export function money(value) {
 }
 
 /** Transforma 0..1 em porcentagem inteira. */
+/** Plural em português sem "(s)": plural(2, 'gol', 'gols') → "2 gols". */
+export const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`;
+
 export const pct = (value) => `${Math.round(value * 100)}%`;
 
 /**

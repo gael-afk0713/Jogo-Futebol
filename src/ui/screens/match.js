@@ -2,14 +2,16 @@
 
 import { esc } from '../dom.js';
 import { round } from '../../core/utils.js';
-import { feed, icon, meter, monogram, ratingBadge, statline, tierClass } from '../components.js';
+import { feed, icon, meter, momentSpot, monogram, pitch, ratingBadge, statline, tierClass } from '../components.js';
 
-const ui = { resolution: null };
+const ui = { resolution: null, lastMoment: null };
 
 function chanceMarkup(chance) {
   const value = Math.round(chance * 100);
   return `<span class="option__aside ${tierClass(value)}"><span class="option__chance">${value}%<small>de chance</small></span></span>`;
 }
+
+const zoneLabel = (zone) => ({ gol: 'sua área', defesa: 'defesa', meio: 'meio-campo', ataque: 'área adversária' })[zone] ?? 'campo';
 
 function stateMessage(match) {
   if (match.sentOff) return 'Você foi expulso e está fora da partida.';
@@ -19,12 +21,42 @@ function stateMessage(match) {
   return 'O jogo segue até o próximo lance em que você se envolve.';
 }
 
+/** Título do desfecho: o gol tem nome próprio, o resto diz se deu certo. */
+function resolutionTitle(resolution) {
+  if (resolution.kind === 'goal' && resolution.teamGoal) return { text: 'Gol!', tone: 'goal', iconName: 'soccer-ball' };
+  if (resolution.teamGoal) return { text: 'Gol do time', tone: 'goal', iconName: 'soccer-ball' };
+  if (resolution.opponentGoal) return { text: 'Gol do adversário', tone: 'bad', iconName: 'x' };
+  return resolution.success
+    ? { text: 'Deu certo', tone: 'good', iconName: 'check' }
+    : { text: 'Não saiu como você queria', tone: 'bad', iconName: 'x' };
+}
+
+function goalScorers(match, side) {
+  const goals = (match.goals ?? []).filter((goal) => goal.side === side);
+  if (!goals.length) return '';
+  return `<ul class="placard__scorers">${goals
+    .map((goal) => `<li class="${goal.mine ? 'is-you' : ''}">${goal.scorer ? `${esc(goal.scorer)} ` : ''}<span class="num">${goal.minute}'</span></li>`)
+    .join('')}</ul>`;
+}
+
 function centerPanel(match) {
   if (ui.resolution) {
-    const good = ui.resolution.success;
+    const title = resolutionTitle(ui.resolution);
+    const myGoal = title.tone === 'goal';
+    const shotKey = `${match.id}-${ui.resolution.minute}-${ui.resolution.text.length}`;
     return `
-      <section class="sheet resolution resolution--${good ? 'good' : 'bad'}" aria-live="polite">
-        <h2 class="resolution__title">${icon(good ? 'check' : 'x')}${good ? 'Deu certo' : 'Não deu'}</h2>
+      <section class="sheet resolution resolution--${title.tone}" aria-live="polite" data-moment="res-${esc(shotKey)}">
+        ${
+          ui.lastMoment
+            ? `<div class="moment__pitch">${pitch({
+                zone: match.zone,
+                spot: momentSpot(ui.lastMoment, match.zone),
+                mode: myGoal ? 'goal' : 'moment',
+                label: myGoal ? 'A bola entra no gol' : 'Onde foi o lance',
+              })}</div>`
+            : ''
+        }
+        <h2 class="resolution__title">${icon(title.iconName)}${title.text}</h2>
         <p class="moment__text">${esc(ui.resolution.text)}</p>
         <p class="muted">Você tinha <strong class="num">${Math.round(ui.resolution.chance * 100)}%</strong> de chance${
           ui.resolution.extras?.length ? `. ${esc(ui.resolution.extras.join(', '))}.` : '.'
@@ -35,14 +67,15 @@ function centerPanel(match) {
 
   if (match.pending) {
     return `
-      <section class="sheet section" aria-labelledby="lance-titulo">
+      <section class="sheet section moment" aria-labelledby="lance-titulo">
+        <div class="moment__pitch">${pitch({ zone: match.zone, spot: momentSpot(match.pending.id, match.zone), label: `Lance na ${zoneLabel(match.zone)}` })}</div>
         <h2 id="lance-titulo"><span class="moment__minute">${match.minute}'</span>${esc(match.pending.title)}</h2>
         <p class="moment__text">${esc(match.pending.text)}</p>
         <ul class="optionlist">
           ${match.pending.options
             .map(
               (option) => `
-            <li>
+            <li class="is-new" style="--i:${option.index}" data-new-key="${esc(`${match.id}-${match.minute}-${option.index}`)}">
               <button class="option option--compact" data-action="match-choose" data-index="${option.index}">
                 <span class="option__text">
                   <span class="option__title">${esc(option.label)}</span>
@@ -75,17 +108,26 @@ export default {
 
     return `
       <div class="screen">
-        <header class="scoreboard" aria-label="Placar">
-          <div class="scoreboard__team">${monogram(match.clubName, { you: true })}<span class="scoreboard__name">${esc(match.clubName)}</span></div>
+        <header class="scoreboard placard" aria-label="Placar">
+          <div class="scoreboard__team">
+            ${monogram(match.clubName, { you: true })}
+            <div class="placard__side"><span class="scoreboard__name">${esc(match.clubName)}</span>${goalScorers(match, 'team')}</div>
+          </div>
           <div class="scoreboard__clock">
             <div class="scoreboard__line">
-              <span class="scoreboard__goals" aria-label="${esc(match.clubName)} ${match.score.team}">${match.score.team}</span>
+              <span class="scoreboard__goals" data-pulse="placar-casa-${esc(match.id)}" data-value="${match.score.team}" aria-label="${esc(match.clubName)} ${match.score.team}">${match.score.team}</span>
               <span class="scoreboard__minute" aria-label="Minuto ${match.minute}">${match.minute}'</span>
-              <span class="scoreboard__goals" aria-label="${esc(match.opponentName)} ${match.score.opponent}">${match.score.opponent}</span>
+              <span class="scoreboard__goals" data-pulse="placar-fora-${esc(match.id)}" data-value="${match.score.opponent}" aria-label="${esc(match.opponentName)} ${match.score.opponent}">${match.score.opponent}</span>
             </div>
-            <span class="scoreboard__comp">${esc(match.competition?.name ?? '')}</span>
+            <span class="scoreboard__comp">${match.minute >= 90 ? 'Fim de jogo' : match.minute > 45 ? '2º tempo' : '1º tempo'} · ${esc(match.competition?.name ?? '')}</span>
           </div>
-          <div class="scoreboard__team scoreboard__team--away"><span class="scoreboard__name">${esc(match.opponentName)}</span>${monogram(match.opponentName)}</div>
+          <div class="scoreboard__team scoreboard__team--away">
+            <div class="placard__side"><span class="scoreboard__name">${esc(match.opponentName)}</span>${goalScorers(match, 'opponent')}</div>
+            ${monogram(match.opponentName)}
+          </div>
+          <div class="placard__clock" aria-hidden="true" data-pulse="relogio-${esc(match.id)}" data-value="${match.minute}" style="--m:${Math.min(90, match.minute) / 90}">
+            <span class="placard__half"></span><span class="placard__fill"></span>
+          </div>
         </header>
 
         <div class="match">
@@ -100,7 +142,7 @@ export default {
             <section class="section" aria-label="Seu jogo">
               <div class="section__head">
                 <h3>Seu jogo</h3>
-                ${ratingBadge(round(match.rating, 1))}
+                ${ratingBadge(round(match.rating, 1), { pulse: `nota-${match.id}` })}
               </div>
               ${statline([
                 { label: 'Gols', value: match.stats.goals },
@@ -108,13 +150,13 @@ export default {
                 ...(match.zone === 'gol' ? [{ label: 'Defesas', value: match.stats.saves }] : [{ label: 'Desarmes', value: match.stats.tackles }]),
                 { label: 'Minutos', value: Math.round(match.minutesPlayed) },
               ])}
-              ${meter({ label: 'Energia', value: match.stamina, iconName: 'lightning' })}
+              ${meter({ label: 'Energia', value: match.stamina, iconName: 'lightning', pulse: `energia-${match.id}` })}
               ${preview ? `<p class="muted">${esc(preview.forecast)} Força do adversário <strong class="num">${preview.opponentRating}</strong>.</p>` : ''}
             </section>
 
             <section class="section" aria-labelledby="narracao-titulo">
               <h3 id="narracao-titulo">Narração</h3>
-              ${feed(match.timeline.slice().reverse(), { limit: 12, minute: true })}
+              ${feed(match.timeline.slice().reverse(), { limit: 12, minute: true, keyPrefix: `${match.id}-` })}
             </section>
           </aside>
         </div>
@@ -123,6 +165,7 @@ export default {
 
   actions: {
     'match-choose': (ctx, dataset) => {
+      ui.lastMoment = ctx.game.state.match?.pending?.id ?? null;
       ui.resolution = ctx.game.matchChoose(Number(dataset.index));
       ctx.rerender();
     },

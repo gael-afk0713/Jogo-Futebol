@@ -1,6 +1,6 @@
 // Seleção nacional: convocações, amistosos e torneios.
 
-import { clamp } from '../core/utils.js';
+import { clamp, plural } from '../core/utils.js';
 import { getNation } from '../data/nations.js';
 import { getLeague, getClub } from '../data/clubs.js';
 import { isGoalkeeper } from '../data/positions.js';
@@ -119,6 +119,6 @@ export function playNationalSeason(player, { year, seasonRatingValue, rng }) {
     starts,
     tournament,
     trophy,
-    text: `Convocado para a ${label}: ${caps} jogos e ${goals} gol(s).`,
+    text: `Convocado para a ${label}: ${plural(caps, 'jogo', 'jogos')} e ${plural(goals, 'gol', 'gols')}.`,
   };
 }

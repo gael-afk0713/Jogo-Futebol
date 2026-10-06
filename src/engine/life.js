@@ -1,6 +1,6 @@
 // Eventos de vida: sorteio, condições e aplicação dos efeitos.
 
-import { clamp } from '../core/utils.js';
+import { clamp, plural } from '../core/utils.js';
 import { attributeLabel } from '../data/attributes.js';
 import { LIFE_EVENTS } from '../data/lifeEvents.js';
 import { lifeModifier } from '../data/traits.js';
@@ -131,7 +131,7 @@ function applyEffects(player, effects = {}, rng) {
   if (effects.injuryWeeks) {
     const weeks = Math.max(1, Math.round(effects.injuryWeeks * (1 + lifeModifier(player.traits, 'injuryRisk') * 0.5)));
     player.injury = { name: 'Lesão', weeks };
-    notes.push(`Lesionado por ${weeks} semana(s)`);
+    notes.push(`Lesionado por ${plural(weeks, 'semana', 'semanas')}`);
   }
 
   if (effects.addFlag) addFlag(player, effects.addFlag);

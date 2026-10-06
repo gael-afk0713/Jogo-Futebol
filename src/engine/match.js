@@ -69,6 +69,7 @@ export function createMatch({ player, clubId, opponentId, competition, isHome, r
     ratingEvents: 0,
     stats: { goals: 0, assists: 0, saves: 0, tackles: 0, shots: 0, yellowCards: 0, redCards: 0 },
     timeline: [],
+    goals: [],
     momentsPlayed: 0,
     totalMoments,
     usedMomentIds: [],
@@ -108,9 +109,12 @@ function addRatingPoints(match, value) {
   match.rating = round(computeRating(match), 1);
 }
 
-function log(match, text, type = 'info', icon = null, minute = match.minute) {
-  match.timeline.push({ minute, text, type, icon });
+function log(match, text, type = 'info', icon = null, minute = match.minute, mark = null) {
+  match.timeline.push({ minute, text, type, icon, ...(mark ? { mark } : {}) });
 }
+
+/** Sobrenome curto para a súmula do placar ("Silva 34'"). */
+const shortName = (name = '') => name.trim().split(/\s+/).pop();
 
 function fillText(template, match, player) {
   return template
@@ -187,12 +191,14 @@ export function successChance(player, option, match) {
 
 function concede(match, reason, minute = match.minute) {
   match.score.opponent += 1;
-  log(match, `Gol do ${match.opponentName}. ${reason}`, 'bad', 'soccer-ball', minute);
+  (match.goals ??= []).push({ side: 'opponent', minute, scorer: null });
+  log(match, `Gol do ${match.opponentName}. ${reason}`, 'bad', 'soccer-ball', minute, 'goal-against');
 }
 
-function teamScores(match, scorer, minute = match.minute) {
+function teamScores(match, text, minute = match.minute, scorer = null, mine = false) {
   match.score.team += 1;
-  log(match, `Gol do ${match.clubName}. ${scorer}`, 'good', 'soccer-ball', minute);
+  (match.goals ??= []).push({ side: 'team', minute, scorer: scorer ? shortName(scorer) : null, mine });
+  log(match, `Gol do ${match.clubName}. ${text}`, 'good', 'soccer-ball', minute, 'goal-for');
 }
 
 /** Simula o que acontece no jogo fora dos seus lances. */
@@ -207,7 +213,8 @@ function simulateBackground(match, player, rng, minutes) {
   // O gol acontece em algum minuto dentro do trecho simulado, não no início dele.
   const goalMinute = () => clamp(match.minute + rng.int(1, Math.max(1, Math.round(minutes))), 1, 90);
   if (rng.chance(clamp(teamXg, 0, 0.9))) {
-    teamScores(match, `${rng.pick(match.teammates)} finaliza bem.`, goalMinute());
+    const scorer = rng.pick(match.teammates);
+    teamScores(match, `${scorer} finaliza bem.`, goalMinute(), scorer);
   }
   if (rng.chance(clamp(oppXg, 0, 0.9))) {
     concede(match, 'Falha coletiva na marcação.', goalMinute());
@@ -299,7 +306,11 @@ export function choose(match, player, optionIndex, rng) {
   addRatingPoints(match, outcome?.rating ?? 0);
   log(match, resolution.text, success ? 'good' : 'bad', success ? 'check' : 'x');
 
+  const before = { ...match.score };
   applyKind(match, player, resolution.kind, rng, resolution);
+  resolution.minute = match.minute;
+  resolution.teamGoal = match.score.team > before.team;
+  resolution.opponentGoal = match.score.opponent > before.opponent;
 
   // Efeitos extras declarados no lance (moral, disciplina, fama).
   for (const key of ['morale', 'discipline', 'fame']) {
@@ -327,13 +338,14 @@ function applyKind(match, player, kind, rng, resolution) {
     case 'goal':
       match.stats.goals += 1;
       match.stats.shots += 1;
-      teamScores(match, `${player.nickname} marca!`);
+      teamScores(match, `${player.nickname} marca!`, match.minute, player.nickname, true);
       break;
     case 'assist':
       // O passe saiu perfeito, mas ainda depende do companheiro acertar o gol.
       if (rng.chance(0.42)) {
         match.stats.assists += 1;
-        teamScores(match, `${rng.pick(match.teammates)} finaliza após seu passe.`);
+        const scorer = rng.pick(match.teammates);
+        teamScores(match, `${scorer} finaliza após seu passe.`, match.minute, scorer);
       } else {
         log(match, 'Passe perfeito, mas o companheiro desperdiçou a chance.', 'info');
       }
@@ -342,7 +354,8 @@ function applyKind(match, player, kind, rng, resolution) {
       match.stats.shots += 1;
       if (rng.chance(0.45)) {
         if (rng.chance(0.6)) match.stats.assists += 1;
-        teamScores(match, `${rng.pick(match.teammates)} aproveita a jogada que você criou.`);
+        const scorer = rng.pick(match.teammates);
+        teamScores(match, `${scorer} aproveita a jogada que você criou.`, match.minute, scorer);
       } else {
         log(match, 'A chance criada não terminou em gol.', 'info');
       }
@@ -390,13 +403,13 @@ function giveCard(match, player, rng, resolution) {
     match.onField = false;
     match.ratingPoints -= 2.2;
     match.rating = round(computeRating(match), 1);
-    log(match, 'Cartão vermelho. Você está expulso.', 'bad', 'cards');
+    log(match, 'Cartão vermelho. Você está expulso.', 'bad', 'cards', match.minute, 'red');
     resolution?.extras.push('Cartão vermelho');
   } else {
     match.stats.yellowCards += 1;
     match.ratingPoints -= 0.35;
     match.rating = round(computeRating(match), 1);
-    log(match, 'Cartão amarelo.', 'bad', 'cards');
+    log(match, 'Cartão amarelo.', 'bad', 'cards', match.minute, 'yellow');
     resolution?.extras.push('Cartão amarelo');
   }
 }
@@ -436,7 +449,7 @@ export function finish(match, player, rng) {
     if (rng.chance(risk)) {
       match.stats.yellowCards = 1;
       rating -= 0.1;
-      log(match, 'Cartão amarelo por falta tática.', 'bad', 'cards');
+      log(match, 'Cartão amarelo por falta tática.', 'bad', 'cards', match.minute, 'yellow');
     }
   }
 
@@ -447,6 +460,8 @@ export function finish(match, player, rng) {
     opponentName: match.opponentName,
     isHome: match.isHome,
     score: { ...match.score },
+    goals: [...(match.goals ?? [])],
+    clubName: match.clubName,
     result,
     rating,
     motm,
@@ -461,7 +476,7 @@ export function finish(match, player, rng) {
     role: match.role,
   };
 
-  log(match, `Fim de jogo: ${match.clubName} ${match.score.team} x ${match.score.opponent} ${match.opponentName}`, 'info', 'timer');
+  log(match, `Fim de jogo: ${match.clubName} ${match.score.team} x ${match.score.opponent} ${match.opponentName}`, 'info', 'timer', 90, 'final');
   if (motm) log(match, 'Você foi eleito o melhor da partida.', 'good', 'medal');
   return match.report;
 }

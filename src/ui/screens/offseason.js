@@ -1,7 +1,7 @@
 // Fim de temporada: a figurinha do ano é colada no álbum, e o mercado abre.
 
 import { esc, toast } from '../dom.js';
-import { money, round } from '../../core/utils.js';
+import { money, plural, round } from '../../core/utils.js';
 import { attributeLabel } from '../../data/attributes.js';
 import { getClub } from '../../data/clubs.js';
 import { icon, initials, offerSticker, ratingBadge, statline } from '../components.js';
@@ -135,7 +135,7 @@ export default {
           <section class="section" aria-labelledby="mercado-titulo">
             <div class="section__head">
               <h2 id="mercado-titulo">Mercado da bola</h2>
-              <p><span class="num">${offers.length}</span> proposta(s)</p>
+              <p class="num">${plural(offers.length, 'proposta', 'propostas')}</p>
             </div>
             ${
               offseason.contractExpired
@@ -151,6 +151,7 @@ export default {
                         label: offer.renewal ? 'Renovar' : offer.loan ? 'Aceitar empréstimo' : 'Assinar',
                         ariaLabel: `${offer.renewal ? 'Renovar com o' : offer.loan ? 'Ir emprestado ao' : 'Assinar com o'} ${offer.clubName}`,
                         highlight: Boolean(offer.renewal),
+                        primary: Boolean(offer.renewal),
                         isNew: true,
                         index,
                       }),

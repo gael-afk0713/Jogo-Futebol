@@ -1,7 +1,7 @@
 // Hub principal: a semana, os atributos, a vida, o álbum da carreira e a liga.
 
 import { esc, toast } from '../dom.js';
-import { money, monthForWeek, round } from '../../core/utils.js';
+import { money, monthForWeek, plural, round } from '../../core/utils.js';
 import { getClub, getLeague } from '../../data/clubs.js';
 import { getNation } from '../../data/nations.js';
 import { getPosition } from '../../data/positions.js';
@@ -68,7 +68,7 @@ function profile(state, data) {
 
   return `
     <section class="profile" aria-label="Seu jogador">
-      ${playerSticker(player, { isNew: grew, meta: `${nation.id} · ${club?.name ?? 'Sem clube'}` })}
+      ${playerSticker(player, { isNew: grew, pulse: 'overall', meta: `${nation.id} · ${club?.name ?? 'Sem clube'}` })}
       <div>
         <h1 class="profile__name">${esc(player.firstName)} ${esc(player.lastName)}</h1>
         <div class="profile__facts">
@@ -88,10 +88,10 @@ function profile(state, data) {
 
 function statusNotice(player) {
   if (player.injury?.weeks > 0) {
-    return `<div class="notice notice--bad">${icon('first-aid-kit')}<div><strong>${esc(player.injury.name)}.</strong> Fora por ${player.injury.weeks} semana(s). Só tratamento nos treinos.</div></div>`;
+    return `<div class="notice notice--bad">${icon('first-aid-kit')}<div><strong>${esc(player.injury.name)}.</strong> Fora por ${plural(player.injury.weeks, 'semana', 'semanas')}. Só tratamento nos treinos.</div></div>`;
   }
   if (player.suspension > 0) {
-    return `<div class="notice notice--bad">${icon('cards')}<div><strong>Suspenso</strong> por ${player.suspension} jogo(s).</div></div>`;
+    return `<div class="notice notice--bad">${icon('cards')}<div><strong>Suspenso</strong> por ${plural(player.suspension, 'jogo', 'jogos')}.</div></div>`;
   }
   if (player.life.fitness < 40) {
     return `<div class="notice notice--warn">${icon('warning')}<div><strong>Forma física baixa.</strong> Descansar esta semana reduz o risco de lesão.</div></div>`;
@@ -218,8 +218,8 @@ function matchStep(state, ctx) {
   const home = fixture.isHome;
 
   return `
-    <section class="sheet fixture" aria-labelledby="jogo-titulo">
-      <div class="fixture__meta">
+    <section class="sheet fixture ticket" aria-labelledby="jogo-titulo">
+      <div class="fixture__meta ticket__head">
         <span>${esc(fixture.competition)}${fixture.stage ? `, ${esc(fixture.stage)}` : ''}</span>
         <span class="tag ${home ? 'tag--home' : 'tag--away'}">${home ? 'Em casa' : 'Fora de casa'}</span>
       </div>
@@ -229,6 +229,7 @@ function matchStep(state, ctx) {
         <span class="fixture__vs">x</span>
         <div class="fixture__team fixture__team--away"><span>${esc(fixture.opponent)}</span>${monogram(fixture.opponent)}</div>
       </div>
+      <div class="ticket__tear" aria-hidden="true"></div>
       <div class="fixture__meta">
         <span>Força do adversário <strong class="num">${fixture.opponentRating}</strong></span>
         <span>${esc(read)}</span>
@@ -251,12 +252,30 @@ function reportStep(state) {
       <p>Resultado: <strong class="num">${report.score.team} x ${report.score.opponent}</strong> contra o ${esc(report.opponentName)}.</p>`;
   } else if (report) {
     const label = report.result === 'V' ? 'Vitória' : report.result === 'E' ? 'Empate' : 'Derrota';
+    const club = getClub(state.player.club);
+    const yourName = report.clubName ?? club?.name ?? '';
+    const scorers = (side) =>
+      (report.goals ?? [])
+        .filter((goal) => goal.side === side)
+        .map((goal) => `<li class="${goal.mine ? 'is-you' : ''}">${goal.scorer ? `${esc(goal.scorer)} ` : ''}<span class="num">${goal.minute}'</span></li>`)
+        .join('');
     body = `
-      <div class="section__head">
-        <h2>${label} por <span class="num">${report.score.team} x ${report.score.opponent}</span></h2>
-        ${ratingBadge(report.rating)}
+      <div class="final-card is-new result--${report.result}" data-new-key="final-${esc(report.opponentName)}-${state.season.weekIndex}">
+        <div class="final-card__head">
+          <span>${esc(report.competition?.name ?? '')}</span>
+          <span class="final-card__whistle">${icon('timer')}Fim de jogo</span>
+        </div>
+        <h2 class="visually-hidden">${label} por ${report.score.team} x ${report.score.opponent} contra o ${esc(report.opponentName)}</h2>
+        <div class="final-card__teams" aria-hidden="true">
+          <div class="final-card__team">${monogram(yourName, { you: true })}<span>${esc(yourName)}</span><ul class="placard__scorers">${scorers('team')}</ul></div>
+          <div class="final-card__score num">${report.score.team}<span>x</span>${report.score.opponent}</div>
+          <div class="final-card__team final-card__team--away">${monogram(report.opponentName)}<span>${esc(report.opponentName)}</span><ul class="placard__scorers">${scorers('opponent')}</ul></div>
+        </div>
+        <div class="final-card__foot">
+          <strong class="final-card__result">${label}</strong>
+          <span class="final-card__grade">Sua nota ${ratingBadge(report.rating)}</span>
+        </div>
       </div>
-      <p class="muted">${esc(report.competition?.name ?? '')} contra o ${esc(report.opponentName)}</p>
       ${statline([
         { label: 'Minutos', value: report.minutesPlayed },
         { label: 'Gols', value: report.stats.goals },
@@ -314,7 +333,7 @@ function weekTab(state, ctx) {
         ? `<div class="notice notice--good">${icon(trainingReport.option.icon)}<div>
             <strong>${esc(trainingReport.option.label)} concluído.</strong>
             ${trainingReport.gains.length ? `Subiu: ${esc(trainingReport.gains.join(', '))}.` : 'Sem evolução visível nesta semana.'}
-            ${trainingReport.skillPoints ? `<small>+${trainingReport.skillPoints} ponto(s) de evolução para gastar em Atributos.</small>` : ''}
+            ${trainingReport.skillPoints ? `<small>+${plural(trainingReport.skillPoints, 'ponto', 'pontos')} de evolução para gastar em Atributos.</small>` : ''}
           </div></div>`
         : ''
     }
@@ -619,9 +638,9 @@ function leagueTab(state) {
     <section class="section">
       <div class="section__head">
         <h2>${esc(league.name)}</h2>
-        ${league.continentalSpots ? `<p>Os ${league.continentalSpots} primeiros vão ao torneio continental</p>` : ''}
       </div>
       ${leagueTable(rows, season.clubId, { continentalSpots: league.continentalSpots ?? 0 })}
+      ${league.continentalSpots ? `<p class="table__legend"><span class="table__pos" aria-hidden="true"></span>Zona de classificação: os ${league.continentalSpots} primeiros vão ao torneio continental.</p>` : ''}
     </section>
 
     <section class="section">
@@ -686,6 +705,7 @@ export default {
   actions: {
     'hub-tab': (ctx, dataset) => {
       ui.tab = dataset.tab;
+      ctx.motion?.requestTransition('tab');
       ctx.rerender();
     },
     'choose-training': (ctx, dataset) => {
@@ -714,6 +734,7 @@ export default {
       ctx.game.skipFreeWeek();
     },
     'advance-week': (ctx) => {
+      ctx.motion?.requestTransition('week');
       ctx.game.advanceWeek();
       ctx.save.schedule();
     },

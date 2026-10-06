@@ -973,9 +973,9 @@ code {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 4px;
-  padding: 12px;
+  padding: 40px 12px 12px;
   border: 1.5px solid var(--rule-strong);
   border-radius: var(--r-sticker);
   background: var(--sheet-2);
@@ -1202,7 +1202,6 @@ code {
   border-radius: inherit;
   transform-origin: left center;
   transform: scaleX(var(--v, 0));
-  transition: transform 500ms var(--ease-out);
 }
 
 .tier--elite {
@@ -1817,7 +1816,7 @@ code {
   font-size: 0.75rem;
   color: var(--cover-ink-2);
   text-align: center;
-  max-width: 14ch;
+  max-width: 20ch;
   line-height: 1.2;
 }
 
@@ -2259,13 +2258,52 @@ code {
   font-weight: 700;
 }
 
-.table tr.is-you td:first-child {
-  box-shadow: inset 3px 0 0 var(--cover);
+.table__pos {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.9em;
+  height: 1.7em;
+  border-radius: 4px;
 }
 
-.table .zone-up td:first-child {
+.table .zone-up .table__pos {
+  background: var(--good-soft);
   color: var(--good);
   font-weight: 700;
+}
+
+.table__club {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.table__club .monogram {
+  width: 26px;
+  height: 26px;
+  font-size: 0.72rem;
+  border-radius: 4px;
+}
+
+.table__legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.88rem;
+  color: var(--ink-3);
+}
+
+.table__legend .table__pos {
+  min-width: 1.4em;
+  height: 1.2em;
+  background: var(--good-soft);
+}
+
+@media (max-width: 520px) {
+  .table__wide {
+    display: none;
+  }
 }
 
 /* ------------------------------------------------------- finanças */
@@ -3024,15 +3062,706 @@ code {
   margin-top: 20px;
 }
 
+/* ------------------------------------------------------------- futebol */
+
+/* número da camisa na foto da figurinha */
+.avatar__kit {
+  font-family: var(--font-cond);
+  font-weight: 800;
+  font-size: 15px;
+  fill: var(--cover);
+  letter-spacing: -0.02em;
+}
+
+/* campo: linhas de giz impressas no papel, sem gramado */
+.pitch {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.pitch__lines,
+.pitch__goal rect {
+  fill: none;
+  stroke: var(--rule-strong);
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+}
+
+.pitch__lines rect:first-child {
+  fill: var(--sheet-2);
+}
+
+.pitch__spots circle {
+  fill: var(--rule-strong);
+}
+
+.pitch__net {
+  fill: none;
+  stroke: var(--rule-strong);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+
+.pitch__zone {
+  fill: var(--cover);
+  opacity: 0.1;
+}
+
+.pitch__ball {
+  transform: translate(var(--bx), var(--by));
+}
+
+.pitch__ball circle {
+  fill: var(--ink);
+  stroke: var(--sheet);
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+}
+
+.pitch__ball.is-shot {
+  transform: translate(106px, 34px);
+}
+
+.pitch__trail {
+  fill: none;
+  stroke: var(--accent-2);
+  stroke-width: 2.5px;
+  stroke-dasharray: 1 0;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.pitch--goal .pitch__goal--their rect,
+.pitch--goal .pitch__net {
+  stroke: var(--ink);
+}
+
+.moment__pitch {
+  max-width: 340px;
+  margin-bottom: 4px;
+}
+
+.pitch__pos circle {
+  fill: var(--sheet);
+  stroke: var(--rule-strong);
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+}
+
+.pitch__pos text {
+  font-family: var(--font-cond);
+  font-weight: 800;
+  font-size: 2.9px;
+  fill: var(--ink-3);
+}
+
+.pitch__pos.is-active circle {
+  fill: var(--cover);
+  stroke: var(--cover);
+}
+
+.pitch__pos.is-active text {
+  fill: var(--cover-ink);
+  font-size: 3.3px;
+}
+
+.position-map {
+  max-width: 440px;
+  margin-bottom: 4px;
+}
+
+/* placar de estádio */
+.placard {
+  padding-bottom: 18px;
+}
+
+@media (min-width: 760px) {
+  .placard {
+    position: relative;
+    top: auto;
+    padding-bottom: 24px;
+  }
+}
+
+.scoreboard__goals {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.15em;
+  padding: 2px 6px 0;
+  border-radius: var(--r-sticker);
+  background: var(--sticker-paper);
+  color: var(--sticker-ink);
+  box-shadow: inset 0 -2px 0 rgb(18 23 34 / 0.12);
+}
+
+.placard__side {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.scoreboard__team--away .placard__side {
+  justify-items: end;
+}
+
+.placard__scorers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: none;
+  color: var(--cover-ink-2);
+}
+
+.scoreboard__team--away .placard__scorers {
+  justify-content: flex-end;
+}
+
+.placard__scorers .is-you {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.placard__clock {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 8px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.16);
+}
+
+.placard__fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--accent);
+  transform-origin: left center;
+  transform: scaleX(var(--m, 0));
+}
+
+.placard__half {
+  position: absolute;
+  left: 50%;
+  top: -3px;
+  width: 1.5px;
+  height: 9px;
+  background: var(--cover-ink-2);
+}
+
+@media (min-width: 760px) {
+  .placard__clock {
+    left: 24px;
+    right: 24px;
+    bottom: 10px;
+  }
+}
+
+@media (max-width: 520px) {
+  .placard__scorers {
+    display: none;
+  }
+}
+
+/* desfecho do lance */
+.resolution--goal .resolution__title {
+  color: var(--ink);
+  font-size: clamp(2rem, 6vw, 2.8rem);
+}
+
+.resolution--goal .resolution__title .icon {
+  padding: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  width: 36px;
+  height: 36px;
+}
+
+/* súmula */
+.feed__item--goal-for .feed__icon {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.feed__item--goal {
+  font-weight: 600;
+}
+
+.feed__icon--card {
+  background: transparent;
+}
+
+.card-mark {
+  display: block;
+  width: 11px;
+  height: 15px;
+  border-radius: 2px;
+  transform: rotate(-8deg);
+  box-shadow: 0 1px 2px rgb(18 23 34 / 0.25);
+}
+
+.card-mark--yellow {
+  background: #f6c600;
+}
+
+.card-mark--red {
+  background: #c2352b;
+}
+
+.feed__divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  font-family: var(--font-cond);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink-2);
+}
+
+.feed__divider::before,
+.feed__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+.feed__divider .icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* placar final no pós-jogo */
+.final-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--r-surface);
+  background-color: var(--cover);
+  background-image: radial-gradient(var(--cover-dot) 1px, transparent 1.4px);
+  background-size: 6px 6px;
+  color: var(--cover-ink);
+}
+
+.final-card__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--cover-ink-2);
+}
+
+.final-card__whistle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.final-card__whistle .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.final-card__teams {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.final-card__team {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  min-width: 0;
+  font-family: var(--font-cond);
+  font-weight: 800;
+  font-size: 1.1rem;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.final-card__team--away {
+  justify-items: end;
+  text-align: right;
+}
+
+.final-card__team--away .placard__scorers {
+  justify-content: flex-end;
+}
+
+.final-card .monogram {
+  border-color: rgb(255 255 255 / 0.25);
+}
+
+.final-card .monogram--you {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.final-card__score {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-cond);
+  font-weight: 800;
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.final-card__score span {
+  font-size: 1.3rem;
+  color: var(--cover-ink-2);
+}
+
+.final-card__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1.5px dashed rgb(255 255 255 / 0.3);
+}
+
+.final-card__result {
+  font-family: var(--font-cond);
+  font-weight: 800;
+  font-size: 1.5rem;
+  text-transform: uppercase;
+}
+
+.result--V .final-card__result {
+  color: var(--accent);
+}
+
+.final-card__grade {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--cover-ink-2);
+}
+
+.final-card .placard__scorers {
+  display: flex;
+}
+
+@media (max-width: 520px) {
+  .final-card__team > span:not(.monogram) {
+    display: none;
+  }
+}
+
+/* o próximo jogo é um ingresso */
+.ticket {
+  position: relative;
+}
+
+.ticket__tear {
+  position: relative;
+  height: 0;
+  margin: 2px -20px;
+  border-top: 1.5px dashed var(--rule-strong);
+}
+
+.ticket__tear::before,
+.ticket__tear::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--paper);
+}
+
+.ticket__tear::before {
+  left: -9px;
+}
+
+.ticket__tear::after {
+  right: -9px;
+}
+
+@media (min-width: 760px) {
+  .ticket__tear {
+    margin-inline: -24px;
+  }
+}
+
 /* --------------------------------------------------------- movimento */
+/*
+ * Gramática: colar figurinha é a assinatura; o gol é o único momento
+ * autoral. Tudo o mais é retorno curto (até 300ms) e só toca quando o dado
+ * muda (src/ui/motion.js). Nada em laço, nada bloqueia o clique.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  /* figurinha brilhante: um reflexo atravessa uma vez ao colar */
+  .sticker--foil.is-new,
+  .card-sticker.sticker--foil.is-new {
+    background-size: 220% 100%;
+    animation:
+      colar 620ms var(--ease-out) both,
+      brilho 1100ms 380ms var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * 90ms), calc(var(--i, 0) * 90ms + 380ms);
+  }
+
+  @keyframes brilho {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: 0 0;
+    }
+  }
+
+  /* lance: a bola rola até o ponto do lance */
+  .moment .pitch__ball {
+    animation: rola 460ms var(--ease-out) both;
+  }
+
+  @keyframes rola {
+    from {
+      transform: translate(calc(var(--bx) - 10px), calc(var(--by) + 4px));
+      opacity: 0;
+    }
+  }
+
+  /* opções do lance entram em sequência curta */
+  .optionlist > li.is-new {
+    animation: entra 260ms var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * 50ms);
+  }
+
+  @keyframes entra {
+    from {
+      transform: translateY(6px);
+      opacity: 0;
+    }
+  }
+
+  /* desfecho: a folha se revela de cima para baixo */
+  .resolution[data-moment]:not(.is-settled) {
+    animation: revela 320ms var(--ease-out) both;
+  }
+
+  @keyframes revela {
+    from {
+      clip-path: inset(0 0 100% 0 round var(--r-surface));
+    }
+    to {
+      clip-path: inset(0 0 0 0 round var(--r-surface));
+    }
+  }
+
+  .resolution[data-moment]:not(.is-settled) .resolution__title {
+    animation: carimbo 240ms 160ms var(--ease-out) both;
+  }
+
+  /* O GOL: a bola corre pelo rastro, a rede estufa, o título carimba */
+  .resolution[data-moment]:not(.is-settled) .pitch__ball.is-shot {
+    animation: chute 560ms 120ms var(--ease-out) both;
+  }
+
+  @keyframes chute {
+    from {
+      transform: translate(var(--bx), var(--by));
+    }
+    to {
+      transform: translate(106px, 34px);
+    }
+  }
+
+  .resolution[data-moment]:not(.is-settled) .pitch__trail {
+    animation: rastro 560ms 120ms var(--ease-out) both;
+  }
+
+  @keyframes rastro {
+    from {
+      stroke-dasharray: 0 1;
+    }
+    to {
+      stroke-dasharray: 1 0;
+    }
+  }
+
+  .resolution[data-moment]:not(.is-settled) .pitch__goal--their {
+    transform-box: fill-box;
+    animation: rede 320ms 640ms var(--ease-out) both;
+  }
+
+  @keyframes rede {
+    40% {
+      transform: translateX(1.4px) scaleY(1.08);
+    }
+  }
+
+  .resolution--goal[data-moment]:not(.is-settled) .resolution__title {
+    animation: carimbo 300ms 620ms var(--ease-out) both;
+  }
+
+  @keyframes carimbo {
+    from {
+      transform: scale(1.18);
+      opacity: 0;
+    }
+  }
+
+  /* placar: o número vira como placa de estádio */
+  .scoreboard__goals.is-changed {
+    animation: vira 440ms var(--ease-out) both;
+  }
+
+  @keyframes vira {
+    0% {
+      transform: perspective(200px) rotateX(-90deg);
+    }
+    60% {
+      transform: perspective(200px) rotateX(12deg);
+      background: var(--accent);
+    }
+    100% {
+      transform: none;
+    }
+  }
+
+  /* relógio do jogo e medidores andam do valor antigo ao novo */
+  .placard__clock.is-changed .placard__fill {
+    animation: relogio 520ms var(--ease-out) both;
+  }
+
+  @keyframes relogio {
+    from {
+      transform: scaleX(calc(var(--from) / 90));
+    }
+  }
+
+  .meter.is-changed .meter__fill {
+    animation: enche 520ms var(--ease-out) both;
+  }
+
+  @keyframes enche {
+    from {
+      transform: scaleX(calc(var(--from) / 100));
+    }
+  }
+
+  /* nota: carimba quando muda */
+  .rating.is-changed {
+    animation: carimbo 260ms var(--ease-out) both;
+  }
+
+  /* figurinha do jogador: o número pisca no amarelo ao subir */
+  .sticker__number strong.is-changed[data-dir='up'] {
+    animation: sobe 900ms var(--ease-out) both;
+  }
+
+  @keyframes sobe {
+    0%,
+    70% {
+      color: var(--accent);
+    }
+  }
+
+  /* súmula: lances novos entram pela esquerda, o gol cola */
+  .feed__item.is-new {
+    animation: lance 300ms var(--ease-out) both;
+  }
+
+  .feed__item--goal.is-new {
+    animation: colar 620ms var(--ease-out) both;
+  }
+
+  @keyframes lance {
+    from {
+      transform: translateX(-8px);
+      opacity: 0;
+    }
+  }
+
+  /* placar final cola como figurinha */
+  .final-card.is-new .final-card__score {
+    animation: carimbo 320ms 360ms var(--ease-out) both;
+  }
+
+  /* troca de tela e de aba: a página vira, a barra fica */
+  .topbar {
+    view-transition-name: topbar;
+  }
+
+  .profile .sticker {
+    view-transition-name: figurinha;
+  }
+
+  ::view-transition-old(root) {
+    animation: sai 140ms ease-in both;
+  }
+
+  ::view-transition-new(root) {
+    animation: chega 280ms var(--ease-out) both;
+  }
+
+  :root[data-vt='tab']::view-transition-new(root) {
+    animation-duration: 180ms;
+  }
+
+  @keyframes sai {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes chega {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+}
+
+/*
+ * Movimento reduzido: sem deslocamento, giro ou escala. Ficam as trocas de
+ * cor e opacidade que confirmam a ação (placar, nota, gol).
+ */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  html {
+    scroll-behavior: auto;
+  }
+
+  .scoreboard__goals.is-changed,
+  .rating.is-changed,
+  .resolution--goal .resolution__title {
+    animation: realce 600ms ease-out both;
+  }
+
+  @keyframes realce {
+    from {
+      background-color: var(--accent);
+      color: var(--accent-ink);
+    }
+  }
+
+  .resolution--goal .resolution__title {
+    animation-name: aparece;
+  }
+
+  @keyframes aparece {
+    from {
+      opacity: 0;
+    }
   }
 }
 

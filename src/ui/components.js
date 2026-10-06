@@ -2,7 +2,7 @@
 
 import { esc } from './dom.js';
 import { ICONS } from './icons.js';
-import { clamp, round } from '../core/utils.js';
+import { clamp, plural, round } from '../core/utils.js';
 import { ATTRIBUTE_GROUPS, attributeTier } from '../data/attributes.js';
 import { getPosition, isGoalkeeper } from '../data/positions.js';
 import { getClub, squadRating } from '../data/clubs.js';
@@ -62,6 +62,7 @@ export function avatarSvg(appearance = {}, { label = 'Retrato do jogador' } = {}
   const hair = appearance.hair ?? 'curto';
   const beard = appearance.beard ?? 'nenhuma';
   const accessory = appearance.accessory ?? 'nenhum';
+  const kitNumber = Number.parseInt(appearance.kitNumber, 10);
 
   const hairShapes = {
     curto: `<path d="M34 46c0-17 12-26 26-26s26 9 26 26c0-6-10-11-26-11S34 40 34 46z" fill="${hairColor}"/>`,
@@ -96,6 +97,105 @@ export function avatarSvg(appearance = {}, { label = 'Retrato do jogador' } = {}
       ${beardShapes[beard] ?? ''}
       ${hairShapes[hair] ?? hairShapes.curto}
       ${accessoryShapes[accessory] ?? ''}
+      ${Number.isFinite(kitNumber) ? `<text class="avatar__kit" x="84" y="134" text-anchor="middle">${kitNumber}</text>` : ''}
+    </svg>`;
+}
+
+/* ------------------------------------------------------------------ campo */
+
+// Medidas oficiais (105 x 68 m), atacando para a direita.
+const ZONE_BANDS = { gol: [0, 17], defesa: [0, 35], meio: [35, 70], ataque: [70, 105] };
+const ZONE_SPOT = { gol: [9, 34], defesa: [24, 30], meio: [52, 38], ataque: [82, 32] };
+
+/** Onde a bola está em cada lance (só apresentação; o motor não usa). */
+const MOMENT_SPOTS = {
+  cara_a_cara: [89, 29],
+  bola_na_meia_lua: [80, 37],
+  cruzamento_na_area: [99, 21],
+  contra_ataque: [66, 42],
+  falta_frontal: [83, 34],
+  penalti: [94, 34],
+  saida_de_bola: [22, 44],
+  duelo_meio: [53, 28],
+  transicao: [46, 40],
+  um_contra_um_defensivo: [14, 27],
+  bola_aerea_defensiva: [1.5, 1.5],
+  saida_zaga: [19, 36],
+  finalizacao_de_fora: [23, 30],
+  cara_a_cara_gol: [13, 37],
+  cruzamento_gol: [7, 22],
+  penalti_defender: [11, 34],
+};
+
+/** Posições no diagrama de criação. */
+export const POSITION_SPOTS = {
+  GOL: [5, 34],
+  ZAG: [20, 34],
+  LAT: [24, 58],
+  VOL: [38, 34],
+  MC: [50, 24],
+  MEI: [66, 34],
+  PON: [78, 10],
+  SA: [82, 42],
+  ATA: [92, 30],
+};
+
+export function momentSpot(momentId, zone) {
+  return MOMENT_SPOTS[momentId] ?? ZONE_SPOT[zone] ?? ZONE_SPOT.meio;
+}
+
+function pitchLines() {
+  return `
+    <g class="pitch__lines">
+      <rect x="0" y="0" width="105" height="68"/>
+      <line x1="52.5" y1="0" x2="52.5" y2="68"/>
+      <circle cx="52.5" cy="34" r="9.15"/>
+      <rect x="0" y="13.84" width="16.5" height="40.32"/>
+      <rect x="88.5" y="13.84" width="16.5" height="40.32"/>
+      <rect x="0" y="24.84" width="5.5" height="18.32"/>
+      <rect x="99.5" y="24.84" width="5.5" height="18.32"/>
+      <path d="M16.5 26.69a9.15 9.15 0 0 1 0 14.62"/>
+      <path d="M88.5 26.69a9.15 9.15 0 0 0 0 14.62"/>
+      <path d="M0 1a1 1 0 0 0 1-1M104 0a1 1 0 0 0 1 1M1 68a1 1 0 0 0-1-1M105 67a1 1 0 0 0-1 1"/>
+    </g>
+    <g class="pitch__spots">
+      <circle cx="52.5" cy="34" r=".7"/><circle cx="11" cy="34" r=".7"/><circle cx="94" cy="34" r=".7"/>
+    </g>
+    <g class="pitch__goal pitch__goal--own"><rect x="-2.4" y="30.34" width="2.4" height="7.32"/></g>
+    <g class="pitch__goal pitch__goal--their">
+      <rect x="105" y="30.34" width="2.4" height="7.32"/>
+      <path class="pitch__net" d="M105.8 30.34v7.32M106.6 30.34v7.32M105 32.17h2.4M105 34h2.4M105 35.83h2.4"/>
+    </g>`;
+}
+
+/**
+ * Campo em linhas de giz impressas no papel do álbum.
+ * mode 'moment': destaca a zona do lance e mostra a bola.
+ * mode 'goal': a bola viaja até a rede (momento do gol).
+ * mode 'positions': diagrama de posições para a criação.
+ */
+export function pitch({ zone = 'meio', spot = null, mode = 'moment', position = null, label = 'Campo', momentKey = null } = {}) {
+  const [x, y] = spot ?? ZONE_SPOT[zone] ?? ZONE_SPOT.meio;
+  const band = ZONE_BANDS[zone] ?? ZONE_BANDS.meio;
+  const goal = mode === 'goal';
+  const body =
+    mode === 'positions'
+      ? Object.entries(POSITION_SPOTS)
+          .map(([id, [px, py]]) => {
+            const active = id === position;
+            return `<g class="pitch__pos ${active ? 'is-active' : ''}"><circle cx="${px}" cy="${py}" r="${active ? 4.4 : 3.2}"/><text x="${px}" y="${py + 1.15}" text-anchor="middle">${id}</text></g>`;
+          })
+          .join('')
+      : `
+        <rect class="pitch__zone" x="${band[0]}" y="0" width="${band[1] - band[0]}" height="68"/>
+        ${goal ? `<path class="pitch__trail" d="M${x} ${y} L106 34" pathLength="1"/>` : ''}
+        <g class="pitch__ball ${goal ? 'is-shot' : ''}" style="--bx:${x}px;--by:${y}px;--gx:${106 - x}px;--gy:${34 - y}px">
+          <circle r="1.9"/>
+        </g>`;
+  return `
+    <svg class="pitch pitch--${mode}" viewBox="-4 -3 113 74" role="img" aria-label="${esc(label)}" ${momentKey ? `data-moment="${esc(momentKey)}"` : ''}>
+      ${pitchLines()}
+      ${body}
     </svg>`;
 }
 
@@ -120,7 +220,7 @@ export function initials(name = '') {
  * Figurinha do jogador. O número da figurinha é o overall.
  * size: 'sm' | 'md' | 'lg'
  */
-export function playerSticker(player, { size = 'md', isNew = false, overall = null, meta = null, foil = false } = {}) {
+export function playerSticker(player, { size = 'md', isNew = false, overall = null, meta = null, foil = false, pulse = null } = {}) {
   const position = getPosition(player.position);
   const club = getClub(player.club);
   const value = overall ?? player.overall;
@@ -130,7 +230,7 @@ export function playerSticker(player, { size = 'md', isNew = false, overall = nu
       <div class="sticker__photo">
         ${avatarSvg(player.appearance, { label: `Retrato de ${player.firstName} ${player.lastName}` })}
         <div class="sticker__number" aria-label="Overall ${value}, ${position.name}">
-          <strong>${esc(value)}</strong>
+          <strong ${pulse ? `data-pulse="${esc(pulse)}" data-value="${esc(value)}" data-count` : ''}>${esc(value)}</strong>
           <small>${esc(position.short)}</small>
         </div>
       </div>
@@ -158,10 +258,11 @@ export const ratingTier = (rating) => {
   return 'fraco';
 };
 
-export function meter({ label, value, iconName = null, tier = null, suffix = '' }) {
+export function meter({ label, value, iconName = null, tier = null, suffix = '', pulse = null }) {
   const safe = clamp(Math.round(value ?? 0), 0, 100);
+  const attrs = pulse ? `data-pulse="${esc(pulse)}" data-value="${safe}"` : '';
   return `
-    <div class="meter ${tier ?? tierClass(safe)}">
+    <div class="meter ${tier ?? tierClass(safe)}" ${attrs}>
       <span class="meter__label">${iconName ? icon(iconName) : ''}${esc(label)}</span>
       <span class="meter__value">${safe}${esc(suffix)}</span>
       <div class="meter__track" role="meter" aria-label="${esc(label)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${safe}">
@@ -176,10 +277,13 @@ export function lifeMeters(player, ids = null) {
   return stats.map((stat) => meter({ label: stat.label, value: player.life[stat.id], iconName: stat.icon })).join('');
 }
 
-export function ratingBadge(rating) {
+export function ratingBadge(rating, { pulse = null } = {}) {
   if (!rating) return '<span class="rating rating--empty num">-</span>';
-  return `<span class="rating tier--${ratingTier(rating)} num">${round(rating, 1).toFixed(1)}</span>`;
+  const value = round(rating, 1).toFixed(1);
+  const attrs = pulse ? `data-pulse="${esc(pulse)}" data-value="${value}"` : '';
+  return `<span class="rating tier--${ratingTier(rating)} num" ${attrs}>${value}</span>`;
 }
+
 
 /* -------------------------------------------------------- atributos */
 
@@ -200,7 +304,7 @@ export function attributeList(player, { spendable = false, skillPoints = 0, cost
           const canBuy = spendable && skillPoints >= cost && !atCeiling;
           const buyLabel = atCeiling
             ? `${attribute.label} já está no seu teto atual`
-            : `Subir ${attribute.label} por ${cost} ponto(s)`;
+            : `Subir ${attribute.label} por ${plural(cost, 'ponto', 'pontos')}`;
           return `
             <li class="attr ${tierClass(effective)}">
               <span class="attr__label">${esc(attribute.label)}${bonus ? `<span class="attr__bonus">+${bonus}</span>` : ''}</span>
@@ -264,7 +368,9 @@ export function leagueTable(rows, highlightClubId, { continentalSpots = 0 } = {}
             <th class="num" scope="col">V</th>
             <th class="num" scope="col">E</th>
             <th class="num" scope="col">D</th>
-            <th class="num" scope="col">SG</th>
+            <th class="num table__wide" scope="col"><abbr title="Gols pró">GP</abbr></th>
+            <th class="num table__wide" scope="col"><abbr title="Gols contra">GC</abbr></th>
+            <th class="num" scope="col"><abbr title="Saldo de gols">SG</abbr></th>
           </tr>
         </thead>
         <tbody>
@@ -274,14 +380,17 @@ export function leagueTable(rows, highlightClubId, { continentalSpots = 0 } = {}
               const classes = [row.clubId === highlightClubId ? 'is-you' : '', index < continentalSpots ? 'zone-up' : '']
                 .filter(Boolean)
                 .join(' ');
-              return `<tr class="${classes}">
-                <td class="num">${index + 1}</td>
-                <td>${esc(club?.name ?? row.clubId)}</td>
+              const you = row.clubId === highlightClubId;
+              return `<tr class="${classes}" ${you ? 'aria-current="true"' : ''}>
+                <td class="num"><span class="table__pos">${index + 1}</span></td>
+                <td><span class="table__club">${you ? monogram(club?.name ?? '', { you: true }) : ''}${esc(club?.name ?? row.clubId)}</span></td>
                 <td class="num"><strong>${row.points}</strong></td>
                 <td class="num">${row.played}</td>
                 <td class="num">${row.wins}</td>
                 <td class="num">${row.draws}</td>
                 <td class="num">${row.losses}</td>
+                <td class="num table__wide">${row.goalsFor}</td>
+                <td class="num table__wide">${row.goalsAgainst}</td>
                 <td class="num">${row.goalDifference > 0 ? '+' : ''}${row.goalDifference}</td>
               </tr>`;
             })
@@ -295,17 +404,30 @@ export function leagueTable(rows, highlightClubId, { continentalSpots = 0 } = {}
 
 const DEFAULT_FEED_ICON = { good: 'check', bad: 'warning', info: 'soccer-ball' };
 
-export function feed(items, { limit = 8, minute = false } = {}) {
+/** Marca do lance na súmula: cartão de verdade, bola na rede ou o ícone. */
+function feedMark(item) {
+  if (item.mark === 'yellow' || item.mark === 'red') {
+    return `<span class="feed__icon feed__icon--card"><span class="card-mark card-mark--${item.mark}" role="img" aria-label="Cartão ${item.mark === 'red' ? 'vermelho' : 'amarelo'}"></span></span>`;
+  }
+  return `<span class="feed__icon">${icon(item.icon ?? DEFAULT_FEED_ICON[item.type] ?? 'soccer-ball')}</span>`;
+}
+
+export function feed(items, { limit = 8, minute = false, keyPrefix = '' } = {}) {
   if (!items.length) return '<p class="muted">Nada por aqui ainda.</p>';
   return `<ul class="feed">${items
     .slice(0, limit)
-    .map(
-      (item) => `
-      <li class="feed__item feed__item--${esc(item.type)}">
-        <span class="feed__icon">${icon(item.icon ?? DEFAULT_FEED_ICON[item.type] ?? 'soccer-ball')}</span>
+    .map((item) => {
+      if (item.mark === 'final') {
+        return `<li class="feed__divider">${icon('timer')}<span>${esc(item.text)}</span></li>`;
+      }
+      const goal = item.mark === 'goal-for' || item.mark === 'goal-against';
+      const key = keyPrefix ? `data-new-key="${esc(`${keyPrefix}${item.minute}-${item.text}`)}"` : '';
+      return `
+      <li class="feed__item feed__item--${esc(item.type)} ${goal ? `feed__item--goal feed__item--${item.mark}` : ''} ${keyPrefix ? 'is-new' : ''}" ${key}>
+        ${feedMark(item)}
         <span>${minute ? `<span class="feed__minute">${item.minute}'</span>` : ''}${esc(item.text)}</span>
-      </li>`,
-    )
+      </li>`;
+    })
     .join('')}</ul>`;
 }
 
@@ -336,7 +458,7 @@ function fitFor(player, rating) {
 }
 
 /** Proposta de clube como figurinha: frente com sigla e nível, verso com o contrato. */
-export function offerSticker(offer, player, { action, label, ariaLabel = null, highlight = false, isNew = false, index = 0 }) {
+export function offerSticker(offer, player, { action, label, ariaLabel = null, highlight = false, isNew = false, index = 0, primary = false }) {
   const rating = squadRating(offer.clubId);
   const fit = fitFor(player, rating);
   return `
@@ -352,12 +474,12 @@ export function offerSticker(offer, player, { action, label, ariaLabel = null, h
         <ul class="offer__facts">
           <li><span>Função</span><strong>${esc(offer.roleLabel)}</strong></li>
           <li><span>Salário</span><strong class="num">${esc(money(offer.weeklySalary))} por semana</strong></li>
-          <li><span>Contrato</span><strong class="num">${offer.years} temporada(s)</strong></li>
+          <li><span>Contrato</span><strong class="num">${esc(plural(offer.years, 'temporada', 'temporadas'))}</strong></li>
           ${offer.signingBonus ? `<li><span>Luvas</span><strong class="num">${esc(money(offer.signingBonus))}</strong></li>` : ''}
           ${offer.continental ? '<li><span>Torneio continental</span><strong>Possível</strong></li>' : ''}
         </ul>
         <p class="offer__fit tier--${fit.tier} tier-text">${esc(fit.text)}</p>
-        <button class="btn btn--primary btn--block" ${action} aria-label="${esc(ariaLabel ?? label)}">${esc(label)}</button>
+        <button class="btn ${primary ? 'btn--primary' : ''} btn--block" ${action} aria-label="${esc(ariaLabel ?? label)}">${esc(label)}</button>
       </div>
     </article>`;
 }

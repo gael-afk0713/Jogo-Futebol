@@ -1,7 +1,7 @@
 // Controlador central do jogo: guarda o estado, executa as ações e avisa a UI.
 
 import { createRng } from './rng.js';
-import { clamp, logistic, round } from './utils.js';
+import { clamp, logistic, plural, round } from './utils.js';
 import { getClub, getLeague, squadRating } from '../data/clubs.js';
 import { getNation } from '../data/nations.js';
 import { MOMENTS } from '../data/matchMoments.js';
@@ -252,7 +252,7 @@ export class Game {
 
     if (report.injury && !player.injury) {
       player.injury = { name: report.injury.name, weeks: report.injury.weeks };
-      this.pushNews(`${report.injury.name} no treino: ${report.injury.weeks} semana(s) fora.`, 'bad', 'first-aid-kit');
+      this.pushNews(`${report.injury.name} no treino: ${plural(report.injury.weeks, 'semana', 'semanas')} fora.`, 'bad', 'first-aid-kit');
     }
     this.state.week.trainingReport = report;
     this.advanceToLifeStep();
@@ -464,14 +464,14 @@ export class Game {
     if (report.stats.redCards) {
       player.suspension += this.rng.int(1, 3);
       adjustLife(player, 'discipline', -8);
-      this.pushNews(`Expulso contra o ${report.opponentName}: ${player.suspension} jogo(s) de suspensão.`, 'bad', 'cards');
+      this.pushNews(`Expulso contra o ${report.opponentName}: ${plural(player.suspension, 'jogo', 'jogos')} de suspensão.`, 'bad', 'cards');
     } else if (report.stats.yellowCards) {
       adjustLife(player, 'discipline', -1);
     }
     if (report.injured) {
       const weeks = this.rng.int(1, 6);
       player.injury = { name: this.rng.pick(['Lesão muscular', 'Entorse', 'Contusão no joelho', 'Fratura no dedo do pé']), weeks };
-      this.pushNews(`Você se lesionou contra o ${report.opponentName}: ${weeks} semana(s) fora.`, 'bad', 'first-aid-kit');
+      this.pushNews(`Você se lesionou contra o ${report.opponentName}: ${plural(weeks, 'semana', 'semanas')} fora.`, 'bad', 'first-aid-kit');
     }
 
     const bonus = matchBonus(player, report);
@@ -481,7 +481,7 @@ export class Game {
 
     const headline = report.didNotPlay
       ? report.reason
-      : `${report.score.team}x${report.score.opponent} contra o ${report.opponentName}. Nota ${report.rating}${report.stats.goals ? `, ${report.stats.goals} gol(s)` : ''}.`;
+      : `${report.score.team}x${report.score.opponent} contra o ${report.opponentName}. Nota ${report.rating}${report.stats.goals ? `, ${plural(report.stats.goals, 'gol', 'gols')}` : ''}.`;
     this.pushNews(headline, report.result === 'V' ? 'good' : report.result === 'D' ? 'bad' : 'info', 'soccer-ball');
 
     this.applyWeekResult(week, report);
