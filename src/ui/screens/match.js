@@ -119,14 +119,15 @@ export default {
               <span class="scoreboard__minute" aria-label="Minuto ${match.minute}">${match.minute}'</span>
               <span class="scoreboard__goals" data-pulse="placar-fora-${esc(match.id)}" data-value="${match.score.opponent}" aria-label="${esc(match.opponentName)} ${match.score.opponent}">${match.score.opponent}</span>
             </div>
-            <span class="scoreboard__comp">${match.minute >= 90 ? 'Fim de jogo' : match.minute > 45 ? '2º tempo' : '1º tempo'} · ${esc(match.competition?.name ?? '')}</span>
+            <span class="placard__half">${match.minute >= 90 ? 'Fim de jogo' : match.minute > 45 ? '2º tempo' : '1º tempo'}</span>
+            <span class="scoreboard__comp">${esc(match.competition?.name ?? '')}</span>
           </div>
           <div class="scoreboard__team scoreboard__team--away">
             <div class="placard__side"><span class="scoreboard__name">${esc(match.opponentName)}</span>${goalScorers(match, 'opponent')}</div>
             ${monogram(match.opponentName)}
           </div>
           <div class="placard__clock" aria-hidden="true" data-pulse="relogio-${esc(match.id)}" data-value="${match.minute}" style="--m:${Math.min(90, match.minute) / 90}">
-            <span class="placard__half"></span><span class="placard__fill"></span>
+            <span class="placard__tick"></span><span class="placard__fill"></span>
           </div>
         </header>
 

@@ -8,12 +8,17 @@
 //                                     .is-changed e data-dir="up|down"
 //   data-moment="chave"               toca uma vez por chave (ex.: o gol)
 
+// Uma ação pode remontar a tela duas vezes seguidas (o motor avisa, a tela
+// redesenha). O que mudou nessa janela continua animando na remontagem.
+const SAME_BEAT_MS = 120;
+
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 export class Motion {
   constructor() {
     this.values = new Map();
-    this.seenNew = new Set();
+    this.changed = new Map();
+    this.seenNew = new Map();
     this.seenMoments = new Set();
     this.screen = null;
     this.pendingTransition = null;
@@ -26,6 +31,7 @@ export class Motion {
 
   /** Chamado depois de cada montagem, antes do navegador pintar. */
   settle(root, screen) {
+    const now = performance.now();
     const screenChanged = screen !== this.screen;
     if (screenChanged) {
       this.screen = screen;
@@ -36,17 +42,21 @@ export class Motion {
     // Nas remontagens seguintes, já estão coladas e ficam quietas.
     for (const node of root.querySelectorAll('.is-new')) {
       const key = node.dataset.newKey ?? node.getAttribute('aria-label') ?? node.textContent.replace(/\s+/g, ' ').trim().slice(0, 60);
-      if (this.seenNew.has(key)) node.classList.remove('is-new');
-      else this.seenNew.add(key);
+      const firstSeen = this.seenNew.get(key);
+      if (firstSeen === undefined) this.seenNew.set(key, now);
+      else if (now - firstSeen > SAME_BEAT_MS) node.classList.remove('is-new');
     }
 
     // Valores que mudaram desde a última montagem.
     for (const node of root.querySelectorAll('[data-pulse]')) {
       const key = node.dataset.pulse;
       const value = node.dataset.value ?? node.textContent.trim();
-      const before = this.values.get(key);
+      let before = this.values.get(key);
       this.values.set(key, value);
+      const recent = this.changed.get(key);
+      if (before === value && recent && now - recent.at <= SAME_BEAT_MS) before = recent.from;
       if (before === undefined || before === value) continue;
+      if (!recent || recent.to !== value || now - recent.at > SAME_BEAT_MS) this.changed.set(key, { from: before, to: value, at: now });
       const a = Number(before);
       const b = Number(value);
       if (Number.isFinite(a) && Number.isFinite(b)) {

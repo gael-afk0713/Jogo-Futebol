@@ -1816,7 +1816,10 @@ code {
   font-size: 0.75rem;
   color: var(--cover-ink-2);
   text-align: center;
-  max-width: 20ch;
+  max-width: 26ch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   line-height: 1.2;
 }
 
@@ -3139,9 +3142,43 @@ code {
   stroke: var(--ink);
 }
 
+.placard__half {
+  font-family: var(--font-cond);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  color: var(--cover-ink);
+}
+
 .moment__pitch {
   max-width: 340px;
   margin-bottom: 4px;
+}
+
+/* No computador o campo fica ao lado do lance, grande o bastante para o gol. */
+@media (min-width: 980px) {
+  .moment,
+  .resolution {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    column-gap: 28px;
+    row-gap: 14px;
+    align-content: start;
+    align-items: start;
+  }
+
+  .moment > *,
+  .resolution > * {
+    grid-column: 2;
+  }
+
+  .moment > .moment__pitch,
+  .resolution > .moment__pitch {
+    grid-column: 1;
+    grid-row: 1 / span 8;
+    max-width: none;
+    margin: 0;
+  }
 }
 
 .pitch__pos circle {
@@ -3249,7 +3286,7 @@ code {
   transform: scaleX(var(--m, 0));
 }
 
-.placard__half {
+.placard__tick {
   position: absolute;
   left: 50%;
   top: -3px;
@@ -3604,8 +3641,11 @@ code {
   }
 
   @keyframes rede {
-    40% {
-      transform: translateX(1.4px) scaleY(1.08);
+    35% {
+      transform: translateX(2.6px) scale(1.25, 1.12);
+    }
+    70% {
+      transform: translateX(-0.6px);
     }
   }
 
@@ -3623,6 +3663,23 @@ code {
   /* placar: o número vira como placa de estádio */
   .scoreboard__goals.is-changed {
     animation: vira 440ms var(--ease-out) both;
+  }
+
+  /* Em gol seu, o placar só vira depois da rede: chute, rede, carimbo, placar. */
+  .screen:has(.resolution--goal[data-moment]:not(.is-settled)) .scoreboard__goals.is-changed {
+    animation-delay: 720ms;
+  }
+
+  .screen:has(.resolution--goal[data-moment]:not(.is-settled)) .placard__scorers .is-you:last-child,
+  .screen:has(.resolution--goal[data-moment]:not(.is-settled)) .feed__item--goal.is-new {
+    animation: aparece-tarde 300ms 760ms var(--ease-out) both;
+  }
+
+  @keyframes aparece-tarde {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
   }
 
   @keyframes vira {
@@ -3742,8 +3799,7 @@ code {
   }
 
   .scoreboard__goals.is-changed,
-  .rating.is-changed,
-  .resolution--goal .resolution__title {
+  .rating.is-changed {
     animation: realce 600ms ease-out both;
   }
 
@@ -3754,8 +3810,8 @@ code {
     }
   }
 
-  .resolution--goal .resolution__title {
-    animation-name: aparece;
+  .resolution--goal[data-moment]:not(.is-settled) .resolution__title {
+    animation: aparece 300ms ease-out both;
   }
 
   @keyframes aparece {
