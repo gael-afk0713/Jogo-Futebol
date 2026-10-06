@@ -6,7 +6,6 @@ import { createPlayer } from '../../engine/player.js';
 import {
   authErrorMessage,
   firebaseAvailable,
-  signInAsGuest,
   signInWithEmail,
   signInWithGoogle,
   signUpWithEmail,
@@ -100,7 +99,7 @@ function loginBox(ctx) {
         <button class="tab" role="tab" aria-selected="${ui.mode === 'login'}" data-action="auth-mode" data-mode="login">Entrar</button>
         <button class="tab" role="tab" aria-selected="${ui.mode === 'signup'}" data-action="auth-mode" data-mode="signup">Criar conta</button>
       </nav>
-      <div class="stack">
+      <form class="stack" novalidate>
         <label class="field">
           <span class="field__label">E-mail</span>
           <input class="input" id="auth-email" type="email" autocomplete="email" placeholder="voce@email.com" />
@@ -110,13 +109,12 @@ function loginBox(ctx) {
           <input class="input" id="auth-password" type="password" autocomplete="${ui.mode === 'login' ? 'current-password' : 'new-password'}" placeholder="Mínimo de 6 caracteres" />
         </label>
         ${ui.error ? `<p class="field__error" role="alert">${esc(ui.error)}</p>` : ''}
-        <button class="btn btn--primary btn--block" data-action="auth-submit" ${ui.busy ? 'disabled' : ''}>
+        <button type="submit" class="btn btn--primary btn--block" data-action="auth-submit" ${ui.busy ? 'disabled' : ''}>
           ${ui.busy ? 'Aguarde' : ui.mode === 'login' ? 'Entrar e sincronizar' : 'Criar conta'}
         </button>
-      </div>
+      </form>
       <div class="actions">
         <button class="btn btn--sm" data-action="auth-google" ${ui.busy ? 'disabled' : ''}>Entrar com Google</button>
-        <button class="btn btn--sm btn--quiet" data-action="auth-guest" ${ui.busy ? 'disabled' : ''}>Entrar como convidado</button>
       </div>
     </section>`;
 }
@@ -206,21 +204,6 @@ export default {
       ctx.rerender();
       try {
         const user = await signInWithGoogle();
-        await ctx.onSignedIn(user);
-      } catch (error) {
-        ui.error = authErrorMessage(error);
-      } finally {
-        ui.busy = false;
-        ctx.rerender();
-      }
-    },
-
-    'auth-guest': async (ctx) => {
-      ui.busy = true;
-      ui.error = null;
-      ctx.rerender();
-      try {
-        const user = await signInAsGuest();
         await ctx.onSignedIn(user);
       } catch (error) {
         ui.error = authErrorMessage(error);

@@ -14,12 +14,12 @@
 // (veja firestore.rules na raiz do repositório).
 
 export const firebaseConfig = {
-  apiKey: '',
-  authDomain: '',
-  projectId: '',
-  storageBucket: '',
-  messagingSenderId: '',
-  appId: '',
+  apiKey: 'AIzaSyBUb7fSMcvFoITVTJlKwTySIPu8LozUhqw',
+  authDomain: 'craque-do-zero-7441e.firebaseapp.com',
+  projectId: 'craque-do-zero-7441e',
+  storageBucket: 'craque-do-zero-7441e.firebasestorage.app',
+  messagingSenderId: '980614360863',
+  appId: '1:980614360863:web:1dc55d456511571ba00a2a',
 };
 
 /** Só tenta conectar quando os campos essenciais estiverem preenchidos. */
