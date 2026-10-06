@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-06T13:33:15.033966+00:00",
+  "generatedAt": "2026-10-06T14:09:17.281994+00:00",
   "title": "Design System: Craque do Zero",
   "extensions": {
     "colorMeta": {
@@ -58,6 +58,22 @@
           "#444c5c",
           "#121722"
         ]
+      },
+      "card-yellow": {
+        "role": "neutral",
+        "displayName": "Cartão amarelo",
+        "canonical": "#f6c600",
+        "tonalRamp": [
+          "#f6c600"
+        ]
+      },
+      "card-red": {
+        "role": "neutral",
+        "displayName": "Cartão vermelho",
+        "canonical": "#c2352b",
+        "tonalRamp": [
+          "#c2352b"
+        ]
       }
     },
     "typographyMeta": {
@@ -76,6 +92,10 @@
       "body": {
         "displayName": "Texto",
         "purpose": "Textos, narração e rótulos de interface."
+      },
+      "placard": {
+        "displayName": "Placa",
+        "purpose": "Tempo do jogo no placar e divisor do apito final (Barlow Condensed 700, 0,95rem)."
       }
     },
     "shadows": [
@@ -93,13 +113,18 @@
         "name": "shadow-panel",
         "value": "0 1px 2px rgb(18 23 34 / 0.05)",
         "purpose": "Folhas de trabalho."
+      },
+      {
+        "name": "placard-digit-inset",
+        "value": "inset 0 -2px 0 rgb(18 23 34 / 0.12)",
+        "purpose": "Base da placa de gol no placar de estádio."
       }
     ],
     "motion": [
       {
         "name": "ease-out",
         "value": "cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Entradas e colar figurinha."
+        "purpose": "Entradas, colar figurinha, gol e retornos."
       },
       {
         "name": "ease-press",
@@ -108,8 +133,48 @@
       },
       {
         "name": "colar",
-        "value": "620ms colar keyframes, atraso de 90ms por item",
-        "purpose": "Movimento assinatura: figurinha pressionada no lugar."
+        "value": "620ms; de scale(1.06) rotate(-2deg) translateY(-6px) com shadow-lift a none com shadow-sticker; opacidade 1 aos 35%; atraso de 90ms por item (--i)",
+        "purpose": "Movimento assinatura: figurinha pressionada no lugar. Vale o construído, não o 1.04/-1.5deg do contrato."
+      },
+      {
+        "name": "brilho",
+        "value": "1100ms, atraso 380ms",
+        "purpose": "Reflexo único na figurinha brilhante ao colar."
+      },
+      {
+        "name": "same-beat",
+        "value": "120ms",
+        "purpose": "Janela em que uma segunda remontagem ainda anima o que acabou de mudar."
+      },
+      {
+        "name": "count-up",
+        "value": "600ms, cúbica de saída",
+        "purpose": "Número sobe contando (data-count)."
+      },
+      {
+        "name": "gol",
+        "value": "chute/rastro 560ms após 120ms; rede 320ms aos 640ms; carimbo 300ms aos 620ms; vira 440ms aos 720ms; artilheiro e súmula 300ms aos 760ms",
+        "purpose": "Único momento autoral: bola, rede, título, placar, artilheiro."
+      },
+      {
+        "name": "vira",
+        "value": "440ms rotateX(-90deg) a 0 com flash amarelo",
+        "purpose": "Número do placar vira como placa de estádio."
+      },
+      {
+        "name": "retorno",
+        "value": "até 320ms; relógio e medidores 520ms do --from ao novo valor",
+        "purpose": "Retornos curtos que só tocam quando o dado muda."
+      },
+      {
+        "name": "view-transition",
+        "value": "sai 140ms ease-in; chega 280ms (180ms entre abas) subindo 8px",
+        "purpose": "Troca de tela, aba e semana; barra e figurinha ficam."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "realce 600ms (fundo amarelo) no placar e na nota; título do gol por opacidade 300ms",
+        "purpose": "Sem deslocamento, giro, escala, contagem nem transição de página."
       }
     ],
     "breakpoints": [
@@ -125,36 +190,150 @@
         "name": "desktop",
         "value": "980px"
       }
-    ],
-    "narrative": {
-      "northStar": "A carreira é um álbum de figurinhas sendo completado.",
-      "rules": [
-        "Figurinha é papel branco, de dia e de noite.",
-        "À noite o fundo vira a capa.",
-        "Amarelo só na ação principal.",
-        "Todo número em algarismos tabulares.",
-        "O que falta aparece como espaço numerado vazio."
-      ],
-      "dos": [
-        "Mostrar a consequência antes da escolha.",
-        "Figurinha para entidades, linhas simples para o resto."
-      ],
-      "donts": [
-        "Emoji como ícone.",
-        "Travessão em texto visível.",
-        "Cores ou escudos de clube inventados.",
-        "Gradiente fora da figurinha brilhante."
-      ]
+    ]
+  },
+  "components": [
+    {
+      "name": "Botão principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "A única ação amarela da tela.",
+      "html": "<button class=\"ds-btn-primary\">Entrar em campo</button>",
+      "css": ".ds-btn-primary{background:var(--accent,#f6c600);color:var(--accent-ink,#1b1600);border:1.5px solid var(--accent,#f6c600);border-radius:8px;min-height:46px;padding:10px 18px;font:600 1rem/1.2 Barlow,system-ui,sans-serif;box-shadow:inset 0 -2px 0 var(--accent-2,#e2b400);cursor:pointer;transition:transform .15s cubic-bezier(.32,.72,0,1),background .15s}.ds-btn-primary:hover{background:var(--accent-2,#e2b400)}.ds-btn-primary:focus-visible{outline:none;box-shadow:0 0 0 3px #fbfcfd,0 0 0 6px #1c3d9e}.ds-btn-primary:active{transform:translateY(2px);box-shadow:none}"
     },
-    "components": {
-      "button-primary": {
-        "html": "<button class=\"btn btn--primary\">Assinar</button>",
-        "css": ".btn--primary{background:#f6c600;color:#1b1600;border:1.5px solid #f6c600;border-radius:8px;min-height:46px;padding:10px 18px;font:600 1rem/1.2 Barlow,system-ui,sans-serif;box-shadow:0 2px 0 #e2b400}"
-      },
-      "slot": {
-        "html": "<div class=\"slot\"><span class=\"slot__number\">12</span><span class=\"slot__label\">Falta</span></div>",
-        "css": ".slot{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:168px;border:1.5px solid #b6bfcc;border-radius:6px;background:#f2f4f7;color:#5e6677}.slot__number{font:800 2.4rem/1 'Barlow Condensed',sans-serif;color:#b6bfcc}"
-      }
+    {
+      "name": "Espaço vazio",
+      "kind": "card",
+      "refersTo": "sticker",
+      "description": "O que falta no álbum, com o número impresso alinhado ao topo.",
+      "html": "<div class=\"ds-slot\"><span class=\"ds-slot__n\">12</span><span>Falta</span></div>",
+      "css": ".ds-slot{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;min-height:168px;width:150px;padding:40px 12px 12px;border:1.5px solid #b6bfcc;border-radius:6px;background:#f2f4f7;color:#5e6677;font:600 .85rem/1.3 Barlow,sans-serif}.ds-slot__n{font:800 2.4rem/1 'Barlow Condensed',sans-serif;color:#b6bfcc;font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name": "Placar de estádio",
+      "kind": "custom",
+      "refersTo": "placard",
+      "description": "Capa cobalto, gols em placas de papel, minuto amarelo, relógio 0 a 90 com tique no intervalo.",
+      "html": "<div class=\"ds-placard\"><span class=\"ds-team\">Leões</span><div class=\"ds-mid\"><div class=\"ds-line\"><span class=\"ds-goal\">1</span><span class=\"ds-min\">63'</span><span class=\"ds-goal\">0</span></div><span class=\"ds-half\">2º tempo</span></div><span class=\"ds-team\" style=\"text-align:right\">Porto</span><div class=\"ds-clock\"><span class=\"ds-tick\"></span><span class=\"ds-fill\" style=\"transform:scaleX(.7)\"></span></div></div>",
+      "css": ".ds-placard{position:relative;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:18px 24px 24px;border-radius:12px;background-color:#1c3d9e;background-image:radial-gradient(rgb(255 255 255/.07) 1px,transparent 1.4px);background-size:6px 6px;color:#fff;font-family:'Barlow Condensed',sans-serif}.ds-team{font-weight:800;font-size:1.1rem;text-transform:uppercase}.ds-mid{display:flex;flex-direction:column;align-items:center;gap:2px}.ds-line{display:flex;align-items:center;gap:14px}.ds-goal{display:inline-grid;place-items:center;min-width:1.15em;padding:2px 6px 0;border-radius:6px;background:#fdfdfb;color:#121722;font-weight:800;font-size:2.6rem;line-height:1;font-variant-numeric:tabular-nums;box-shadow:inset 0 -2px 0 rgb(18 23 34/.12)}.ds-min{min-width:52px;padding:2px 8px;border-radius:4px;background:#f6c600;color:#1b1600;font-weight:800;font-size:1.2rem;text-align:center}.ds-half{font-weight:700;font-size:.95rem}.ds-clock{position:absolute;left:24px;right:24px;bottom:10px;height:3px;border-radius:2px;background:rgb(255 255 255/.16)}.ds-fill{position:absolute;inset:0;border-radius:inherit;background:#f6c600;transform-origin:left center}.ds-tick{position:absolute;left:50%;top:-3px;width:1.5px;height:9px;background:#cdd7f6}"
+    },
+    {
+      "name": "Campo",
+      "kind": "custom",
+      "refersTo": "pitch",
+      "description": "Campo em linhas de giz sobre a folha, zona do lance em cobalto a 10%, bola em tinta.",
+      "html": "<svg class=\"ds-pitch\" viewBox=\"-4 -3 113 74\"><g class=\"ds-lines\"><rect x=\"0\" y=\"0\" width=\"105\" height=\"68\"/><line x1=\"52.5\" y1=\"0\" x2=\"52.5\" y2=\"68\"/><circle cx=\"52.5\" cy=\"34\" r=\"9.15\"/><rect x=\"0\" y=\"13.84\" width=\"16.5\" height=\"40.32\"/><rect x=\"88.5\" y=\"13.84\" width=\"16.5\" height=\"40.32\"/></g><rect class=\"ds-zone\" x=\"70\" y=\"0\" width=\"35\" height=\"68\"/><path class=\"ds-trail\" d=\"M90 30 L106 34\"/><circle class=\"ds-ball\" cx=\"90\" cy=\"30\" r=\"1.9\"/></svg>",
+      "css": ".ds-pitch{display:block;width:340px;height:auto;overflow:visible}.ds-lines{fill:none;stroke:#b6bfcc;stroke-width:1.5px;vector-effect:non-scaling-stroke;stroke-linejoin:round}.ds-lines rect:first-child{fill:#f2f4f7}.ds-lines *{vector-effect:non-scaling-stroke}.ds-zone{fill:#1c3d9e;opacity:.1}.ds-trail{fill:none;stroke:#e2b400;stroke-width:2.5px;stroke-linecap:round;vector-effect:non-scaling-stroke}.ds-ball{fill:#121722;stroke:#fbfcfd;stroke-width:1.5px;vector-effect:non-scaling-stroke}"
+    },
+    {
+      "name": "Placar final",
+      "kind": "card",
+      "refersTo": "final-card",
+      "description": "A placa de estádio fechada no pós-jogo, com rodapé tracejado.",
+      "html": "<div class=\"ds-final\"><div class=\"ds-head\"><span>Estadual</span><span>Fim de jogo</span></div><div class=\"ds-score\">2<span>x</span>1</div><div class=\"ds-foot\"><strong>Vitória</strong><span>Sua nota 7,4</span></div></div>",
+      "css": ".ds-final{display:grid;gap:14px;width:320px;padding:16px;border-radius:12px;background-color:#1c3d9e;background-image:radial-gradient(rgb(255 255 255/.07) 1px,transparent 1.4px);background-size:6px 6px;color:#fff;font-family:Barlow,sans-serif}.ds-head{display:flex;justify-content:space-between;font-size:.85rem;color:#cdd7f6}.ds-score{display:flex;justify-content:center;align-items:center;gap:8px;font:800 3rem/1 'Barlow Condensed',sans-serif;font-variant-numeric:tabular-nums}.ds-score span{font-size:1.3rem;color:#cdd7f6}.ds-foot{display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1.5px dashed rgb(255 255 255/.3);color:#cdd7f6;font-size:.9rem}.ds-foot strong{font:800 1.5rem 'Barlow Condensed',sans-serif;text-transform:uppercase;color:#f6c600}"
+    },
+    {
+      "name": "Ingresso",
+      "kind": "card",
+      "refersTo": "ticket",
+      "description": "O próximo jogo, com picote tracejado e dois recortes na cor do papel.",
+      "html": "<div class=\"ds-wrap\"><div class=\"ds-ticket\"><div>Leões x Porto</div><div class=\"ds-tear\"></div><div>Força do adversário 68</div></div></div>",
+      "css": ".ds-wrap{background:#eceff3;padding:16px}.ds-ticket{display:grid;gap:12px;width:300px;padding:20px;border-radius:12px;background:#fbfcfd;box-shadow:0 1px 2px rgb(18 23 34/.05);font:500 1rem Barlow,sans-serif;color:#121722}.ds-tear{position:relative;height:0;margin:2px -20px;border-top:1.5px dashed #b6bfcc}.ds-tear::before,.ds-tear::after{content:'';position:absolute;top:-10px;width:18px;height:18px;border-radius:50%;background:#eceff3}.ds-tear::before{left:-9px}.ds-tear::after{right:-9px}"
+    },
+    {
+      "name": "Posição na tabela",
+      "kind": "chip",
+      "refersTo": "table-pos-zone",
+      "description": "Etiqueta de 4px; verde só na zona de classificação continental.",
+      "html": "<span class=\"ds-pos ds-pos--zone\">1</span> <span class=\"ds-pos\">9</span>",
+      "css": ".ds-pos{display:inline-grid;place-items:center;min-width:1.9em;height:1.7em;border-radius:4px;font:400 .95rem Barlow,sans-serif;font-variant-numeric:tabular-nums;color:#121722}.ds-pos--zone{background:#e3f3ea;color:#17804a;font-weight:700}"
+    },
+    {
+      "name": "Marca de cartão",
+      "kind": "custom",
+      "refersTo": "card-yellow",
+      "description": "Cartão de verdade na súmula.",
+      "html": "<span class=\"ds-card ds-card--y\"></span> <span class=\"ds-card ds-card--r\"></span>",
+      "css": ".ds-card{display:inline-block;width:11px;height:15px;border-radius:2px;transform:rotate(-8deg);box-shadow:0 1px 2px rgb(18 23 34/.25)}.ds-card--y{background:#f6c600}.ds-card--r{background:#c2352b}"
     }
+  ],
+  "narrative": {
+    "northStar": "A carreira é um álbum de figurinhas sendo completado.",
+    "overview": "A carreira é um álbum de figurinhas sendo completado. O jogador é uma figurinha; cada temporada completa vira uma figurinha colada num espaço numerado; títulos e prêmios viram figurinhas brilhantes; o que ainda falta aparece como espaço vazio com o número impresso.\n\nÉ uma superfície de operação (o jogador conclui uma semana por vez), então a navegação, as abas, os botões e os campos são os padrões da web. O mundo do álbum entra por quatro vias apenas: tipografia, paleta, densidade e o movimento assinatura de colar figurinha.\n\nO futebol entra pelo mesmo papel: o campo é desenhado em linhas de giz sobre a folha, o placar é uma placa de estádio impressa na capa cobalto, o próximo jogo é um ingresso com picote e os cartões da súmula são cartões de verdade. O gol é o único momento autoral de movimento; todo o resto é retorno curto que só toca quando o dado muda.\n\nO padrão da categoria que este sistema recusa: tela escura de estádio, verde neon e cartões translúcidos. A versão anterior do jogo era exatamente isso.",
+    "keyCharacteristics": [
+      "Papel branco frio, capa cobalto chapada com retícula, amarelo racionado.",
+      "Figurinhas com a mesma mobília fixa: número, nome na faixa, clube ou posição, uma linha de dado.",
+      "Números grandes em algarismos tabulares como título da informação.",
+      "Futebol desenhado como impressão: giz no papel, placa de estádio, ingresso, cartões.",
+      "Movimento que toca uma vez por mudança real de dado, nunca em laço."
+    ],
+    "rules": [
+      {
+        "name": "Figurinha é papel branco",
+        "body": "Dentro de `.sticker` e `.card-sticker` a escala de texto é sempre a do dia, inclusive no modo noturno.",
+        "section": "colors"
+      },
+      {
+        "name": "À noite o fundo vira a capa",
+        "body": "O modo noturno troca papel e folha por azul-marinho (`#0e1733`, `#152148`), tinta por `#eef2fb`, e o amarelo passa a marcar foco e abas ativas. As figurinhas não mudam.",
+        "section": "colors"
+      },
+      {
+        "name": "Nada de cinza em superfície colorida",
+        "body": "Texto secundário sobre a capa usa `cover-ink-2`, tingido do próprio azul.",
+        "section": "colors"
+      },
+      {
+        "name": "Todo número em algarismos tabulares",
+        "body": "Use `.num` ou a família condensada; os números nunca dançam ao mudar.",
+        "section": "typography"
+      },
+      {
+        "name": "Caixa alta só na faixa da figurinha e na capa",
+        "body": "Títulos e rótulos ficam em caixa de frase.",
+        "section": "typography"
+      },
+      {
+        "name": "Sem rótulo acima de título",
+        "body": "O título carrega o próprio peso.",
+        "section": "typography"
+      },
+      {
+        "name": "Sem sombra dura deslocada",
+        "body": "O mundo é papel impresso, não neobrutalismo.",
+        "section": "elevation"
+      },
+      {
+        "name": "Sem vidro",
+        "body": "Nenhum `backdrop-filter`.",
+        "section": "elevation"
+      },
+      {
+        "name": "O campo não tem profundidade",
+        "body": "Linhas de giz sobre a folha, sem gramado, sem perspectiva, sem sombra.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Mostrar a consequência de cada escolha antes de ela ser feita.",
+      "Usar figurinha para entidades (jogador, clube, temporada, conquista) e linhas simples para todo o resto.",
+      "Mostrar o que falta como espaço numerado vazio.",
+      "Usar ícones Phosphor de `src/ui/icons.js`, extraídos do pacote oficial.",
+      "Desenhar o futebol como impressão: campo em giz, placa de estádio, ingresso, cartão de verdade.",
+      "Ligar toda animação de entrada ou de mudança à memória de movimento, para que toque uma vez por mudança real.",
+      "Manter em movimento reduzido só a cor e a opacidade que confirmam a ação."
+    ],
+    "donts": [
+      "Não usar emoji como ícone nem bandeira emoji (vira letras no Windows); o país aparece pelo código (BRA).",
+      "Não usar travessão em texto visível.",
+      "Não inventar cores de clube nem escudos. O clube aparece pela sigla.",
+      "Não pôr amarelo em mais de uma ação por tela.",
+      "Não usar gradiente fora da figurinha brilhante (a retícula de pontos da capa é textura de impressão, não gradiente de cor).",
+      "Não desenhar gramado, listras de grama ou campo em perspectiva.",
+      "Não animar em laço nem bloquear o clique com animação.",
+      "Não marcar zona de rebaixamento: o jogo não tem rebaixamento.",
+      "Não usar as cores dos cartões fora da marca de cartão."
+    ]
   }
 }
