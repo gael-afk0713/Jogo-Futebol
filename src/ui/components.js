@@ -22,7 +22,7 @@ export function icon(name, { label = '', cls = '' } = {}) {
 
 /* --------------------------------------------------------------- aparência */
 
-export const SKIN_TONES = ['#f6d7bd', '#edbb93', '#d79a68', '#b9794f', '#8d5524', '#5c3317'];
+export const SKIN_TONES = ['#ecb58d', '#d3996d', '#bf8056', '#b97a4f', '#7e4d32', '#4e3026'];
 
 export const HAIR_STYLES = [
   { id: 'curto', label: 'Curto' },
@@ -35,6 +35,7 @@ export const HAIR_STYLES = [
 
 export const BEARD_STYLES = [
   { id: 'nenhuma', label: 'Sem barba' },
+  { id: 'rala', label: 'Barba por fazer' },
   { id: 'cavanhaque', label: 'Cavanhaque' },
   { id: 'cheia', label: 'Barba cheia' },
 ];
@@ -55,49 +56,79 @@ export const HAIR_COLORS = [
   { value: '#2f6fb3', label: 'Azul' },
 ];
 
-/** Retrato do jogador em SVG: cabeça e ombros, como na foto da figurinha. */
+/* Retrato em camadas: pele (6 tons), cabelo em cinza pintado na cor escolhida,
+   barba, acessórios e o número da camisa. As camadas de pele e cabelo são
+   ilustrações em assets/avatar, todas no mesmo quadro de 440x513. */
+const AVATAR_W = 440;
+const AVATAR_H = 513;
+const HAIR_INDEX = { curto: 1, moicano: 2, black: 3, longo: 4, raspado: 5, coque: 6 };
+const avatarAsset = (name) => new URL(`../../assets/avatar/${name}.webp`, import.meta.url).href;
+
+function hexToRgb(hex) {
+  const value = Number.parseInt(String(hex).replace('#', ''), 16);
+  return [(value >> 16) & 255, (value >> 8) & 255, value & 255].map((channel) => channel / 255);
+}
+
+/**
+ * Filtro que pinta o cabelo cinza na cor escolhida, mantendo a sombra:
+ * o cinza escuro vira a cor escurecida e o cinza claro vira o brilho.
+ */
+function hairTint(hex) {
+  const base = hexToRgb(hex);
+  const stops = Array.from({ length: 11 }, (_, index) => index / 10);
+  const tone = (gray, channel) => {
+    const t = clamp((gray - 0.2) / 0.3, 0, 1);
+    const dark = base[channel] * 0.45;
+    const mid = base[channel];
+    const light = mid + (1 - mid) * 0.35;
+    const value = t < 0.5 ? dark + (mid - dark) * (t / 0.5) : mid + (light - mid) * ((t - 0.5) / 0.5);
+    return round(value, 3);
+  };
+  const table = (channel) => stops.map((gray) => tone(gray, channel)).join(' ');
+  const id = `tinta-${String(hex).replace('#', '')}`;
+  return {
+    id,
+    markup: `<filter id="${id}" color-interpolation-filters="sRGB"><feComponentTransfer>
+      <feFuncR type="table" tableValues="${table(0)}"/><feFuncG type="table" tableValues="${table(1)}"/><feFuncB type="table" tableValues="${table(2)}"/>
+    </feComponentTransfer></filter>`,
+  };
+}
+
+/** Barbas desenhadas no traço da ilustração, na cor do cabelo. */
+function beardMarkup(beard, color) {
+  const line = 'stroke="#1b1d22" stroke-width="2" stroke-linejoin="round"';
+  const mustache = `<path d="M186 302 Q220 288 254 302 Q238 312 220 306 Q202 312 186 302 Z" fill="${color}" ${line}/>`;
+  if (beard === 'cavanhaque') {
+    return `${mustache}<path d="M192 328 Q220 318 248 328 L254 362 Q242 394 220 398 Q198 394 186 362 Z" fill="${color}" ${line}/>`;
+  }
+  if (beard === 'cheia') {
+    return `<path d="M130 292 C134 350 176 396 220 397 C264 396 306 350 310 292 L298 294 C296 322 282 340 264 342 C252 328 236 322 220 322 C204 322 188 328 176 342 C158 340 144 322 142 294 Z" fill="${color}" ${line}/>${mustache}`;
+  }
+  if (beard === 'rala') {
+    return `<path d="M136 300 C140 352 178 392 220 393 C262 392 300 352 304 300 C290 334 266 344 220 344 C174 344 150 334 136 300 Z" fill="${color}" opacity=".32"/>
+      <path d="M190 302 Q220 292 250 302 Q236 309 220 305 Q204 309 190 302 Z" fill="${color}" opacity=".4"/>`;
+  }
+  return '';
+}
+
+/** Retrato do jogador: cabeça e ombros, como na foto da figurinha. */
 export function avatarSvg(appearance = {}, { label = 'Retrato do jogador' } = {}) {
-  const skin = SKIN_TONES[clamp(appearance.skin ?? 3, 0, SKIN_TONES.length - 1)];
-  const hairColor = appearance.hairColor ?? '#2b1d14';
-  const hair = appearance.hair ?? 'curto';
-  const beard = appearance.beard ?? 'nenhuma';
-  const accessory = appearance.accessory ?? 'nenhum';
+  const skin = clamp(Math.round(appearance.skin ?? 3), 0, SKIN_TONES.length - 1) + 1;
+  const hair = HAIR_INDEX[appearance.hair] ?? HAIR_INDEX.curto;
+  const hairColor = appearance.hairColor ?? '#1b1210';
+  const tint = hairTint(hairColor);
   const kitNumber = Number.parseInt(appearance.kitNumber, 10);
-
-  const hairShapes = {
-    curto: `<path d="M34 46c0-17 12-26 26-26s26 9 26 26c0-6-10-11-26-11S34 40 34 46z" fill="${hairColor}"/>`,
-    moicano: `<path d="M55 14c7 0 11 7 11 18v12H55z" fill="${hairColor}"/><path d="M36 46c2-9 8-13 15-15v13z" fill="${hairColor}" opacity=".55"/>`,
-    black: `<ellipse cx="60" cy="36" rx="32" ry="24" fill="${hairColor}"/>`,
-    longo: `<path d="M31 48c0-19 13-28 29-28s29 9 29 28v32c-6 4-10-6-10-19 0-11-8-15-19-15s-19 4-19 15c0 13-4 23-10 19z" fill="${hairColor}"/>`,
-    raspado: `<path d="M36 46c0-15 11-23 24-23s24 8 24 23c-3-4-11-7-24-7s-21 3-24 7z" fill="${hairColor}" opacity=".45"/>`,
-    coque: `<path d="M34 46c0-17 12-26 26-26s26 9 26 26c0-6-10-11-26-11S34 40 34 46z" fill="${hairColor}"/><circle cx="60" cy="14" r="9" fill="${hairColor}"/>`,
-  };
-
-  const beardShapes = {
-    nenhuma: '',
-    cavanhaque: `<path d="M52 80h16c0 6-4 10-8 10s-8-4-8-10z" fill="${hairColor}" opacity=".85"/>`,
-    cheia: `<path d="M36 60c0 24 11 34 24 34s24-10 24-34c-4 15-12 20-24 20s-20-5-24-20z" fill="${hairColor}" opacity=".9"/>`,
-  };
-
-  const accessoryShapes = {
-    nenhum: '',
-    faixa: `<rect x="20" y="124" width="22" height="9" rx="2" fill="#f6c600" transform="rotate(-8 31 128)"/>`,
-    fita: `<rect x="34" y="39" width="52" height="6" rx="3" fill="#ffffff" opacity=".9"/>`,
-  };
+  const accessory = appearance.accessory ?? 'nenhum';
 
   return `
-    <svg class="avatar" viewBox="0 0 120 140" role="img" aria-label="${esc(label)}">
-      <path d="M8 140c2-26 22-38 52-38s50 12 52 38z" fill="#fdfdfb"/>
-      <path d="M48 102h24l-12 14z" fill="#d7dbe3"/>
-      <rect x="51" y="88" width="18" height="18" rx="6" fill="${skin}"/>
-      <ellipse cx="60" cy="62" rx="26" ry="31" fill="${skin}"/>
-      <ellipse cx="50" cy="60" rx="3.4" ry="4.2" fill="#1b2430"/>
-      <ellipse cx="70" cy="60" rx="3.4" ry="4.2" fill="#1b2430"/>
-      <path d="M52 75q8 5 16 0" stroke="#8d4a3a" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-      ${beardShapes[beard] ?? ''}
-      ${hairShapes[hair] ?? hairShapes.curto}
-      ${accessoryShapes[accessory] ?? ''}
-      ${Number.isFinite(kitNumber) ? `<text class="avatar__kit" x="84" y="134" text-anchor="middle">${kitNumber}</text>` : ''}
+    <svg class="avatar" viewBox="0 0 ${AVATAR_W} ${AVATAR_H}" role="img" aria-label="${esc(label)}">
+      <defs>${tint.markup}</defs>
+      <image href="${avatarAsset(`pele-${skin}`)}" width="${AVATAR_W}" height="${AVATAR_H}"/>
+      ${beardMarkup(appearance.beard, hairColor)}
+      <image href="${avatarAsset(`cabelo-${hair}`)}" width="${AVATAR_W}" height="${AVATAR_H}" filter="url(#${tint.id})"/>
+      ${accessory === 'fita' ? '<path d="M128 168 Q220 132 312 168 L314 186 Q220 152 126 186 Z" fill="#ffffff" stroke="#1b1d22" stroke-width="2"/>' : ''}
+      ${accessory === 'faixa' ? '<rect x="14" y="452" width="66" height="22" rx="3" fill="#f6c600" stroke="#1b1d22" stroke-width="2" transform="rotate(-26 47 463)"/>' : ''}
+      ${Number.isFinite(kitNumber) ? `<text class="avatar__kit" x="356" y="480" text-anchor="middle">${kitNumber}</text>` : ''}
     </svg>`;
 }
 
