@@ -1,9 +1,9 @@
 // Primeiro passo da carreira: escolher em qual peneira apostar.
 
 import { esc } from '../dom.js';
-import { money } from '../../core/utils.js';
-import { getLeague, squadRating } from '../../data/clubs.js';
-import { avatarSvg, overallBadge } from '../components.js';
+import { getNation } from '../../data/nations.js';
+import { getPosition } from '../../data/positions.js';
+import { offerSticker, playerSticker } from '../components.js';
 
 export default {
   id: 'trials',
@@ -14,47 +14,27 @@ export default {
     if (!player || !trials) return '<div class="screen"><p>Carregando...</p></div>';
 
     return `
-      <div class="screen screen--trials">
-        <header class="screen__head">
-          <h1>Começando do zero</h1>
-          <p class="muted">${esc(trials.intro)}</p>
-        </header>
-
-        <section class="preview">
-          <div class="preview__avatar">${avatarSvg(player.appearance, 110)}</div>
-          <div class="preview__info">
-            <h2>${esc(player.firstName)} ${esc(player.lastName)}</h2>
-            <p class="muted">Três clubes te chamaram para treinar. Escolha um — o nível do clube muda
-            o quanto você vai jogar e o quanto vai aparecer.</p>
+      <div class="screen">
+        <header class="legacy">
+          ${playerSticker(player, { size: 'md', isNew: true, meta: `${getNation(player.nationality).id} · ${getPosition(player.position).name}` })}
+          <div class="section">
+            <h1>Começando do zero</h1>
+            <p class="lede">${esc(trials.intro)}</p>
+            <p class="lede">Três clubes chamaram você para a peneira. Clube mais forte significa mais vitrine e menos minutos. Escolha um.</p>
           </div>
-          ${overallBadge(player.overall, { label: player.position, size: 'lg' })}
-        </section>
+        </header>
 
         <div class="offers">
           ${trials.offers
-            .map((offer) => {
-              const league = getLeague(offer.leagueId);
-              const rating = squadRating(offer.clubId);
-              const gap = player.overall - rating;
-              const chance = gap >= 0 ? 'Você já está no nível do grupo' : gap > -8 ? 'Vai disputar posição' : 'Vai precisar suar para aparecer';
-              return `
-                <article class="offer">
-                  <header class="offer__head">
-                    <h3>${esc(offer.clubName)}</h3>
-                    <span class="offer__league">${esc(league?.name ?? '')}</span>
-                  </header>
-                  <p class="offer__pitch">${esc(offer.pitch)}</p>
-                  <ul class="offer__facts">
-                    <li>Nível do plantel: <strong>${rating}</strong></li>
-                    <li>Salário: <strong>${esc(money(offer.weeklySalary))}</strong>/semana</li>
-                    <li>Contrato: <strong>${offer.years} temporadas</strong></li>
-                    <li class="muted">${esc(chance)}</li>
-                  </ul>
-                  <button class="btn btn--primary btn--block" data-action="accept-trial" data-offer="${esc(offer.id)}">
-                    Assinar com o ${esc(offer.clubName)}
-                  </button>
-                </article>`;
-            })
+            .map((offer, index) =>
+              offerSticker(offer, player, {
+                action: `data-action="accept-trial" data-offer="${esc(offer.id)}"`,
+                label: 'Assinar',
+                ariaLabel: `Assinar com o ${offer.clubName}`,
+                isNew: true,
+                index,
+              }),
+            )
             .join('')}
         </div>
       </div>`;

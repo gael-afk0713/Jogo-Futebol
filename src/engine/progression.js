@@ -152,10 +152,10 @@ export function legacyScore(player) {
 }
 
 export function legacyTier(score) {
-  if (score >= 3200) return { label: 'LENDA ETERNA', icon: '👑', text: 'Seu nome entra na conversa dos maiores de todos os tempos.' };
-  if (score >= 2200) return { label: 'ÍDOLO MUNDIAL', icon: '🌟', text: 'Gerações vão lembrar de te ver jogar.' };
-  if (score >= 1400) return { label: 'CRAQUE CONSAGRADO', icon: '🏆', text: 'Carreira de altíssimo nível, com títulos e respeito.' };
-  if (score >= 800) return { label: 'PROFISSIONAL RESPEITADO', icon: '🎖️', text: 'Você viveu do futebol com dignidade e boas histórias.' };
-  if (score >= 400) return { label: 'CARREIRA SÓLIDA', icon: '⚽', text: 'Nem toda carreira é de craque — e a sua valeu a pena.' };
-  return { label: 'SONHO INTERROMPIDO', icon: '🥀', text: 'O futebol é cruel. Pelo menos você tentou.' };
+  if (score >= 3200) return { label: 'LENDA ETERNA', icon: 'trophy', text: 'Seu nome entra na conversa dos maiores de todos os tempos.' };
+  if (score >= 2200) return { label: 'ÍDOLO MUNDIAL', icon: 'star', text: 'Gerações vão lembrar de te ver jogar.' };
+  if (score >= 1400) return { label: 'CRAQUE CONSAGRADO', icon: 'trophy', text: 'Carreira de altíssimo nível, com títulos e respeito.' };
+  if (score >= 800) return { label: 'PROFISSIONAL RESPEITADO', icon: 'medal', text: 'Você viveu do futebol com dignidade e boas histórias.' };
+  if (score >= 400) return { label: 'CARREIRA SÓLIDA', icon: 'soccer-ball', text: 'Nem toda carreira é de craque, e a sua valeu a pena.' };
+  return { label: 'SONHO INTERROMPIDO', icon: 'heart', text: 'O futebol é cruel. Pelo menos você tentou.' };
 }

@@ -92,7 +92,7 @@ seu overall, idade, potencial, nota da temporada, fama, reputação e disciplina
 Cada proposta diz a função (estrela, titular, rotação, promessa), salário, luvas,
 duração e multa. Também existem renovação e empréstimo para quem não está jogando.
 
-São **mais de 180 clubes em 18 ligas** (da Copa São Paulo de Juniores e Série C
+São **202 clubes em 18 ligas** (da Copa São Paulo de Juniores e Série C
 brasileira até Premier League, LaLiga, Bundesliga, Serie A, Saudi Pro League).
 
 ### 7. Seleção, títulos e prêmios
@@ -149,11 +149,22 @@ escrever a cada clique). O 💾 na barra de cima força o save imediato.
 
 ---
 
+## Visual
+
+A interface é desenhada como um **álbum de figurinhas**: você é uma figurinha, cada
+temporada completa é colada num espaço numerado, títulos e prêmios viram figurinhas
+brilhantes e o que ainda falta aparece como espaço vazio. Funciona no celular e no
+computador, e segue o modo claro ou noturno do sistema. As regras estão em
+[`DESIGN.md`](DESIGN.md).
+
 ## Estrutura do código
 
 ```
 index.html                 página única
-assets/css/style.css       tema escuro, mobile-first
+assets/css/style.css       mundo "álbum de figurinhas", claro e noturno
+assets/fonts/              Barlow e Barlow Condensed hospedadas no projeto (OFL)
+DESIGN.md                  sistema visual: tokens, regras e componentes
+PRODUCT.md                 quem joga, para quê e o que não pode mudar
 src/
   main.js                  ponto de entrada
   core/
@@ -164,11 +175,11 @@ src/
   data/                    conteúdo do jogo, separado das regras
     attributes.js          34 atributos em 7 grupos
     positions.js           9 posições, pesos de overall e perfis
-    clubs.js               18 ligas, 180+ clubes, prestígio e salários
+    clubs.js               18 ligas, 202 clubes, prestígio e salários
     nations.js             20 seleções
     traits.js              14 traços com efeitos em campo e fora
-    lifeEvents.js          36 eventos de vida com condições e desfechos
-    matchMoments.js        21 lances interativos de partida
+    lifeEvents.js          33 eventos de vida com condições e desfechos
+    matchMoments.js        19 lances interativos de partida
     names.js               geradores de nome por país
   engine/                  regras puras, sem DOM
     player.js              criação e atributos de vida
@@ -184,7 +195,8 @@ src/
     finance.js             salário, gastos, investimentos
   ui/
     app.js                 roteador de telas e delegação de eventos
-    components.js          avatar SVG, barras, tabelas, cartões
+    components.js          figurinhas, avatar SVG, medidores, tabelas
+    icons.js               ícones Phosphor usados no jogo (MIT)
     dom.js                 helpers, toast, modal
     screens/               auth, create, trials, hub, match, offseason, retired
   firebase/

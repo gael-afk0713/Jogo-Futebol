@@ -8,7 +8,7 @@
 //   4. Em "Configurações do projeto > Seus aplicativos > Web", copie o objeto
 //      de configuração e cole abaixo.
 //
-// A apiKey do Firebase Web é pública por design — ela identifica o projeto e
+// A apiKey do Firebase Web é pública por design: ela identifica o projeto e
 // não dá acesso aos dados. A proteção real vem das regras do Firestore
 // (veja firestore.rules na raiz do repositório).
 

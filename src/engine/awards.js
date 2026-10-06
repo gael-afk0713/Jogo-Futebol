@@ -32,28 +32,28 @@ export function evaluateAwards(player, { season, summary, rng }) {
   if (!isGoalkeeper(player.position)) {
     const bar = topScorerBar(league);
     if (stats.goals >= bar && rng.chance(clamp(0.45 + (stats.goals - bar) * 0.07, 0.3, 0.95))) {
-      push(`Artilheiro da ${league.name}`, '👟', 3);
+      push(`Artilheiro da ${league.name}`, 'soccer-ball', 3);
     }
   }
 
   // Melhor jogador da liga
   if (rating >= 7.25 && stats.apps >= 18 && topFour && rng.chance(clamp((rating - 7.1) * 1.6, 0.2, 0.85))) {
-    push(`Melhor jogador da ${league.name}`, '🏅', 4);
+    push(`Melhor jogador da ${league.name}`, 'medal', 4);
   }
 
   // Seleção do campeonato
   if (rating >= 6.95 && stats.apps >= 16 && rng.chance(0.55)) {
-    push(`Seleção da ${league.name}`, '⭐', 2);
+    push(`Seleção da ${league.name}`, 'star', 2);
   }
 
   // Revelação
   if (player.age <= 21 && rating >= 6.75 && stats.apps >= 14 && rng.chance(0.6)) {
-    push('Revelação da temporada', '🌱', 2);
+    push('Revelação da temporada', 'sparkle', 2);
   }
 
   // Luva de ouro
   if (isGoalkeeper(player.position) && stats.cleanSheets >= 10 && rng.chance(0.6)) {
-    push(`Luva de Ouro da ${league.name}`, '🧤', 3);
+    push(`Luva de Ouro da ${league.name}`, 'hand-grabbing', 3);
   }
 
   // Golden Boy (sub-21 mundial)
@@ -64,7 +64,7 @@ export function evaluateAwards(player, { season, summary, rng }) {
     (league?.reputation ?? 0) >= 70 &&
     rng.chance(0.35)
   ) {
-    push('Golden Boy', '🥇', 6);
+    push('Golden Boy', 'medal', 6);
   }
 
   // Bola de Ouro
@@ -80,16 +80,16 @@ export function evaluateAwards(player, { season, summary, rng }) {
     ((league?.reputation ?? 50) - 70) * 0.25;
 
   if (player.overall >= 85 && rating >= 7 && ballonScore > 40 && rng.chance(clamp(ballonScore / 130, 0.1, 0.8))) {
-    push('BOLA DE OURO', '🏆', 12);
+    push('BOLA DE OURO', 'trophy', 12);
     adjustLife(player, 'fame', 22);
     adjustLife(player, 'reputation', 18);
   } else if (player.overall >= 82 && ballonScore > 26 && rng.chance(0.4)) {
-    push('Top 10 da Bola de Ouro', '✨', 4);
+    push('Top 10 da Bola de Ouro', 'star', 4);
   }
 
   // Prêmio de melhor na posição (mundial)
   if (player.overall >= 85 && rating >= 7.1 && rng.chance(0.45)) {
-    push(`Melhor ${player.position} do mundo`, '🌍', 5);
+    push(`Melhor ${player.position} do mundo`, 'flag', 5);
   }
 
   for (const award of awards) {

@@ -49,7 +49,7 @@ export const INVESTMENTS = [
   {
     id: 'poupanca',
     label: 'Renda fixa',
-    icon: '🏦',
+    icon: 'coins',
     cost: 50_000,
     description: 'Rende pouco, mas quase nunca dá problema.',
     minReturn: 1.02,
@@ -59,7 +59,7 @@ export const INVESTMENTS = [
   {
     id: 'imovel',
     label: 'Apartamento para alugar',
-    icon: '🏢',
+    icon: 'buildings',
     cost: 300_000,
     description: 'Renda passiva estável e valorização no longo prazo.',
     minReturn: 1.05,
@@ -69,7 +69,7 @@ export const INVESTMENTS = [
   {
     id: 'empresa',
     label: 'Sociedade em uma empresa',
-    icon: '📊',
+    icon: 'chart-line-up',
     cost: 800_000,
     description: 'Pode multiplicar ou virar pó.',
     minReturn: 0.6,
@@ -79,7 +79,7 @@ export const INVESTMENTS = [
   {
     id: 'escolinha',
     label: 'Escolinha de futebol',
-    icon: '🥎',
+    icon: 'soccer-ball',
     cost: 150_000,
     description: 'Dá lucro modesto e melhora muito a sua reputação.',
     minReturn: 1.0,

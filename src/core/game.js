@@ -151,8 +151,8 @@ export class Game {
     return this.state.season;
   }
 
-  pushNews(text, type = 'info') {
-    this.state.news.unshift({ text, type, at: Date.now(), week: this.season?.weekIndex ?? 0, year: this.season?.year ?? null });
+  pushNews(text, type = 'info', icon = null) {
+    this.state.news.unshift({ text, type, icon, at: Date.now(), week: this.season?.weekIndex ?? 0, year: this.season?.year ?? null });
     this.state.news = this.state.news.slice(0, 60);
   }
 
@@ -174,10 +174,10 @@ export class Game {
     const nation = getNation(player.nationality);
     this.state.trials = {
       offers: generateTrialOffers(player, this.rng, { nationLeagueId: nation.league === 'BRA1' ? 'BRA_BASE' : nation.league }),
-      intro: `${fullName(player)}, ${player.age} anos, ${getNation(player.nationality).demonym}. Nenhum clube, nenhum contrato — só vontade.`,
+      intro: `${fullName(player)}, ${player.age} anos, ${getNation(player.nationality).demonym}. Nenhum clube, nenhum contrato. Só vontade.`,
     };
     this.state.screen = SCREENS.TRIALS;
-    this.pushNews(`${fullName(player)} começa a buscar uma chance no futebol profissional.`, 'info');
+    this.pushNews(`${fullName(player)} começa a buscar uma chance no futebol profissional.`, 'info', 'user');
     this.notify();
     return player;
   }
@@ -188,7 +188,7 @@ export class Game {
     if (!offer) return;
     signContract(this.player, offer, { year: START_YEAR });
     this.player.career.clubs = [offer.clubId];
-    this.pushNews(`Contrato assinado com o ${offer.clubName}. A carreira começa agora.`, 'good');
+    this.pushNews(`Contrato assinado com o ${offer.clubName}. A carreira começa agora.`, 'good', 'handshake');
     adjustLife(this.player, 'happiness', 10);
     this.state.trials = null;
     this.beginSeason(START_YEAR, false);
@@ -202,7 +202,7 @@ export class Game {
     this.state.week = { step: WEEK_STEPS.TRAINING, trainingReport: null, eventId: null, eventResult: null, matchReport: null };
     this.state.offseason = null;
     const league = getLeague(this.season.leagueId);
-    this.pushNews(`Temporada ${year}/${String(year + 1).slice(2)} começa: ${league.name} com o ${getClub(this.player.club).name}.`, 'info');
+    this.pushNews(`Temporada ${year}/${String(year + 1).slice(2)} começa: ${league.name} com o ${getClub(this.player.club).name}.`, 'info', 'calendar-blank');
   }
 
   // ------------------------------------------------------------- loop semanal
@@ -252,7 +252,7 @@ export class Game {
 
     if (report.injury && !player.injury) {
       player.injury = { name: report.injury.name, weeks: report.injury.weeks };
-      this.pushNews(`${report.injury.name} no treino: ${report.injury.weeks} semana(s) fora.`, 'bad');
+      this.pushNews(`${report.injury.name} no treino: ${report.injury.weeks} semana(s) fora.`, 'bad', 'first-aid-kit');
     }
     this.state.week.trainingReport = report;
     this.advanceToLifeStep();
@@ -287,7 +287,7 @@ export class Game {
     this.player.overall = playerOverall(this.player);
     this.state.week.eventResult = { ...result, title: event.title, icon: event.icon };
     this.state.week.step = WEEK_STEPS.MATCH;
-    if (result?.text) this.pushNews(`${event.icon} ${result.text}`, 'info');
+    if (result?.text) this.pushNews(result.text, 'info', event.icon);
     this.notify();
     return result;
   }
@@ -464,14 +464,14 @@ export class Game {
     if (report.stats.redCards) {
       player.suspension += this.rng.int(1, 3);
       adjustLife(player, 'discipline', -8);
-      this.pushNews(`Expulso contra o ${report.opponentName}: ${player.suspension} jogo(s) de suspensão.`, 'bad');
+      this.pushNews(`Expulso contra o ${report.opponentName}: ${player.suspension} jogo(s) de suspensão.`, 'bad', 'cards');
     } else if (report.stats.yellowCards) {
       adjustLife(player, 'discipline', -1);
     }
     if (report.injured) {
       const weeks = this.rng.int(1, 6);
       player.injury = { name: this.rng.pick(['Lesão muscular', 'Entorse', 'Contusão no joelho', 'Fratura no dedo do pé']), weeks };
-      this.pushNews(`Você se lesionou contra o ${report.opponentName}: ${weeks} semana(s) fora.`, 'bad');
+      this.pushNews(`Você se lesionou contra o ${report.opponentName}: ${weeks} semana(s) fora.`, 'bad', 'first-aid-kit');
     }
 
     const bonus = matchBonus(player, report);
@@ -481,8 +481,8 @@ export class Game {
 
     const headline = report.didNotPlay
       ? report.reason
-      : `${report.score.team}x${report.score.opponent} contra o ${report.opponentName} · nota ${report.rating}${report.stats.goals ? ` · ${report.stats.goals} gol(s)` : ''}`;
-    this.pushNews(headline, report.result === 'V' ? 'good' : report.result === 'D' ? 'bad' : 'info');
+      : `${report.score.team}x${report.score.opponent} contra o ${report.opponentName}. Nota ${report.rating}${report.stats.goals ? `, ${report.stats.goals} gol(s)` : ''}.`;
+    this.pushNews(headline, report.result === 'V' ? 'good' : report.result === 'D' ? 'bad' : 'info', 'soccer-ball');
 
     this.applyWeekResult(week, report);
     this.state.week.matchReport = report;
@@ -510,10 +510,10 @@ export class Game {
       if (report.score.team === report.score.opponent) won = this.rng.chance(0.5);
       updateKnockout(season, week, won);
       if (!won && week.knockout) {
-        this.pushNews(`Eliminado na ${week.stage} da ${week.competitionName}.`, 'bad');
+        this.pushNews(`Eliminado na ${week.stage} da ${week.competitionName}.`, 'bad', 'x');
       }
       if (won && week.stage === 'FINAL') {
-        this.pushNews(`🏆 CAMPEÃO da ${week.competitionName}!`, 'good');
+        this.pushNews(`Campeão da ${week.competitionName}.`, 'good', 'trophy');
       }
     }
 
@@ -540,7 +540,7 @@ export class Game {
     if (player.injury) {
       player.injury.weeks -= 1;
       if (player.injury.weeks <= 0) {
-        this.pushNews('Recuperado da lesão e liberado para treinar.', 'good');
+        this.pushNews('Recuperado da lesão e liberado para treinar.', 'good', 'first-aid-kit');
         player.injury = null;
         adjustLife(player, 'fitness', -8);
       }
@@ -676,7 +676,7 @@ export class Game {
             loan: false,
             parentClub: null,
           };
-          this.pushNews(`Fim do empréstimo: você retorna ao ${getClub(parent)?.name}.`, 'info');
+          this.pushNews(`Fim do empréstimo: você retorna ao ${getClub(parent)?.name}.`, 'info', 'airplane-tilt');
         }
       }
     }
@@ -733,11 +733,11 @@ export class Game {
     signContract(this.player, offer, { year: offseason.year + 1 });
     adjustLife(this.player, 'happiness', 8);
     if (offer.renewal) {
-      this.pushNews(`Renovação assinada com o ${offer.clubName}.`, 'good');
+      this.pushNews(`Renovação assinada com o ${offer.clubName}.`, 'good', 'handshake');
     } else if (offer.loan) {
-      this.pushNews(`Emprestado ao ${offer.clubName} por uma temporada.`, 'info');
+      this.pushNews(`Emprestado ao ${offer.clubName} por uma temporada.`, 'info', 'airplane-tilt');
     } else {
-      this.pushNews(`Transferência fechada: ${previous} ➜ ${offer.clubName}.`, 'good');
+      this.pushNews(`Transferência fechada: ${previous} para o ${offer.clubName}.`, 'good', 'airplane-tilt');
       adjustLife(this.player, 'fame', 5);
     }
     this.startNextSeason();
@@ -753,10 +753,10 @@ export class Game {
       if (fallback) {
         fallback.weeklySalary = Math.round(fallback.weeklySalary * 0.75);
         signContract(this.player, fallback, { year: offseason.year + 1 });
-        this.pushNews(`Sem grandes propostas, você renovou em condições modestas com o ${fallback.clubName}.`, 'info');
+        this.pushNews(`Sem grandes propostas, você renovou em condições modestas com o ${fallback.clubName}.`, 'info', 'handshake');
       }
     } else {
-      this.pushNews(`Você permanece no ${getClub(this.player.club)?.name}.`, 'info');
+      this.pushNews(`Você permanece no ${getClub(this.player.club)?.name}.`, 'info', 'house');
     }
     this.startNextSeason();
   }

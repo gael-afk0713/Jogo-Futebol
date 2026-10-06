@@ -20,7 +20,7 @@ export const MOMENTS = [
     zones: ['ataque'],
     weight: 10,
     title: 'Cara a cara com o goleiro',
-    text: '{minute}\' — Lançamento nas suas costas, você ganha a corrida e fica de frente para o goleiro do {opponent}.',
+    text: 'Lançamento nas suas costas, você ganha a corrida e fica de frente para o goleiro do {opponent}.',
     options: [
       {
         label: 'Bater cruzado, no canto',
@@ -29,7 +29,7 @@ export const MOMENTS = [
         mod: 'shoot',
         difficulty: 4,
         stamina: 3,
-        success: { kind: 'goal', rating: 1.4, text: 'No canto! Sem chance para o goleiro — é GOL!' },
+        success: { kind: 'goal', rating: 1.4, text: 'No canto, sem chance para o goleiro. É gol!' },
         failure: { kind: 'lost', rating: -0.4, text: 'O goleiro adivinhou o canto e espalmou.' },
       },
       {
@@ -69,7 +69,7 @@ export const MOMENTS = [
     zones: ['ataque', 'meio'],
     weight: 9,
     title: 'Bola na meia-lua',
-    text: '{minute}\' — A bola sobra para você na entrada da área, com um zagueiro fechando o espaço.',
+    text: 'A bola sobra para você na entrada da área, com um zagueiro fechando o espaço.',
     options: [
       {
         label: 'Chutar de fora da área',
@@ -109,7 +109,7 @@ export const MOMENTS = [
     zones: ['ataque'],
     weight: 8,
     title: 'Cruzamento na segunda trave',
-    text: '{minute}\' — {teammate} levanta na área e a bola vem na sua direção, na altura da cabeça.',
+    text: '{teammate} levanta na área e a bola vem na sua direção, na altura da cabeça.',
     options: [
       {
         label: 'Cabecear no canto',
@@ -148,7 +148,7 @@ export const MOMENTS = [
     zones: ['ataque', 'meio'],
     weight: 8,
     title: 'Contra-ataque 2 contra 1',
-    text: '{minute}\' — Vocês roubam a bola e saem em dois contra um zagueiro. Você conduz.',
+    text: 'Vocês roubam a bola e saem em dois contra um zagueiro. Você conduz.',
     options: [
       {
         label: 'Segurar e tocar na hora certa',
@@ -179,7 +179,7 @@ export const MOMENTS = [
     tag: 'bola-parada',
     requiresSetPiece: true,
     title: 'Falta frontal, 22 metros',
-    text: '{minute}\' — Falta na entrada da área. Você pega a bola e o estádio faz silêncio.',
+    text: 'Falta na entrada da área. Você pega a bola e o estádio faz silêncio.',
     options: [
       {
         label: 'Bater por cima da barreira',
@@ -198,7 +198,7 @@ export const MOMENTS = [
         mod: 'setPiece',
         difficulty: 20,
         stamina: 2,
-        success: { kind: 'goal', rating: 2.2, text: 'Por baixo da barreira que saltou — GOL inacreditável!' },
+        success: { kind: 'goal', rating: 2.2, text: 'Por baixo da barreira que saltou. Gol inacreditável!' },
         failure: { kind: 'lost', rating: -0.3, text: 'A barreira não saltou e bloqueou.' },
       },
       {
@@ -220,7 +220,7 @@ export const MOMENTS = [
     tag: 'penalti',
     requiresPenalty: true,
     title: 'Pênalti!',
-    text: '{minute}\' — Pênalti para o {club}. Você é o cobrador. Toda a pressão nos seus pés.',
+    text: 'Pênalti para o {club}. Você é o cobrador. Toda a pressão nos seus pés.',
     options: [
       {
         label: 'Bater forte no canto',
@@ -270,7 +270,7 @@ export const MOMENTS = [
     zones: ['meio', 'defesa'],
     weight: 9,
     title: 'Pressão alta do adversário',
-    text: '{minute}\' — O {opponent} sobe a marcação e você recebe de costas, cercado por dois.',
+    text: 'O {opponent} sobe a marcação e você recebe de costas, cercado por dois.',
     options: [
       {
         label: 'Girar e sair jogando',
@@ -309,7 +309,7 @@ export const MOMENTS = [
     zones: ['meio', 'defesa'],
     weight: 8,
     title: 'Duelo no meio de campo',
-    text: '{minute}\' — Bola dividida no meio. O camisa 8 do {opponent} vem com tudo.',
+    text: 'Bola dividida no meio. O camisa 8 do {opponent} vem com tudo.',
     options: [
       {
         label: 'Entrar firme na dividida',
@@ -348,7 +348,7 @@ export const MOMENTS = [
     zones: ['meio'],
     weight: 7,
     title: 'Hora de acelerar o jogo',
-    text: '{minute}\' — Você recebe no meio com campo pela frente e o jogo aberto.',
+    text: 'Você recebe no meio com campo pela frente e o jogo aberto.',
     options: [
       {
         label: 'Conduzir até a intermediária',
@@ -389,7 +389,7 @@ export const MOMENTS = [
     zones: ['defesa', 'meio'],
     weight: 10,
     title: 'Um contra um na sua área',
-    text: '{minute}\' — O ponta do {opponent} vem driblando em cima de você, dentro da sua área.',
+    text: 'O ponta do {opponent} vem driblando em cima de você, dentro da sua área.',
     options: [
       {
         label: 'Esperar e tirar na hora certa',
@@ -430,7 +430,7 @@ export const MOMENTS = [
     zones: ['defesa'],
     weight: 8,
     title: 'Escanteio contra',
-    text: '{minute}\' — Escanteio para o {opponent}. A bola vem na sua zona e o centroavante sobe junto.',
+    text: 'Escanteio para o {opponent}. A bola vem na sua zona e o centroavante sobe junto.',
     options: [
       {
         label: 'Subir para cortar de cabeça',
@@ -460,7 +460,7 @@ export const MOMENTS = [
     zones: ['defesa'],
     weight: 6,
     title: 'Construção desde a defesa',
-    text: '{minute}\' — Você recebe do goleiro com o atacante do {opponent} pressionando.',
+    text: 'Você recebe do goleiro com o atacante do {opponent} pressionando.',
     options: [
       {
         label: 'Sair jogando pelo chão',
@@ -500,7 +500,7 @@ export const MOMENTS = [
     zones: ['gol'],
     weight: 10,
     title: 'Chute de fora da área',
-    text: '{minute}\' — O meia do {opponent} arrisca de longe, a bola vem com força e desvia no caminho.',
+    text: 'O meia do {opponent} arrisca de longe, a bola vem com força e desvia no caminho.',
     options: [
       {
         label: 'Espalmar para a linha de fundo',
@@ -529,7 +529,7 @@ export const MOMENTS = [
     zones: ['gol'],
     weight: 9,
     title: 'Atacante na sua cara',
-    text: '{minute}\' — Falha da zaga e o atacante do {opponent} vem livre na sua direção.',
+    text: 'Falha da zaga e o atacante do {opponent} vem livre na sua direção.',
     options: [
       {
         label: 'Sair da área e fechar o ângulo',
@@ -569,7 +569,7 @@ export const MOMENTS = [
     zones: ['gol'],
     weight: 8,
     title: 'Bola alçada na área',
-    text: '{minute}\' — Cruzamento na sua área, três atacantes do {opponent} esperando o rebote.',
+    text: 'Cruzamento na sua área, três atacantes do {opponent} esperando o rebote.',
     options: [
       {
         label: 'Sair de soco',
@@ -608,7 +608,7 @@ export const MOMENTS = [
     weight: 3,
     tag: 'penalti',
     title: 'Pênalti contra',
-    text: '{minute}\' — Pênalti para o {opponent}. Você estuda o batedor na marca da cal.',
+    text: 'Pênalti para o {opponent}. Você estuda o batedor na marca da cal.',
     options: [
       {
         label: 'Escolher um canto e voar',
@@ -651,7 +651,7 @@ export const MOMENTS = [
     weight: 6,
     lateGameOnly: true,
     title: 'Último lance da partida',
-    text: '{minute}\' — Último ataque do jogo e a bola cai no seu pé. Agora ou nunca.',
+    text: 'Último ataque do jogo e a bola cai no seu pé. Agora ou nunca.',
     options: [
       {
         label: 'Assumir a responsabilidade e chutar',
@@ -680,7 +680,7 @@ export const MOMENTS = [
     zones: ['ataque', 'meio', 'defesa', 'gol'],
     weight: 4,
     title: 'Provocação do adversário',
-    text: '{minute}\' — O zagueiro do {opponent} te provoca depois de uma dividida e empurra seu peito.',
+    text: 'O zagueiro do {opponent} te provoca depois de uma dividida e empurra seu peito.',
     options: [
       {
         label: 'Ignorar e seguir o jogo',
@@ -719,7 +719,7 @@ export const MOMENTS = [
     weight: 5,
     requiresTired: true,
     title: 'Pernas pesadas',
-    text: '{minute}\' — Você sente a coxa travando. O banco pergunta se você quer sair.',
+    text: 'Você sente a coxa travando. O banco pergunta se você quer sair.',
     options: [
       {
         label: 'Pedir substituição',

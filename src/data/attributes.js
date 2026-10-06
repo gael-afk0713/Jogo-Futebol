@@ -5,7 +5,7 @@ export const ATTRIBUTE_GROUPS = [
   {
     id: 'ritmo',
     label: 'Ritmo',
-    icon: '⚡',
+    icon: 'lightning',
     attributes: [
       { id: 'acceleration', label: 'Aceleração' },
       { id: 'sprintSpeed', label: 'Velocidade' },
@@ -14,7 +14,7 @@ export const ATTRIBUTE_GROUPS = [
   {
     id: 'finalizacao',
     label: 'Finalização',
-    icon: '🎯',
+    icon: 'target',
     attributes: [
       { id: 'finishing', label: 'Finalização' },
       { id: 'shotPower', label: 'Força do chute' },
@@ -27,7 +27,7 @@ export const ATTRIBUTE_GROUPS = [
   {
     id: 'passe',
     label: 'Passe',
-    icon: '🧠',
+    icon: 'brain',
     attributes: [
       { id: 'vision', label: 'Visão de jogo' },
       { id: 'shortPass', label: 'Passe curto' },
@@ -40,7 +40,7 @@ export const ATTRIBUTE_GROUPS = [
   {
     id: 'drible',
     label: 'Drible',
-    icon: '🕺',
+    icon: 'sneaker-move',
     attributes: [
       { id: 'ballControl', label: 'Controle de bola' },
       { id: 'dribbling', label: 'Drible' },
@@ -53,7 +53,7 @@ export const ATTRIBUTE_GROUPS = [
   {
     id: 'defesa',
     label: 'Defesa',
-    icon: '🛡️',
+    icon: 'shield',
     attributes: [
       { id: 'defAwareness', label: 'Senso defensivo' },
       { id: 'interceptions', label: 'Interceptação' },
@@ -65,7 +65,7 @@ export const ATTRIBUTE_GROUPS = [
   {
     id: 'fisico',
     label: 'Físico',
-    icon: '💪',
+    icon: 'barbell',
     attributes: [
       { id: 'strength', label: 'Força' },
       { id: 'stamina', label: 'Resistência' },
@@ -76,7 +76,7 @@ export const ATTRIBUTE_GROUPS = [
   {
     id: 'goleiro',
     label: 'Goleiro',
-    icon: '🧤',
+    icon: 'hand-grabbing',
     goalkeeperOnly: true,
     attributes: [
       { id: 'gkDiving', label: 'Elasticidade' },

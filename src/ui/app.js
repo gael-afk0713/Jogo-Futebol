@@ -1,6 +1,7 @@
 // Monta a aplicação: roteia telas, delega eventos e cuida do save.
 
 import { confirmDialog, esc, mount, toast } from './dom.js';
+import { icon } from './components.js';
 import { game, SCREENS } from '../core/game.js';
 import { SaveManager, loadLocal } from '../core/storage.js';
 import { firebaseAvailable, onAuthChange, signOutUser } from '../firebase/firebase.js';
@@ -24,12 +25,18 @@ const SCREEN_MAP = {
 };
 
 const SAVE_LABELS = {
-  idle: '',
-  local: '💾 salvo no navegador',
-  saving: '☁️ salvando...',
-  cloud: '☁️ salvo na nuvem',
-  error: '⚠️ falha ao salvar na nuvem',
+  idle: { text: '', icon: null },
+  local: { text: 'Salvo no navegador', icon: 'floppy-disk' },
+  saving: { text: 'Salvando na nuvem', icon: 'cloud' },
+  cloud: { text: 'Salvo na nuvem', icon: 'cloud-check' },
+  error: { text: 'Falha ao salvar na nuvem', icon: 'cloud-slash' },
 };
+
+function saveStatusMarkup(status) {
+  const label = SAVE_LABELS[status] ?? SAVE_LABELS.idle;
+  if (!label.text) return '';
+  return `${icon(label.icon)}<span class="save-status__text">${esc(label.text)}</span>`;
+}
 
 export class App {
   constructor(root) {
@@ -213,21 +220,23 @@ export class App {
     const user = this.auth.user;
 
     return `
+      <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
       <header class="topbar">
-        <button class="topbar__brand" data-action="${showGameControls ? 'noop' : 'go-auth'}">
-          <span class="topbar__logo">⚽</span>
-          <span class="topbar__title">Craque do Zero</span>
+        <button class="brand" data-action="${showGameControls ? 'noop' : 'go-auth'}" aria-label="Craque do Zero">
+          <span class="brand__mark">${icon('soccer-ball')}</span>
+          <span class="brand__name">Craque do Zero</span>
         </button>
         <div class="topbar__right">
-          <span class="topbar__save" id="save-status">${esc(SAVE_LABELS[this.save.status] ?? '')}</span>
+          <span class="save-status" id="save-status" role="status">${saveStatusMarkup(this.save.status)}</span>
           ${
             showGameControls
-              ? `<button class="btn btn--mini" data-action="save-now" title="Salvar agora">💾</button>
-                 <button class="btn btn--mini ${state.settings.fastMode ? 'is-active' : ''}" data-action="toggle-fast" title="Modo rápido: menos eventos de vida">⏩</button>
-                 <button class="btn btn--mini" data-action="new-game" title="Nova carreira">🔄</button>`
+              ? `<button class="iconbtn" data-action="save-now" aria-label="Salvar agora" title="Salvar agora">${icon('floppy-disk')}</button>
+                 <button class="iconbtn ${state.settings.fastMode ? 'is-active' : ''}" data-action="toggle-fast"
+                   aria-pressed="${state.settings.fastMode}" aria-label="Modo rápido: menos eventos de vida" title="Modo rápido: menos eventos de vida">${icon('fast-forward')}</button>
+                 <button class="iconbtn" data-action="new-game" aria-label="Começar nova carreira" title="Começar nova carreira">${icon('arrow-counter-clockwise')}</button>`
               : ''
           }
-          ${user ? `<button class="btn btn--mini" data-action="app-sign-out" title="Sair da conta">🚪</button>` : ''}
+          ${user ? `<button class="iconbtn" data-action="app-sign-out" aria-label="Sair da conta" title="Sair da conta">${icon('sign-out')}</button>` : ''}
         </div>
       </header>`;
   }
@@ -236,15 +245,17 @@ export class App {
     if (this.rendering) return;
     this.rendering = true;
     const screen = SCREEN_MAP[this.game.state.screen] ?? authScreen;
-    const scroll = window.scrollY;
-    const markup = `${this.topBar()}<main class="app__main">${screen.render(this.game.state, this.ctx)}</main>`;
+    const screenChanged = this.lastScreen !== this.game.state.screen;
+    this.lastScreen = this.game.state.screen;
+    const scroll = screenChanged ? 0 : window.scrollY;
+    const markup = `${this.topBar()}<main class="app__main" id="conteudo" tabindex="-1">${screen.render(this.game.state, this.ctx)}</main>`;
     mount(this.root, markup);
-    window.scrollTo({ top: scroll });
+    window.scrollTo({ top: scroll, behavior: 'instant' });
     this.rendering = false;
   }
 
   renderStatus() {
     const node = document.getElementById('save-status');
-    if (node) node.textContent = SAVE_LABELS[this.save.status] ?? '';
+    if (node) node.innerHTML = saveStatusMarkup(this.save.status);
   }
 }

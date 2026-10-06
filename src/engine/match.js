@@ -108,8 +108,8 @@ function addRatingPoints(match, value) {
   match.rating = round(computeRating(match), 1);
 }
 
-function log(match, text, type = 'info') {
-  match.timeline.push({ minute: match.minute, text, type });
+function log(match, text, type = 'info', icon = null, minute = match.minute) {
+  match.timeline.push({ minute, text, type, icon });
 }
 
 function fillText(template, match, player) {
@@ -154,7 +154,7 @@ function pickMoment(match, player, rng) {
     if (moment.lateGameOnly && lateGame) weight *= 2.5;
     if (moment.tag === 'penalti') weight *= 0.6;
     // O jogo tende a procurar quem sabe jogar: um meia técnico recebe mais
-    // lances de passe e drible do que disputas aéreas. Sem zerar nenhum lance —
+    // lances de passe e drible do que disputas aéreas. Sem zerar nenhum lance:
     // às vezes a bola cai na sua cabeça mesmo.
     const bestChance = Math.max(...moment.options.map((option) => successChance(player, option, match)));
     weight *= 0.35 + bestChance * 1.3;
@@ -185,14 +185,14 @@ export function successChance(player, option, match) {
   return clamp(probability, 0.05, 0.95);
 }
 
-function concede(match, reason) {
+function concede(match, reason, minute = match.minute) {
   match.score.opponent += 1;
-  log(match, `⚽ Gol do ${match.opponentName}. ${reason}`, 'bad');
+  log(match, `Gol do ${match.opponentName}. ${reason}`, 'bad', 'soccer-ball', minute);
 }
 
-function teamScores(match, scorer) {
+function teamScores(match, scorer, minute = match.minute) {
   match.score.team += 1;
-  log(match, `⚽ Gol do ${match.clubName}! ${scorer}`, 'good');
+  log(match, `Gol do ${match.clubName}. ${scorer}`, 'good', 'soccer-ball', minute);
 }
 
 /** Simula o que acontece no jogo fora dos seus lances. */
@@ -204,11 +204,13 @@ function simulateBackground(match, player, rng, minutes) {
   const teamXg = expectedGoals(match.teamRating, match.opponentRating) * share * (1 + playerBoost);
   const oppXg = expectedGoals(match.opponentRating, match.teamRating) * share;
 
+  // O gol acontece em algum minuto dentro do trecho simulado, não no início dele.
+  const goalMinute = () => clamp(match.minute + rng.int(1, Math.max(1, Math.round(minutes))), 1, 90);
   if (rng.chance(clamp(teamXg, 0, 0.9))) {
-    teamScores(match, `${rng.pick(match.teammates)} finaliza bem.`);
+    teamScores(match, `${rng.pick(match.teammates)} finaliza bem.`, goalMinute());
   }
   if (rng.chance(clamp(oppXg, 0, 0.9))) {
-    concede(match, 'Falha coletiva na marcação.');
+    concede(match, 'Falha coletiva na marcação.', goalMinute());
   }
 }
 
@@ -228,7 +230,7 @@ export function advance(match, player, rng) {
       simulateBackground(match, player, rng, step);
       match.minute = match.entryMinute;
       match.onField = true;
-      log(match, `🔁 Você entra em campo no lugar de ${rng.pick(match.teammates)}.`, 'info');
+      log(match, `Você entra em campo no lugar de ${rng.pick(match.teammates)}.`, 'info', 'arrow-right');
     }
   }
 
@@ -295,7 +297,7 @@ export function choose(match, player, optionIndex, rng) {
   };
 
   addRatingPoints(match, outcome?.rating ?? 0);
-  log(match, `${success ? '✅' : '❌'} ${resolution.text}`, success ? 'good' : 'bad');
+  log(match, resolution.text, success ? 'good' : 'bad', success ? 'check' : 'x');
 
   applyKind(match, player, resolution.kind, rng, resolution);
 
@@ -369,7 +371,7 @@ function applyKind(match, player, kind, rng, resolution) {
     case 'substitution':
       match.substituted = true;
       match.onField = false;
-      log(match, '🔁 Você deixa o campo.', 'info');
+      log(match, 'Você deixa o campo.', 'info', 'sign-out');
       break;
     case 'lost': {
       const concedeChance = { gol: 1, defesa: 0.4, meio: 0.2, ataque: 0.05 }[match.zone] ?? 0.1;
@@ -388,13 +390,13 @@ function giveCard(match, player, rng, resolution) {
     match.onField = false;
     match.ratingPoints -= 2.2;
     match.rating = round(computeRating(match), 1);
-    log(match, '🟥 CARTÃO VERMELHO! Você está expulso.', 'bad');
+    log(match, 'Cartão vermelho. Você está expulso.', 'bad', 'cards');
     resolution?.extras.push('Cartão vermelho');
   } else {
     match.stats.yellowCards += 1;
     match.ratingPoints -= 0.35;
     match.rating = round(computeRating(match), 1);
-    log(match, '🟨 Cartão amarelo.', 'bad');
+    log(match, 'Cartão amarelo.', 'bad', 'cards');
     resolution?.extras.push('Cartão amarelo');
   }
 }
@@ -402,7 +404,7 @@ function giveCard(match, player, rng, resolution) {
 function injure(match, resolution) {
   match.injured = true;
   match.onField = false;
-  log(match, '🚑 Você se machuca e precisa sair.', 'bad');
+  log(match, 'Você se machuca e precisa sair.', 'bad', 'first-aid-kit');
   resolution?.extras.push('Lesão');
 }
 
@@ -434,7 +436,7 @@ export function finish(match, player, rng) {
     if (rng.chance(risk)) {
       match.stats.yellowCards = 1;
       rating -= 0.1;
-      log(match, '🟨 Cartão amarelo por falta tática.', 'bad');
+      log(match, 'Cartão amarelo por falta tática.', 'bad', 'cards');
     }
   }
 
@@ -459,8 +461,8 @@ export function finish(match, player, rng) {
     role: match.role,
   };
 
-  log(match, `🔚 Fim de jogo: ${match.clubName} ${match.score.team} x ${match.score.opponent} ${match.opponentName}`, 'info');
-  if (motm) log(match, '🏅 Você foi eleito o melhor da partida!', 'good');
+  log(match, `Fim de jogo: ${match.clubName} ${match.score.team} x ${match.score.opponent} ${match.opponentName}`, 'info', 'timer');
+  if (motm) log(match, 'Você foi eleito o melhor da partida.', 'good', 'medal');
   return match.report;
 }
 

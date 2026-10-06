@@ -281,7 +281,7 @@ export function qualifiesForContinental(season) {
   return Boolean(position && position <= spots) || season.cup.winner;
 }
 
-/** Nível médio dos adversários enfrentados — usado no cálculo de evolução. */
+/** Nível médio dos adversários enfrentados, usado no cálculo de evolução. */
 export function seasonDifficulty(season) {
   const played = season.results ?? [];
   if (!played.length) return getLeague(season.leagueId)?.level ?? 60;

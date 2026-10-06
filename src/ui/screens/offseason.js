@@ -1,61 +1,26 @@
-// Fim de temporada: balanço, prêmios, evolução e mercado da bola.
+// Fim de temporada: a figurinha do ano é colada no álbum, e o mercado abre.
 
 import { esc, toast } from '../dom.js';
 import { money, round } from '../../core/utils.js';
 import { attributeLabel } from '../../data/attributes.js';
-import { getClub, squadRating } from '../../data/clubs.js';
-import { ratingPill, statRow } from '../components.js';
+import { getClub } from '../../data/clubs.js';
+import { icon, initials, offerSticker, ratingBadge, statline } from '../components.js';
 
-function growthBlock(growth) {
+function growthSection(growth) {
   const gains = Object.entries(growth.gains ?? {});
   const losses = Object.entries(growth.losses ?? {});
+  const delta = growth.delta;
   return `
-    <section class="card">
-      <header class="card__head">
-        <h3>Evolução</h3>
-        <span class="pill pill--${growth.delta > 0 ? 'elite' : growth.delta < 0 ? 'fraco' : 'medio'}">
-          ${growth.before} → ${growth.after} (${growth.delta >= 0 ? '+' : ''}${growth.delta})
-        </span>
-      </header>
-      ${
-        gains.length
-          ? `<p class="muted">Subiu: ${esc(gains.map(([id, value]) => `${attributeLabel(id)} +${value}`).join(', '))}</p>`
-          : ''
-      }
-      ${
-        losses.length
-          ? `<p class="muted">Caiu com a idade: ${esc(losses.map(([id, value]) => `${attributeLabel(id)} ${value}`).join(', '))}</p>`
-          : ''
-      }
+    <section class="section">
+      <h3>Evolução</h3>
+      <p class="budget ${delta > 0 ? 'is-done' : ''}">
+        <span class="num">${growth.before}</span>${icon('arrow-right')}<strong>${growth.after}</strong>
+        <span>${delta > 0 ? `+${delta} de overall` : delta < 0 ? `${delta} de overall` : 'overall estável'}</span>
+      </p>
+      ${gains.length ? `<p class="muted">Subiu: ${esc(gains.map(([id, value]) => `${attributeLabel(id)} +${value}`).join(', '))}.</p>` : ''}
+      ${losses.length ? `<p class="muted">Caiu com a idade: ${esc(losses.map(([id, value]) => `${attributeLabel(id)} ${value}`).join(', '))}.</p>` : ''}
       ${!gains.length && !losses.length ? '<p class="muted">Temporada sem mudança técnica relevante.</p>' : ''}
     </section>`;
-}
-
-function offerCard(offer, player, { highlight = false } = {}) {
-  const rating = squadRating(offer.clubId);
-  const gap = player.overall - rating;
-  const fit = gap >= 3 ? 'Você seria referência' : gap >= -2 ? 'Você brigaria pela titularidade' : gap >= -8 ? 'Vai ter que conquistar espaço' : 'Clube muito acima do seu nível atual';
-
-  return `
-    <article class="offer ${highlight ? 'offer--highlight' : ''}">
-      <header class="offer__head">
-        <h3>${esc(offer.clubName)}</h3>
-        <span class="offer__league">${esc(offer.leagueName)}</span>
-      </header>
-      <p class="offer__pitch">${esc(offer.pitch)}</p>
-      <ul class="offer__facts">
-        <li>Função: <strong>${esc(offer.roleLabel)}</strong></li>
-        <li>Salário: <strong>${esc(money(offer.weeklySalary))}</strong>/semana</li>
-        <li>Contrato: <strong>${offer.years} temporada(s)</strong></li>
-        ${offer.signingBonus ? `<li>Luvas: ${esc(money(offer.signingBonus))}</li>` : ''}
-        <li>Nível do plantel: <strong>${rating}</strong></li>
-        ${offer.continental ? '<li>🌍 Disputa torneio continental</li>' : ''}
-        <li class="muted">${esc(fit)}</li>
-      </ul>
-      <button class="btn btn--primary btn--block" data-action="accept-offer" data-offer="${esc(offer.id)}">
-        ${offer.renewal ? 'Renovar contrato' : offer.loan ? 'Aceitar empréstimo' : 'Assinar'}
-      </button>
-    </article>`;
 }
 
 export default {
@@ -67,120 +32,135 @@ export default {
     if (!offseason) return '<div class="screen"><p>Fechando a temporada...</p></div>';
 
     const { summary, awards, prize, national, investments, growth, record } = offseason;
+    const specials = [
+      ...summary.trophies.map((trophy) => ({ name: trophy.name, icon: 'trophy' })),
+      ...awards.map((award) => ({ name: award.name, icon: award.icon })),
+      ...(national.trophy ? [{ name: national.trophy.name, icon: 'flag' }] : []),
+    ];
+    const offers = [...(offseason.renewal ? [offseason.renewal] : []), ...offseason.offers, ...offseason.loans];
 
     return `
-      <div class="screen screen--offseason">
-        <header class="screen__head">
-          <span class="hero__badge">Fim da temporada ${offseason.year}</span>
-          <h1>${esc(summary.clubName)}</h1>
-          <p class="muted">${esc(summary.leagueName)} · ${summary.position ? `${summary.position}º lugar` : 'campanha encerrada'} ·
-            ${esc(summary.record)} · ${summary.points} pontos</p>
+      <div class="screen">
+        <header class="legacy">
+          <article class="card-sticker season-sticker is-new" aria-label="Figurinha da temporada ${offseason.year}">
+            <div class="card-sticker__face">
+              <span class="card-sticker__monogram">${esc(initials(summary.clubName))}</span>
+              <span class="card-sticker__big"><strong>${growth.after}</strong><small>Overall</small></span>
+            </div>
+            <div class="card-sticker__band">${esc(summary.clubName)}</div>
+            <div class="card-sticker__sub">${offseason.year}, ${record.age} anos</div>
+            <div class="season-sticker__line"><span class="num">${record.apps} J</span><span class="num">${record.goals} G</span><span class="num">${record.assists} A</span></div>
+          </article>
+          <div class="section">
+            <h1>Temporada ${offseason.year} encerrada</h1>
+            <p class="lede">
+              ${esc(summary.leagueName)}: ${summary.position ? `<strong>${summary.position}º lugar</strong>` : 'campanha encerrada'},
+              <span class="num">${esc(summary.record)}</span>, <span class="num">${summary.points}</span> pontos.
+              Figurinha colada no seu álbum.
+            </p>
+          </div>
         </header>
 
-        <section class="card">
-          <h3>Seu ano</h3>
-          ${statRow([
+        <section class="section">
+          <div class="section__head">
+            <h2>Seu ano</h2>
+            ${ratingBadge(record.rating)}
+          </div>
+          ${statline([
             { label: 'Jogos', value: record.apps },
             { label: 'Gols', value: record.goals },
-            { label: 'Assist.', value: record.assists },
+            { label: 'Assistências', value: record.assists },
             { label: 'Melhor em campo', value: record.motm },
-            { label: 'Nota', value: round(record.rating, 2) || '—' },
+            { label: 'Nota média', value: record.rating ? round(record.rating, 2).toFixed(2) : '-' },
           ])}
-          <p>Nota média da temporada: ${ratingPill(record.rating)}</p>
         </section>
 
-        ${growthBlock(growth)}
-
         ${
-          summary.trophies.length
-            ? `<section class="card card--trophy">
-                <h3>🏆 Títulos conquistados</h3>
-                <ul class="list">${summary.trophies.map((trophy) => `<li>${esc(trophy.name)}</li>`).join('')}</ul>
+          specials.length
+            ? `<section class="section">
+                <h2>Figurinhas brilhantes</h2>
+                <div class="album album--trophies">
+                  ${specials
+                    .map(
+                      (item, index) => `
+                    <article class="card-sticker sticker--foil trophy-sticker is-new" style="--i:${index + 1}">
+                      ${icon(item.icon)}
+                      <span class="trophy-sticker__name">${esc(item.name)}</span>
+                      <span class="trophy-sticker__year num">${offseason.year}</span>
+                    </article>`,
+                    )
+                    .join('')}
+                </div>
               </section>`
             : ''
         }
 
-        ${
-          awards.length
-            ? `<section class="card card--award">
-                <h3>Prêmios individuais</h3>
-                <ul class="list">${awards.map((award) => `<li>${esc(award.icon)} ${esc(award.name)}</li>`).join('')}</ul>
-              </section>`
-            : ''
-        }
+        <div class="split">
+          ${growthSection(growth)}
+          <section class="section">
+            <h3>Copas e seleção</h3>
+            <ul class="ledger">
+              <li><span>Copa nacional</span><strong>${esc(summary.cupStage)}</strong></li>
+              ${summary.continental ? `<li><span>Torneio continental</span><strong>${esc(summary.continental)}</strong></li>` : ''}
+              <li><span>Seleção</span><strong>${national.caps ? `<span class="num">${national.caps}</span> jogos, <span class="num">${national.goals}</span> gols` : 'Sem convocação'}</strong></li>
+              ${national.tournament ? `<li><span>${esc(national.tournament.name)}</span><strong>${esc(national.tournament.result)}</strong></li>` : ''}
+            </ul>
+            ${offseason.nextContinental ? `<div class="notice notice--good">${icon('star')}<div>Classificado para o torneio continental do ano que vem.</div></div>` : ''}
+          </section>
+        </div>
 
-        <section class="card">
-          <h3>Copas</h3>
-          <ul class="list">
-            <li>Copa nacional: <strong>${esc(summary.cupStage)}</strong></li>
-            ${summary.continental ? `<li>Torneio continental: <strong>${esc(summary.continental)}</strong></li>` : ''}
-            ${offseason.nextContinental ? '<li>🌍 Classificado para o torneio continental do ano que vem!</li>' : ''}
-          </ul>
-        </section>
-
-        <section class="card">
-          <h3>Seleção</h3>
-          <p>${esc(national.text)}</p>
-          ${national.tournament ? `<p class="muted">${esc(national.tournament.name)}: ${esc(national.tournament.result)}</p>` : ''}
-        </section>
-
-        <section class="card">
+        <section class="section">
           <h3>Dinheiro</h3>
-          ${
-            prize.lines.length
-              ? `<ul class="list">${prize.lines
-                  .map((line) => `<li>${esc(line.label)}: <strong>${esc(money(line.value))}</strong></li>`)
-                  .join('')}</ul>`
-              : '<p class="muted">Sem bônus nesta temporada.</p>'
-          }
-          ${
-            investments.lines.length
-              ? `<h4>Investimentos</h4>
-                 <ul class="list">${investments.lines
-                   .map(
-                     (line) =>
-                       `<li>${esc(line.label)}: <strong class="${line.value >= 0 ? 'is-positive' : 'is-negative'}">${esc(money(line.value))}</strong>${line.blewUp ? ' <small class="muted">(deu problema)</small>' : ''}</li>`,
-                   )
-                   .join('')}</ul>`
-              : ''
-          }
-          <p class="muted">Em conta: <strong>${esc(money(player.money))}</strong> ·
-            valor de mercado: <strong>${esc(money(offseason.marketValue))}</strong></p>
+          <ul class="ledger">
+            ${prize.lines.map((line) => `<li><span>${esc(line.label)}</span><strong class="is-positive">${esc(money(line.value))}</strong></li>`).join('')}
+            ${investments.lines
+              .map(
+                (line) =>
+                  `<li><span>${esc(line.label)}${line.blewUp ? ', deu problema' : ''}</span><strong class="${line.value >= 0 ? 'is-positive' : 'is-negative'}">${esc(money(line.value))}</strong></li>`,
+              )
+              .join('')}
+            <li><span>Em conta agora</span><strong>${esc(money(player.money))}</strong></li>
+            <li><span>Valor de mercado</span><strong>${esc(money(offseason.marketValue))}</strong></li>
+          </ul>
         </section>
 
         ${
           offseason.forcedRetirement
-            ? `<section class="card card--danger">
-                <h3>Fim de linha</h3>
-                <p>${esc(offseason.forcedRetirement)}</p>
-                <button class="btn btn--danger btn--block" data-action="forced-retire">Encerrar a carreira</button>
+            ? `<section class="sheet section">
+                <h2>Fim de linha</h2>
+                <div class="notice notice--bad">${icon('warning')}<div>${esc(offseason.forcedRetirement)}</div></div>
+                <div class="actions"><button class="btn btn--primary" data-action="forced-retire">Ver o álbum completo ${icon('arrow-right')}</button></div>
               </section>`
             : `
-          <section class="market">
-            <h2>Mercado da bola</h2>
+          <section class="section" aria-labelledby="mercado-titulo">
+            <div class="section__head">
+              <h2 id="mercado-titulo">Mercado da bola</h2>
+              <p><span class="num">${offers.length}</span> proposta(s)</p>
+            </div>
             ${
               offseason.contractExpired
-                ? '<p class="banner banner--warn">Seu contrato terminou. Você precisa de um novo clube.</p>'
-                : '<p class="muted">Você tem contrato, mas pode ouvir propostas.</p>'
+                ? `<div class="notice notice--warn">${icon('warning')}<div><strong>Seu contrato terminou.</strong> Escolha um clube ou fique em condições modestas.</div></div>`
+                : `<p class="lede">Você tem contrato com o ${esc(getClub(player.club)?.name ?? 'clube atual')}, mas pode ouvir propostas.</p>`
             }
-
-            <div class="offers">
-              ${offseason.renewal ? offerCard(offseason.renewal, player, { highlight: true }) : ''}
-              ${offseason.offers.map((offer) => offerCard(offer, player)).join('')}
-              ${offseason.loans.map((offer) => offerCard(offer, player)).join('')}
-            </div>
-
             ${
-              !offseason.offers.length && !offseason.loans.length && !offseason.renewal
-                ? '<p class="muted">Ninguém te procurou neste mercado. Siga trabalhando.</p>'
-                : ''
+              offers.length
+                ? `<div class="offers">${offers
+                    .map((offer, index) =>
+                      offerSticker(offer, player, {
+                        action: `data-action="accept-offer" data-offer="${esc(offer.id)}"`,
+                        label: offer.renewal ? 'Renovar' : offer.loan ? 'Aceitar empréstimo' : 'Assinar',
+                        ariaLabel: `${offer.renewal ? 'Renovar com o' : offer.loan ? 'Ir emprestado ao' : 'Assinar com o'} ${offer.clubName}`,
+                        highlight: Boolean(offer.renewal),
+                        isNew: true,
+                        index,
+                      }),
+                    )
+                    .join('')}</div>`
+                : '<p class="muted">Ninguém procurou você neste mercado. Siga trabalhando.</p>'
             }
-
-            <div class="row-actions">
-              <button class="btn btn--ghost" data-action="stay-club">
-                Ficar no ${esc(getClub(player.club)?.name ?? 'clube atual')}
-              </button>
-              <button class="btn btn--danger btn--ghost" data-action="retire-now">Me aposentar</button>
+            <div class="actions">
+              <button class="btn" data-action="stay-club">Ficar no ${esc(getClub(player.club)?.name ?? 'clube atual')}</button>
+              <button class="btn btn--quiet" data-action="retire-now">Me aposentar</button>
             </div>
           </section>`
         }
@@ -199,7 +179,7 @@ export default {
     'retire-now': async (ctx) => {
       const ok = await ctx.confirm({
         title: 'Encerrar a carreira?',
-        text: 'Você vai se aposentar agora e ver o resumo do seu legado.',
+        text: 'Você vai se aposentar agora e ver o álbum completo com o seu legado.',
         confirmLabel: 'Pendurar as chuteiras',
         danger: true,
       });

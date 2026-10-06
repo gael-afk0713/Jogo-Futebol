@@ -10,17 +10,17 @@ export const CREATION_GROUP_CAP = 8;
 export const START_AGE = 16;
 
 export const LIFE_STATS = [
-  { id: 'happiness', label: 'Felicidade', icon: '😀' },
-  { id: 'fitness', label: 'Forma física', icon: '🫀' },
-  { id: 'health', label: 'Saúde', icon: '🩺' },
-  { id: 'discipline', label: 'Disciplina', icon: '🧭' },
-  { id: 'intelligence', label: 'Inteligência', icon: '🧠' },
-  { id: 'charisma', label: 'Carisma', icon: '✨' },
-  { id: 'fame', label: 'Fama', icon: '🌟' },
-  { id: 'reputation', label: 'Reputação', icon: '🎖️' },
-  { id: 'morale', label: 'Vestiário', icon: '🤝' },
-  { id: 'managerRelation', label: 'Técnico', icon: '📋' },
-  { id: 'fanRelation', label: 'Torcida', icon: '📣' },
+  { id: 'happiness', label: 'Felicidade', icon: 'smiley' },
+  { id: 'fitness', label: 'Forma física', icon: 'heartbeat' },
+  { id: 'health', label: 'Saúde', icon: 'stethoscope' },
+  { id: 'discipline', label: 'Disciplina', icon: 'compass' },
+  { id: 'intelligence', label: 'Inteligência', icon: 'brain' },
+  { id: 'charisma', label: 'Carisma', icon: 'sparkle' },
+  { id: 'fame', label: 'Fama', icon: 'star' },
+  { id: 'reputation', label: 'Reputação', icon: 'medal' },
+  { id: 'morale', label: 'Vestiário', icon: 'handshake' },
+  { id: 'managerRelation', label: 'Técnico', icon: 'clipboard-text' },
+  { id: 'fanRelation', label: 'Torcida', icon: 'megaphone' },
 ];
 
 export const LIFE_STAT_IDS = LIFE_STATS.map((stat) => stat.id);

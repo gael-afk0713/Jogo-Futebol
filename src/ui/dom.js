@@ -69,7 +69,7 @@ export function confirmDialog({ title, text, confirmLabel = 'Confirmar', cancelL
         <h3>${esc(title)}</h3>
         <p>${esc(text)}</p>
         <div class="modal__actions">
-          <button class="btn btn--ghost" data-modal="cancel">${esc(cancelLabel)}</button>
+          <button class="btn btn--quiet" data-modal="cancel">${esc(cancelLabel)}</button>
           <button class="btn ${danger ? 'btn--danger' : 'btn--primary'}" data-modal="ok">${esc(confirmLabel)}</button>
         </div>
       </div>`;

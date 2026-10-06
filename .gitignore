@@ -12,3 +12,7 @@ Thumbs.db
 # Build / cache de servidores estáticos
 .cache/
 dist/
+
+# Capturas de revisão de design (regeráveis)
+.impeccable/review/
+.impeccable/config.local.json

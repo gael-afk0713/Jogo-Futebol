@@ -19,7 +19,7 @@ export const LIFE_EVENTS = [
   {
     id: 'convite_treino_extra',
     category: 'treino',
-    icon: '🏃',
+    icon: 'person-simple-run',
     title: 'Treino extra na folga',
     text: 'O preparador físico oferece uma sessão extra no seu dia de descanso.',
     weight: 10,
@@ -43,7 +43,7 @@ export const LIFE_EVENTS = [
   {
     id: 'analista_video',
     category: 'treino',
-    icon: '🎬',
+    icon: 'person-simple-run',
     title: 'Sessão de vídeo',
     text: 'O analista de desempenho separou 40 minutos dos seus erros no último jogo.',
     weight: 8,
@@ -62,7 +62,7 @@ export const LIFE_EVENTS = [
   {
     id: 'academia_bruta',
     category: 'treino',
-    icon: '🏋️',
+    icon: 'person-simple-run',
     title: 'Pegada na musculação',
     text: 'Você quer ganhar massa para aguentar o contato do futebol profissional.',
     weight: 7,
@@ -86,7 +86,7 @@ export const LIFE_EVENTS = [
   {
     id: 'festa_balada',
     category: 'festa',
-    icon: '🎉',
+    icon: 'confetti',
     title: 'Festa depois da vitória',
     text: 'Os veteranos do grupo chamam para comemorar na balada mais badalada da cidade.',
     weight: 10,
@@ -116,7 +116,7 @@ export const LIFE_EVENTS = [
   {
     id: 'relacionamento_inicio',
     category: 'amor',
-    icon: '💘',
+    icon: 'heart',
     title: 'Alguém especial',
     text: 'Você conhece alguém que parece entender a loucura que é a sua rotina.',
     weight: 8,
@@ -135,7 +135,7 @@ export const LIFE_EVENTS = [
   {
     id: 'relacionamento_crise',
     category: 'amor',
-    icon: '💔',
+    icon: 'heart',
     title: 'Crise no relacionamento',
     text: 'Viagens, concentrações, pressão. A relação está desgastada.',
     weight: 7,
@@ -159,7 +159,7 @@ export const LIFE_EVENTS = [
   {
     id: 'filho',
     category: 'familia',
-    icon: '👶',
+    icon: 'house-line',
     title: 'Vai ser pai/mãe',
     text: 'A família vai crescer. A notícia muda tudo.',
     weight: 5,
@@ -174,7 +174,7 @@ export const LIFE_EVENTS = [
   {
     id: 'familia_pedido',
     category: 'familia',
-    icon: '🏠',
+    icon: 'house-line',
     title: 'Pedido da família',
     text: 'Sua mãe liga: a casa onde você cresceu precisa de reforma urgente.',
     weight: 7,
@@ -199,7 +199,7 @@ export const LIFE_EVENTS = [
   {
     id: 'entrevista_polemica',
     category: 'midia',
-    icon: '🎤',
+    icon: 'microphone-stage',
     title: 'Pergunta capciosa na coletiva',
     text: 'Um jornalista pergunta se você está insatisfeito com o esquema do técnico.',
     weight: 9,
@@ -225,7 +225,7 @@ export const LIFE_EVENTS = [
   {
     id: 'rede_social',
     category: 'midia',
-    icon: '📱',
+    icon: 'microphone-stage',
     title: 'Hora de postar',
     text: 'Seu social media sugere um post para a semana.',
     weight: 8,
@@ -251,7 +251,7 @@ export const LIFE_EVENTS = [
   {
     id: 'documentario',
     category: 'midia',
-    icon: '🎥',
+    icon: 'microphone-stage',
     title: 'Convite para documentário',
     text: 'Uma produtora quer gravar um documentário sobre a sua trajetória.',
     weight: 5,
@@ -272,7 +272,7 @@ export const LIFE_EVENTS = [
   {
     id: 'patrocinio_chuteira',
     category: 'negocios',
-    icon: '👟',
+    icon: 'briefcase',
     title: 'Proposta de patrocínio',
     text: 'Uma marca esportiva quer te vestir dos pés à cabeça.',
     weight: 8,
@@ -297,7 +297,7 @@ export const LIFE_EVENTS = [
   {
     id: 'investimento',
     category: 'negocios',
-    icon: '📈',
+    icon: 'briefcase',
     title: 'Oportunidade de investimento',
     text: 'Um amigo de infância aparece com um negócio "imperdível".',
     weight: 8,
@@ -326,7 +326,7 @@ export const LIFE_EVENTS = [
   {
     id: 'carro_luxo',
     category: 'negocios',
-    icon: '🏎️',
+    icon: 'briefcase',
     title: 'A loja de carros ligou',
     text: 'Aquele esportivo que você sempre quis está reservado no seu nome.',
     weight: 7,
@@ -349,7 +349,7 @@ export const LIFE_EVENTS = [
   {
     id: 'caridade',
     category: 'negocios',
-    icon: '❤️',
+    icon: 'briefcase',
     title: 'Projeto social',
     text: 'A escolinha do seu bairro quer seu nome (e sua ajuda) para seguir funcionando.',
     weight: 7,
@@ -374,7 +374,7 @@ export const LIFE_EVENTS = [
   {
     id: 'briga_vestiario',
     category: 'vestiario',
-    icon: '🥊',
+    icon: 'users-three',
     title: 'Treta no vestiário',
     text: 'O capitão te cobra publicamente por falta de entrega no último jogo.',
     weight: 8,
@@ -400,7 +400,7 @@ export const LIFE_EVENTS = [
   {
     id: 'camisa_10',
     category: 'vestiario',
-    icon: '🔟',
+    icon: 'users-three',
     title: 'A camisa vagou',
     text: 'O dono da camisa mais pesada do clube saiu. O roupeiro pergunta se você quer.',
     weight: 5,
@@ -419,7 +419,7 @@ export const LIFE_EVENTS = [
   {
     id: 'reserva_bronca',
     category: 'vestiario',
-    icon: '🪑',
+    icon: 'users-three',
     title: 'Você no banco',
     text: 'Três jogos no banco. Seu empresário quer que você force uma conversa com o técnico.',
     weight: 8,
@@ -446,7 +446,7 @@ export const LIFE_EVENTS = [
   {
     id: 'aposta',
     category: 'risco',
-    icon: '🎲',
+    icon: 'dice-five',
     title: 'Convite para apostar',
     text: 'Um conhecido oferece "palpite certeiro" em jogos da sua própria liga.',
     weight: 6,
@@ -469,7 +469,7 @@ export const LIFE_EVENTS = [
   {
     id: 'lesao_ignorada',
     category: 'saude',
-    icon: '🩹',
+    icon: 'first-aid-kit',
     title: 'Dor na posterior',
     text: 'Você sente um incômodo na coxa na véspera de um jogo decisivo.',
     weight: 8,
@@ -491,7 +491,7 @@ export const LIFE_EVENTS = [
   {
     id: 'convite_duvidoso',
     category: 'risco',
-    icon: '🚬',
+    icon: 'dice-five',
     title: 'Noite perigosa',
     text: 'Em uma festa, alguém oferece algo que pode acabar com a sua carreira.',
     weight: 5,
@@ -515,7 +515,7 @@ export const LIFE_EVENTS = [
   {
     id: 'mentor',
     category: 'carreira',
-    icon: '🧓',
+    icon: 'graduation-cap',
     title: 'Um veterano te adota',
     text: 'Um ídolo do clube, no fim da carreira, oferece te ensinar o ofício.',
     weight: 7,
@@ -534,7 +534,7 @@ export const LIFE_EVENTS = [
   {
     id: 'escola',
     category: 'carreira',
-    icon: '🎓',
+    icon: 'graduation-cap',
     title: 'Estudos',
     text: 'Você pode concluir os estudos à distância enquanto joga.',
     weight: 6,
@@ -553,7 +553,7 @@ export const LIFE_EVENTS = [
   {
     id: 'empresario_troca',
     category: 'carreira',
-    icon: '🤝',
+    icon: 'graduation-cap',
     title: 'Proposta de um super-empresário',
     text: 'Um agente famoso quer te representar, mas cobra comissão alta.',
     weight: 6,
@@ -572,7 +572,7 @@ export const LIFE_EVENTS = [
   {
     id: 'idioma',
     category: 'carreira',
-    icon: '🗣️',
+    icon: 'graduation-cap',
     title: 'Aula de idioma',
     text: 'Seu empresário sugere aprender outro idioma para facilitar uma transferência.',
     weight: 7,
@@ -592,7 +592,7 @@ export const LIFE_EVENTS = [
   {
     id: 'torcida_organizada',
     category: 'torcida',
-    icon: '📣',
+    icon: 'megaphone',
     title: 'Organizada no CT',
     text: 'Depois de uma sequência ruim, a torcida organizada aparece no treino.',
     weight: 7,
@@ -613,7 +613,7 @@ export const LIFE_EVENTS = [
   {
     id: 'homenagem_torcida',
     category: 'torcida',
-    icon: '🏟️',
+    icon: 'megaphone',
     title: 'Mosaico com seu nome',
     text: 'A torcida preparou um mosaico gigante com o seu rosto para o próximo jogo.',
     weight: 5,
@@ -632,7 +632,7 @@ export const LIFE_EVENTS = [
   {
     id: 'selecao_sonho',
     category: 'carreira',
-    icon: '🌍',
+    icon: 'graduation-cap',
     title: 'Sondagem de outra seleção',
     text: 'Você tem direito a outra nacionalidade e essa federação quer te convocar já.',
     weight: 4,
@@ -651,7 +651,7 @@ export const LIFE_EVENTS = [
   {
     id: 'pressao_renovacao',
     category: 'carreira',
-    icon: '✍️',
+    icon: 'graduation-cap',
     title: 'Clube quer renovar',
     text: 'A diretoria oferece renovação antecipada com aumento salarial moderado.',
     weight: 7,
@@ -670,7 +670,7 @@ export const LIFE_EVENTS = [
   {
     id: 'saude_mental',
     category: 'saude',
-    icon: '🧠',
+    icon: 'first-aid-kit',
     title: 'Peso na cabeça',
     text: 'A pressão está afetando seu sono e sua confiança.',
     weight: 8,
@@ -696,7 +696,7 @@ export const LIFE_EVENTS = [
   {
     id: 'tatuagem',
     category: 'vida',
-    icon: '💉',
+    icon: 'coffee',
     title: 'Tatuagem nova',
     text: 'Você quer marcar na pele a sua história até aqui.',
     weight: 5,
@@ -719,7 +719,7 @@ export const LIFE_EVENTS = [
   {
     id: 'videogame',
     category: 'vida',
-    icon: '🎮',
+    icon: 'coffee',
     title: 'Madrugada de videogame',
     text: 'Você entra numa live com amigos e o relógio passa das 3h.',
     weight: 7,
@@ -738,7 +738,7 @@ export const LIFE_EVENTS = [
   {
     id: 'volta_as_origens',
     category: 'vida',
-    icon: '🌳',
+    icon: 'coffee',
     title: 'Visita ao campinho',
     text: 'Você passa pelo campo de terra onde tudo começou.',
     weight: 6,

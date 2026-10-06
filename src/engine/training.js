@@ -11,7 +11,7 @@ export const TRAINING_OPTIONS = [
   {
     id: 'tecnico',
     label: 'Treino técnico',
-    icon: '⚽',
+    icon: 'soccer-ball',
     description: 'Fundamentos da sua posição. Evolução sólida nos atributos que importam.',
     targets: 'key',
     fitness: -3,
@@ -23,7 +23,7 @@ export const TRAINING_OPTIONS = [
   {
     id: 'fisico',
     label: 'Preparação física',
-    icon: '🏃',
+    icon: 'person-simple-run',
     description: 'Corrida, explosão e resistência. Melhora a forma física.',
     targets: ['acceleration', 'sprintSpeed', 'stamina', 'workRate', 'jumping'],
     fitness: 7,
@@ -35,7 +35,7 @@ export const TRAINING_OPTIONS = [
   {
     id: 'academia',
     label: 'Musculação',
-    icon: '🏋️',
+    icon: 'barbell',
     description: 'Ganho de força para aguentar o contato.',
     targets: ['strength', 'jumping', 'balance', 'aggression'],
     fitness: 3,
@@ -47,7 +47,7 @@ export const TRAINING_OPTIONS = [
   {
     id: 'tatico',
     label: 'Treino tático',
-    icon: '📋',
+    icon: 'clipboard-text',
     description: 'Posicionamento e leitura de jogo. Agrada a comissão técnica.',
     targets: ['defAwareness', 'interceptions', 'vision', 'reactions', 'composure', 'gkPositioning'],
     fitness: -1,
@@ -61,7 +61,7 @@ export const TRAINING_OPTIONS = [
   {
     id: 'bola_parada',
     label: 'Bola parada',
-    icon: '🎯',
+    icon: 'target',
     description: 'Faltas, cobranças e pênaltis depois do treino.',
     targets: ['freeKick', 'penalties', 'curve', 'crossing', 'longShots'],
     fitness: -1,
@@ -73,7 +73,7 @@ export const TRAINING_OPTIONS = [
   {
     id: 'finalizacao',
     label: 'Finalização',
-    icon: '🥅',
+    icon: 'crosshair',
     description: 'Centenas de chutes a gol. Para quem vive de decidir.',
     targets: ['finishing', 'shotPower', 'volleys', 'heading', 'composure'],
     fitness: -2,
@@ -85,7 +85,7 @@ export const TRAINING_OPTIONS = [
   {
     id: 'goleiro',
     label: 'Treino de goleiro',
-    icon: '🧤',
+    icon: 'hand-grabbing',
     description: 'Reflexos, encaixe e saída de gol.',
     goalkeeperOnly: true,
     targets: ['gkReflexes', 'gkDiving', 'gkHandling', 'gkPositioning', 'gkKicking'],
@@ -98,7 +98,7 @@ export const TRAINING_OPTIONS = [
   {
     id: 'descanso',
     label: 'Descanso e fisioterapia',
-    icon: '🛌',
+    icon: 'bed',
     description: 'Recupera corpo e cabeça. Sem evolução técnica.',
     targets: [],
     fitness: 12,
@@ -111,7 +111,7 @@ export const TRAINING_OPTIONS = [
   {
     id: 'livre',
     label: 'Folga na cidade',
-    icon: '🌇',
+    icon: 'buildings',
     description: 'Cabeça fora do futebol. Felicidade em alta, forma em baixa.',
     targets: [],
     fitness: -4,
