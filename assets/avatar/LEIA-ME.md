@@ -9,5 +9,10 @@ em WebP no mesmo quadro de 440x513.
   Ficam em cinza; o jogo pinta na cor escolhida com um filtro SVG
   (`hairTint` em `src/ui/components.js`).
 
-Barbas, fita, braçadeira de capitão e número da camisa são desenhados em SVG
-por cima, no próprio código.
+- `barba-*`: cavanhaque, desenhada, cheia e bigode, em cinza e pintadas na cor
+  do cabelo; "barba por fazer" é a cheia com metade da opacidade. Vieram em JPG
+  sobre fundo preto e a transparência foi tirada da luminosidade.
+- `acessorio-*`: fita, braçadeira de capitão (girada e posicionada no braço) e
+  cordão.
+
+O número da camisa e a sombra do cabelo são feitos em SVG no próprio código.

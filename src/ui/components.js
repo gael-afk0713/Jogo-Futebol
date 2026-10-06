@@ -36,7 +36,9 @@ export const HAIR_STYLES = [
 export const BEARD_STYLES = [
   { id: 'nenhuma', label: 'Sem barba' },
   { id: 'rala', label: 'Barba por fazer' },
+  { id: 'bigode', label: 'Bigode' },
   { id: 'cavanhaque', label: 'Cavanhaque' },
+  { id: 'desenhada', label: 'Barba desenhada' },
   { id: 'cheia', label: 'Barba cheia' },
 ];
 
@@ -44,6 +46,7 @@ export const ACCESSORIES = [
   { id: 'nenhum', label: 'Nenhum' },
   { id: 'faixa', label: 'Faixa de capitão' },
   { id: 'fita', label: 'Fita no cabelo' },
+  { id: 'cordao', label: 'Cordão' },
 ];
 
 export const HAIR_COLORS = [
@@ -108,22 +111,15 @@ const HAIR_SHADOW_DEFS = `
     <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0"/>
   </filter>`;
 
-/** Barbas desenhadas no traço da ilustração, na cor do cabelo. */
-function beardMarkup(beard, color) {
-  const line = 'stroke="#1b1d22" stroke-width="2" stroke-linejoin="round"';
-  const mustache = `<path d="M186 302 Q220 288 254 302 Q238 312 220 306 Q202 312 186 302 Z" fill="${color}" ${line}/>`;
-  if (beard === 'cavanhaque') {
-    return `${mustache}<path d="M192 328 Q220 318 248 328 L254 362 Q242 394 220 398 Q198 394 186 362 Z" fill="${color}" ${line}/>`;
-  }
-  if (beard === 'cheia') {
-    return `<path d="M130 292 C134 350 176 396 220 397 C264 396 306 350 310 292 L298 294 C296 322 282 340 264 342 C252 328 236 322 220 322 C204 322 188 328 176 342 C158 340 144 322 142 294 Z" fill="${color}" ${line}/>${mustache}`;
-  }
-  if (beard === 'rala') {
-    return `<path d="M136 300 C140 352 178 392 220 393 C262 392 300 352 304 300 C290 334 266 344 220 344 C174 344 150 334 136 300 Z" fill="${color}" opacity=".32"/>
-      <path d="M190 302 Q220 292 250 302 Q236 309 220 305 Q204 309 190 302 Z" fill="${color}" opacity=".4"/>`;
-  }
-  return '';
+/** Barba ilustrada, em cinza, pintada na cor do cabelo. "Por fazer" é a cheia mais leve. */
+function beardMarkup(beard, filterId) {
+  const layer = { cavanhaque: 'cavanhaque', desenhada: 'desenhada', cheia: 'cheia', bigode: 'bigode', rala: 'cheia' }[beard];
+  if (!layer) return '';
+  const opacity = beard === 'rala' ? ' opacity=".5"' : '';
+  return `<image href="${avatarAsset(`barba-${layer}`)}" width="${AVATAR_W}" height="${AVATAR_H}" filter="url(#${filterId})"${opacity}/>`;
 }
+
+const ACCESSORY_LAYERS = { fita: 'fita', faixa: 'faixa', cordao: 'cordao' };
 
 /** Retrato do jogador: cabeça e ombros, como na foto da figurinha. */
 export function avatarSvg(appearance = {}, { label = 'Retrato do jogador' } = {}) {
@@ -147,10 +143,9 @@ export function avatarSvg(appearance = {}, { label = 'Retrato do jogador' } = {}
       <g mask="url(#pele-${skin}-mascara)">
         <image href="${avatarAsset(`cabelo-${hair}`)}" width="${AVATAR_W}" height="${AVATAR_H}" filter="url(#sombra-cabelo)"/>
       </g>
-      ${beardMarkup(appearance.beard, hairColor)}
+      ${beardMarkup(appearance.beard, tint.id)}
       <image href="${avatarAsset(`cabelo-${hair}`)}" width="${AVATAR_W}" height="${AVATAR_H}" filter="url(#${tint.id})"/>
-      ${accessory === 'fita' ? '<path d="M128 168 Q220 132 312 168 L314 186 Q220 152 126 186 Z" fill="#ffffff" stroke="#1b1d22" stroke-width="2"/>' : ''}
-      ${accessory === 'faixa' ? '<rect x="14" y="452" width="66" height="22" rx="3" fill="#f6c600" stroke="#1b1d22" stroke-width="2" transform="rotate(-26 47 463)"/>' : ''}
+      ${ACCESSORY_LAYERS[accessory] ? `<image href="${avatarAsset(`acessorio-${ACCESSORY_LAYERS[accessory]}`)}" width="${AVATAR_W}" height="${AVATAR_H}"/>` : ''}
       ${Number.isFinite(kitNumber) ? `<text class="avatar__kit" x="356" y="480" text-anchor="middle">${kitNumber}</text>` : ''}
     </svg>`;
 }
