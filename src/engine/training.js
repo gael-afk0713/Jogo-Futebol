@@ -5,7 +5,7 @@ import { attributeLabel } from '../data/attributes.js';
 import { lifeModifier } from '../data/traits.js';
 import { isGoalkeeper } from '../data/positions.js';
 import { adjustLife, ageCurve } from './player.js';
-import { attributeCeiling, keyAttributesFor, upgradeCost } from './overall.js';
+import { attributeCeiling, effectiveAttributes, keyAttributesFor, upgradeCost } from './overall.js';
 import { itemEffects } from './shop.js';
 
 export const TRAINING_OPTIONS = [
@@ -79,6 +79,18 @@ export const TRAINING_OPTIONS = [
     targets: ['finishing', 'shotPower', 'volleys', 'heading', 'composure'],
     fitness: -2,
     happiness: 1,
+    skillPoints: 1,
+    xp: 25,
+    injuryRisk: 0.02,
+  },
+  {
+    id: 'drible',
+    label: 'Treino de drible',
+    icon: 'sneaker-move',
+    description: 'Cones, um contra um e mudança de direção. O treino mais divertido da semana.',
+    targets: ['dribbling', 'ballControl', 'agility', 'balance', 'reactions'],
+    fitness: -2,
+    happiness: 2,
     skillPoints: 1,
     xp: 25,
     injuryRisk: 0.02,
@@ -237,7 +249,7 @@ export function trainingOptionsFor(player) {
   return TRAINING_OPTIONS.filter((option) => {
     if (option.requires && !unlocked.has(option.requires)) return false;
     if (option.goalkeeperOnly && !gk) return false;
-    if (gk && ['finalizacao', 'bola_parada'].includes(option.id)) return false;
+    if (gk && ['finalizacao', 'bola_parada', 'drible'].includes(option.id)) return false;
     return true;
   });
 }
@@ -270,48 +282,120 @@ export function grantXp(player, attributeIds, amount) {
   return gains;
 }
 
-/** Aplica o treino da semana. */
-export function applyTraining(player, optionId, rng) {
-  const option = TRAINING_OPTIONS.find((item) => item.id === optionId) ?? TRAINING_OPTIONS[0];
+/**
+ * A conta do treino, sem sortear nada e sem mudar o jogador. O treino de
+ * verdade e a prévia da loja usam esta mesma função, então a prévia mostra
+ * exatamente o que vai acontecer (o que é sorte aparece como chance).
+ */
+function planTraining(player, option) {
   const targets = targetAttributes(player, option);
+  const gear = itemEffects(player);
 
   const trainingBonus = 1 + lifeModifier(player.traits, 'trainingGain');
   const ageFactor = clamp(1 + ageCurve(player.age) * 0.3, 0.45, 1.4);
   const intelligenceFactor = 0.85 + player.life.intelligence / 300;
   const happinessFactor = 0.8 + player.life.happiness / 250;
-  const gear = itemEffects(player);
   const gearXp = gear.xp[option.id] ?? 1;
-  const amount = Math.round((option.xp ?? 0) * trainingBonus * ageFactor * intelligenceFactor * happinessFactor * gearXp);
-
-  const gains = targets.length && amount > 0 ? grantXp(player, targets, amount) : [];
+  const xp = Math.round((option.xp ?? 0) * trainingBonus * ageFactor * intelligenceFactor * happinessFactor * gearXp);
 
   const fitnessBonus = 1 + lifeModifier(player.traits, 'fitnessGain');
   let fitness = (option.fitness ?? 0) * (option.fitness > 0 ? fitnessBonus : 1);
   if ((option.fitness ?? 0) < 0) fitness = Math.min(0, fitness + gear.trainingFitness);
   if (option.id === 'descanso' || option.id === 'crioterapia') fitness += gear.restBonus;
-  adjustLife(player, 'fitness', fitness);
-  adjustLife(player, 'happiness', option.happiness ?? 0);
-  if (option.health) adjustLife(player, 'health', option.health);
-  if (option.managerRelation) adjustLife(player, 'managerRelation', option.managerRelation);
-  if (option.intelligence) adjustLife(player, 'intelligence', option.intelligence);
+  const fitnessAfter = clamp(Math.round(player.life.fitness + fitness), 0, 100);
 
-  const extraPoints = (option.skillPoints ?? 0) + (gear.skillPoints[option.id] ?? 0);
-  const bonusPoint = rng.chance(clamp(player.life.intelligence / 400 + 0.08, 0, 0.4)) ? 1 : 0;
-  player.skillPoints += extraPoints + bonusPoint;
+  return {
+    option,
+    targets,
+    xp,
+    life: {
+      fitness,
+      happiness: option.happiness ?? 0,
+      health: option.health ?? 0,
+      managerRelation: option.managerRelation ?? 0,
+      intelligence: option.intelligence ?? 0,
+    },
+    fixedPoints: (option.skillPoints ?? 0) + (gear.skillPoints[option.id] ?? 0),
+    bonusPointChance: clamp(player.life.intelligence / 400 + 0.08, 0, 0.4),
+    injuryRisk:
+      (option.injuryRisk ?? 0) * (1 + lifeModifier(player.traits, 'injuryRisk')) * (fitnessAfter < 45 ? 2 : 1) * gear.injuryRisk,
+  };
+}
 
-  const injuryRisk =
-    (option.injuryRisk ?? 0) * (1 + lifeModifier(player.traits, 'injuryRisk')) * (player.life.fitness < 45 ? 2 : 1) * gear.injuryRisk;
+/** Aplica o treino da semana. */
+export function applyTraining(player, optionId, rng) {
+  const option = TRAINING_OPTIONS.find((item) => item.id === optionId) ?? TRAINING_OPTIONS[0];
+  const plan = planTraining(player, option);
+
+  const gains = plan.targets.length && plan.xp > 0 ? grantXp(player, plan.targets, plan.xp) : [];
+
+  for (const [stat, delta] of Object.entries(plan.life)) if (delta) adjustLife(player, stat, delta);
+
+  const bonusPoint = rng.chance(plan.bonusPointChance) ? 1 : 0;
+  player.skillPoints += plan.fixedPoints + bonusPoint;
+
   let injury = null;
-  if (injuryRisk > 0 && rng.chance(injuryRisk)) {
+  if (plan.injuryRisk > 0 && rng.chance(plan.injuryRisk)) {
     injury = { name: rng.pick(['Desconforto muscular', 'Entorse no tornozelo', 'Lesão na coxa']), weeks: rng.int(1, 3) };
   }
 
   return {
     option,
     gains: gains.map((id) => attributeLabel(id)),
-    skillPoints: extraPoints + bonusPoint,
-    xp: amount,
+    skillPoints: plan.fixedPoints + bonusPoint,
+    xp: plan.xp,
     injury,
+  };
+}
+
+/**
+ * Prévia exata de um treino: quanto XP cada atributo recebe, quanto falta
+ * para subir, se sobe nesta semana e como ficam forma, felicidade e o resto.
+ */
+export function previewTraining(player, optionId) {
+  const option = TRAINING_OPTIONS.find((item) => item.id === optionId);
+  if (!option) return null;
+  const plan = planTraining(player, option);
+  const ceiling = attributeCeiling(player);
+  const shown = effectiveAttributes(player);
+  const copy = { ...player, attributes: { ...player.attributes }, xp: { ...(player.xp ?? {}) } };
+  if (plan.targets.length && plan.xp > 0) grantXp(copy, plan.targets, plan.xp);
+
+  const attributes = plan.targets.map((id) => {
+    const value = player.attributes[id] ?? 40;
+    const after = copy.attributes[id] ?? value;
+    const atCeiling = value >= ceiling;
+    const progress = after >= ceiling ? 0 : copy.xp[id] ?? 0;
+    // Bônus de traços e itens: a prévia mostra o mesmo número da aba Atributos.
+    const bonus = (shown[id] ?? value) - value;
+    return {
+      id,
+      label: attributeLabel(id),
+      value,
+      after,
+      bonus,
+      atCeiling,
+      progress,
+      need: after >= ceiling ? 0 : xpThreshold(after),
+    };
+  });
+
+  const lifeRows = Object.entries(plan.life)
+    .filter(([, delta]) => delta)
+    .map(([stat, delta]) => {
+      const before = player.life[stat] ?? 50;
+      return { stat, before, after: clamp(Math.round(before + delta), 0, 100) };
+    });
+
+  return {
+    option,
+    xp: plan.xp,
+    ceiling,
+    attributes,
+    life: lifeRows,
+    fixedPoints: plan.fixedPoints,
+    bonusPointChance: plan.bonusPointChance,
+    injuryRisk: plan.injuryRisk,
   };
 }
 

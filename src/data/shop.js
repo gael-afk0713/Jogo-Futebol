@@ -11,6 +11,7 @@
 //   unlocks        -> treinos novos liberados (ver engine/training.js)
 //   fasterHealing  -> chance por semana de a lesão curar uma semana a mais
 //   weeklyHappiness-> felicidade por semana
+//   insight        -> mostra a prévia exata de cada treino (passando o mouse ou no olho)
 //
 // positions: só aparece para essas posições (sem a lista, serve para todos).
 // group: rótulo curto mostrado na loja para itens de posição.
@@ -88,6 +89,15 @@ export const SHOP_ITEMS = [
     effects: { xp: { finalizacao: 1.25, artilheiro: 1.15 }, skillPoints: { finalizacao: 1 } },
     positions: ATT,
     group: 'Ataque',
+  },
+  {
+    id: 'tablet',
+    kind: 'equip',
+    label: 'Tablet de análise de treino',
+    icon: 'chart-bar',
+    price: 8_000,
+    description: 'Mostra exatamente o que cada treino vai te dar antes de você escolher.',
+    effects: { insight: true },
   },
   {
     id: 'gps',

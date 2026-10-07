@@ -629,6 +629,11 @@ export class Game {
       this.rng,
     );
     const potentialChange = reviewPotential(player, { rating: rating || 6.2, minutes: player.season.minutes }, this.rng);
+    if (potentialChange.change > 0) {
+      this.pushNews(`Seu potencial subiu ${potentialChange.change}: ${potentialChange.reasons.join(' e ')}. O teto dos atributos acompanha.`, 'good', 'arrow-up');
+    } else if (potentialChange.change < 0) {
+      this.pushNews('Temporada muito abaixo: seu potencial caiu 1.', 'bad', 'arrow-down');
+    }
 
     // Totais de carreira
     const totals = player.career.totals;

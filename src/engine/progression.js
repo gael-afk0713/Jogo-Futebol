@@ -4,7 +4,7 @@ import { clamp } from '../core/utils.js';
 import { ATTRIBUTE_IDS } from '../data/attributes.js';
 import { getPosition, isGoalkeeper } from '../data/positions.js';
 import { ageCurve } from './player.js';
-import { attributeCeiling, playerOverall } from './overall.js';
+import { attributeCeiling, keyAttributesFor, playerOverall } from './overall.js';
 
 const DECLINE_FIRST = ['acceleration', 'sprintSpeed', 'agility', 'stamina', 'jumping', 'balance'];
 const DECLINE_LAST = ['composure', 'vision', 'shortPass', 'defAwareness', 'gkPositioning', 'penalties'];
@@ -104,20 +104,55 @@ export function endOfSeasonGrowth(player, { minutes, rating, difficulty }, rng) 
   };
 }
 
-/** Potencial pode ser revisto para cima quando o jogador surpreende. */
+// Goleiros e defensores tiram notas naturalmente mais baixas (brilham não
+// errando), então a meta de nota deles é mais baixa na mesma proporção.
+const RATING_ADJUST = { gol: 0.3, defesa: 0.15, meio: 0.05, ataque: 0 };
+
+/**
+ * Revisão do potencial no fim da temporada. Dois caminhos para subir:
+ *   1. Temporada boa (nota ajustada pela posição, com minutos suficientes).
+ *   2. Bater no teto: quem já encostou no limite nos atributos principais
+ *      da posição ganha espaço novo, para a carreira não travar.
+ * Só um começo de carreira muito ruim derruba o potencial.
+ * Retorna { change, reasons }.
+ */
 export function reviewPotential(player, { rating, minutes }, rng) {
-  const avg = rating;
-  if (player.age <= 23 && avg >= 7.6 && minutes > 1200 && rng.chance(0.5)) {
-    const bump = rng.int(1, 3);
-    player.potential = clamp(player.potential + bump, 50, 99);
-    return bump;
+  const reasons = [];
+  if (player.age > 29 || player.potential >= 99) return { change: 0, reasons };
+
+  const zone = getPosition(player.position).zone;
+  const adjusted = rating + (RATING_ADJUST[zone] ?? 0);
+  const young = player.age <= 23;
+  const prime = player.age <= 26;
+  // Quanto mais alto o potencial, mais difícil subir: craque continua raro.
+  const room = player.potential >= 93 ? 0.25 : player.potential >= 88 ? 0.5 : 1;
+  const step = (chance) => (rng.chance(chance * room) ? 1 : 0);
+  let fromSeason = 0;
+  let fromCeiling = 0;
+
+  if (minutes >= 900) {
+    if (adjusted >= 7.3) fromSeason = step(1) + (young ? step(0.6) : 0);
+    else if (adjusted >= 6.9) fromSeason = young ? step(1) : prime ? step(0.5) : step(0.25);
+    else if (adjusted >= 6.6 && young) fromSeason = step(0.35);
+    if (fromSeason) reasons.push('boa temporada');
   }
-  if (player.age <= 21 && avg < 6.2 && minutes > 900 && rng.chance(0.3)) {
-    const drop = rng.int(1, 2);
-    player.potential = clamp(player.potential - drop, 50, 99);
-    return -drop;
+
+  // Encostou no teto: o trabalho abre espaço, para a carreira não travar.
+  const ceiling = attributeCeiling(player);
+  const capped = keyAttributesFor(player.position, 6).filter((id) => (player.attributes[id] ?? 0) >= ceiling).length;
+  if (capped >= 4) {
+    fromCeiling = step(prime ? 0.6 : 0.35);
+    if (fromCeiling) reasons.push('chegou ao teto nos atributos principais');
   }
-  return 0;
+
+  let change = Math.min(2, fromSeason + fromCeiling);
+  if (change === 0 && player.age <= 21 && adjusted < 6.0 && minutes > 900 && rng.chance(0.3)) {
+    change = -1;
+    reasons.push('temporada muito abaixo');
+  }
+
+  player.potential = clamp(player.potential + change, 50, 99);
+  return { change, reasons };
 }
 
 export function shouldForceRetirement(player) {

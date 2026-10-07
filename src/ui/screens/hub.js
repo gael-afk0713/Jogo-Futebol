@@ -7,13 +7,13 @@ import { getNation } from '../../data/nations.js';
 import { getPosition } from '../../data/positions.js';
 import { WEEK_STEPS } from '../../core/game.js';
 import { standings } from '../../engine/season.js';
-import { trainingOptionsFor } from '../../engine/training.js';
+import { previewTraining, trainingOptionsFor } from '../../engine/training.js';
 import { upgradeCost, attributeCeiling, keyAttributesFor } from '../../engine/overall.js';
 import { attributeLabel } from '../../data/attributes.js';
 import { INVESTMENTS, invest, netWorth, weeklyExpenses, weeklySponsors } from '../../engine/finance.js';
 import { marketValue, getRole } from '../../engine/transfers.js';
 import { mainSquadRequirement } from '../../engine/national.js';
-import { isPositionItem, ownsItem, shopItemsFor } from '../../engine/shop.js';
+import { isPositionItem, itemEffects, ownsItem, shopItemsFor } from '../../engine/shop.js';
 import { TRAINING_OPTIONS } from '../../engine/training.js';
 import {
   attributeList,
@@ -30,7 +30,7 @@ import {
   traitChips,
 } from '../components.js';
 
-const ui = { tab: 'semana', lastOverall: null };
+const ui = { tab: 'semana', lastOverall: null, peek: null };
 
 const TABS = [
   { id: 'semana', label: 'Semana', icon: 'calendar-blank' },
@@ -150,11 +150,53 @@ function suggestedTraining(player, options) {
   return { id: ids.has('goleiro') ? 'goleiro' : 'tecnico', why: 'Corpo e cabeça em dia: hora de evoluir.' };
 }
 
-function trainingRow(player, option, { blocked, suggested }) {
+const LIFE_LABELS = { fitness: 'Forma física', happiness: 'Felicidade', health: 'Saúde', managerRelation: 'Técnico', intelligence: 'Inteligência' };
+const pct = (value) => `${Math.round(value * 100)}%`;
+
+/** Detalhes exatos do treino (só com o tablet da loja). */
+function trainingPeek(player, option, insight) {
+  if (!insight) {
+    return `<p class="peek__locked">${icon('lock-simple')}<span>Compre o <strong>Tablet de análise de treino</strong> na loja (aba Atributos) para ver exatamente o que cada treino vai te dar.</span></p>`;
+  }
+  const preview = previewTraining(player, option.id);
+  if (!preview) return '';
+  const attrs = preview.attributes.length
+    ? `<table class="peek__table">
+        <caption>+${preview.xp} XP em cada atributo</caption>
+        <tbody>${preview.attributes
+          .map((row) => {
+            const result = row.atCeiling
+              ? '<span class="peek__cap">no teto</span>'
+              : row.after > row.value
+                ? `<strong class="peek__up">sobe para ${Math.min(99, row.after + row.bonus)}</strong>`
+                : `<span>${row.progress}/${row.need} XP</span>`;
+            return `<tr><th scope="row">${esc(row.label)}</th><td class="num">${Math.min(99, row.value + row.bonus)}</td><td>${result}</td></tr>`;
+          })
+          .join('')}</tbody>
+      </table>`
+    : '<p class="peek__note">Não treina atributos.</p>';
+  const life = preview.life
+    .map((row) => `<li><span>${esc(LIFE_LABELS[row.stat] ?? row.stat)}</span><strong class="num ${row.after >= row.before ? 'is-positive' : 'is-negative'}">${row.before} → ${row.after}</strong></li>`)
+    .join('');
+  const points = preview.fixedPoints
+    ? `<li><span>Pontos de evolução</span><strong class="num">+${preview.fixedPoints}</strong></li>`
+    : '';
+  return `
+    ${attrs}
+    <ul class="peek__list">
+      ${life}
+      ${points}
+      <li><span>Ponto extra (sorte)</span><strong class="num">${pct(preview.bonusPointChance)}</strong></li>
+      <li><span>Risco de lesão</span><strong class="num ${preview.injuryRisk >= 0.04 ? 'is-negative' : ''}">${preview.injuryRisk ? pct(preview.injuryRisk) : 'nenhum'}</strong></li>
+    </ul>`;
+}
+
+function trainingRow(player, option, { blocked, suggested, insight }) {
   const targets = trainingTargets(player, option);
-  return `<li>
+  const open = ui.peek === option.id;
+  return `<li class="train-row ${open ? 'is-open' : ''}">
     <button class="train ${suggested ? 'is-suggested' : ''}" data-action="choose-training" data-training="${option.id}" ${blocked ? 'disabled' : ''}
-      title="${esc(option.description)}">
+      aria-describedby="peek-${option.id}">
       <span class="option__icon">${icon(option.icon)}</span>
       <span class="train__text">
         <span class="train__title">${esc(option.label)}${suggested ? '<span class="train__tag">Sugerido</span>' : ''}</span>
@@ -162,6 +204,9 @@ function trainingRow(player, option, { blocked, suggested }) {
       </span>
       ${trainingEffects(option)}
     </button>
+    <button class="train__eye" data-action="peek-training" data-training="${option.id}" aria-expanded="${open}" aria-controls="peek-${option.id}"
+      aria-label="${insight ? `Ver o que ${esc(option.label)} vai te dar` : 'Detalhes bloqueados: compre o tablet na loja'}">${icon(insight ? 'eye' : 'lock-simple')}</button>
+    <div class="peek" id="peek-${option.id}" role="tooltip">${trainingPeek(player, option, insight)}</div>
   </li>`;
 }
 
@@ -170,7 +215,8 @@ function trainingStep(state) {
   const injured = player.injury?.weeks > 0;
   const options = trainingOptionsFor(player);
   const tip = suggestedTraining(player, options);
-  const row = (option) => trainingRow(player, option, { blocked: injured && option.id !== 'descanso', suggested: option.id === tip.id });
+  const insight = itemEffects(player).insight;
+  const row = (option) => trainingRow(player, option, { blocked: injured && option.id !== 'descanso', suggested: option.id === tip.id, insight });
   const grow = options.filter((option) => !RECOVERY.has(option.id));
   const rest = options.filter((option) => RECOVERY.has(option.id));
   return `
@@ -454,6 +500,7 @@ function itemEffectText(item) {
   if (effects.restBonus) parts.push(`Descanso recupera +${effects.restBonus}`);
   if (effects.fasterHealing) parts.push('Lesões curam mais rápido');
   if (effects.weeklyHappiness) parts.push(`Felicidade +${effects.weeklyHappiness} por semana`);
+  if (effects.insight) parts.push('Mostra o XP, a forma e o risco exatos de cada treino');
   return parts;
 }
 
@@ -835,7 +882,12 @@ export default {
       ctx.motion?.requestTransition('tab');
       ctx.rerender();
     },
+    'peek-training': (ctx, dataset) => {
+      ui.peek = ui.peek === dataset.training ? null : dataset.training;
+      ctx.rerender();
+    },
     'choose-training': (ctx, dataset) => {
+      ui.peek = null;
       ctx.game.chooseTraining(dataset.training);
       ctx.save.schedule();
     },

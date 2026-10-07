@@ -33,6 +33,7 @@ export function itemEffects(player) {
     restBonus: 0,
     fasterHealing: 0,
     weeklyHappiness: 0,
+    insight: false,
   };
   for (const item of activeItems(player)) {
     const effects = item.effects ?? {};
@@ -45,6 +46,7 @@ export function itemEffects(player) {
     total.weeklyFitness += effects.weeklyFitness ?? 0;
     total.restBonus += effects.restBonus ?? 0;
     total.weeklyHappiness += effects.weeklyHappiness ?? 0;
+    if (effects.insight) total.insight = true;
     total.fasterHealing = Math.max(total.fasterHealing, effects.fasterHealing ?? 0);
   }
   return total;

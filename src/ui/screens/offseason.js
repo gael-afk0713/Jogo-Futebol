@@ -6,7 +6,7 @@ import { attributeLabel } from '../../data/attributes.js';
 import { getClub } from '../../data/clubs.js';
 import { icon, initials, offerSticker, ratingBadge, statline } from '../components.js';
 
-function growthSection(growth) {
+function growthSection(growth, potential, player) {
   const gains = Object.entries(growth.gains ?? {});
   const losses = Object.entries(growth.losses ?? {});
   const delta = growth.delta;
@@ -20,6 +20,13 @@ function growthSection(growth) {
       ${gains.length ? `<p class="muted">Subiu: ${esc(gains.map(([id, value]) => `${attributeLabel(id)} +${value}`).join(', '))}.</p>` : ''}
       ${losses.length ? `<p class="muted">Caiu com a idade: ${esc(losses.map(([id, value]) => `${attributeLabel(id)} ${value}`).join(', '))}.</p>` : ''}
       ${!gains.length && !losses.length ? '<p class="muted">Temporada sem mudança técnica relevante.</p>' : ''}
+      ${
+        potential?.change > 0
+          ? `<div class="notice notice--good">${icon('arrow-up')}<div><strong>Potencial +${potential.change}</strong> (${esc(potential.reasons.join(' e '))}). Teto dos atributos agora em <strong class="num">${Math.min(99, player.potential + 2)}</strong>.</div></div>`
+          : potential?.change < 0
+            ? `<div class="notice notice--bad">${icon('arrow-down')}<div><strong>Potencial -1</strong> depois de uma temporada muito abaixo.</div></div>`
+            : ''
+      }
     </section>`;
 }
 
@@ -96,7 +103,7 @@ export default {
         }
 
         <div class="split">
-          ${growthSection(growth)}
+          ${growthSection(growth, offseason.potentialChange, player)}
           <section class="section">
             <h3>Copas e seleção</h3>
             <ul class="ledger">

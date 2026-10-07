@@ -55,8 +55,11 @@ você vai jogar e aparecer no primeiro ano.
 ### 3. A semana
 Cada semana tem três etapas:
 
-1. **Treino** — 9 focos diferentes (técnico, físico, musculação, tático, bola
-   parada, finalização, treino de goleiro, descanso, folga). Cada um mexe em
+1. **Treino** — 10 focos diferentes (técnico, físico, musculação, tático, bola
+   parada, finalização, drible, treino de goleiro, descanso, folga), mais os
+   liberados pela loja. Com o *Tablet de análise de treino*, passar o mouse (ou
+   tocar no olho) mostra exatamente o XP de cada atributo, o que sobe, a forma,
+   a felicidade, os pontos e o risco de lesão daquele treino. Cada um mexe em
    evolução, forma física, felicidade e na relação com o técnico.
 2. **Vida** — eventos no estilo BitLife: festas, relacionamentos, imprensa,
    patrocínios, investimentos, brigas de vestiário, apostas, projetos sociais,
@@ -82,8 +85,11 @@ lesão — e a sua nota da partida, que é a média da qualidade das suas decis�
 - **Pontos de evolução** para gastar à mão, com custo crescente
 - Evolução de fim de temporada a partir de minutos jogados, nota média, condição
   física, felicidade e nível dos adversários enfrentados
-- **Potencial oculto**, revelado depois de 3 temporadas, que pode subir se você
-  surpreender (ou cair se decepcionar)
+- **Potencial oculto**, revelado depois de 3 temporadas. Ele sobe com boas
+  temporadas (a meta de nota é ajustada pela posição: goleiros e defensores têm
+  meta mais baixa) e quando você encosta no teto nos atributos principais, para a
+  carreira não travar. Sobe até +2 por temporada, até os 29 anos, e fica mais
+  difícil acima de 88. Só um começo de carreira muito ruim derruba o potencial.
 - Declínio a partir dos 32, começando por velocidade e resistência
 
 ### 5b. Investir na evolução

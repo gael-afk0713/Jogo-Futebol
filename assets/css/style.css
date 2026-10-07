@@ -3076,6 +3076,151 @@ code {
   }
 }
 
+/* prévia do treino (tablet da loja) */
+.train-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 4px;
+}
+
+.train__eye {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+.train__eye .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.train__eye:hover,
+.train-row.is-open .train__eye {
+  background: var(--info-soft);
+  color: var(--cover);
+}
+
+.peek {
+  display: none;
+  grid-column: 1 / -1;
+  padding: 12px 14px;
+  border-radius: var(--r-control);
+  background: var(--sheet);
+  border: 1px solid var(--rule-strong);
+  box-shadow: var(--shadow-lift);
+  font-size: 0.9rem;
+}
+
+/* No toque, o olho abre os detalhes dentro da lista. */
+.train-row.is-open .peek {
+  display: block;
+  margin: 2px 0 10px 48px;
+  box-shadow: none;
+}
+
+/* Com mouse, os detalhes flutuam ao passar por cima do treino. */
+@media (hover: hover) {
+  .train-row:not(.is-open):hover .peek,
+  .train-row:not(.is-open):focus-within .peek {
+    display: block;
+    position: absolute;
+    top: calc(100% - 4px);
+    left: 48px;
+    right: 0;
+    z-index: 15;
+  }
+}
+
+.peek__locked {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  color: var(--ink-2);
+}
+
+.peek__locked .icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-top: 2px;
+  color: var(--ink-3);
+}
+
+.peek__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+}
+
+.peek__table caption {
+  text-align: left;
+  font-family: var(--font-cond);
+  font-weight: 700;
+  font-size: 1rem;
+  padding-bottom: 4px;
+}
+
+.peek__table th,
+.peek__table td {
+  padding: 4px 0;
+  border-top: 1px solid var(--rule);
+  text-align: left;
+  font-weight: 500;
+}
+
+.peek__table th {
+  color: var(--ink-2);
+}
+
+.peek__table td.num {
+  width: 3ch;
+  padding-right: 12px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.peek__up {
+  color: var(--good);
+}
+
+.peek__cap {
+  color: var(--ink-3);
+}
+
+.peek__list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.peek__list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.peek__list span {
+  color: var(--ink-2);
+}
+
+.peek .is-positive {
+  color: var(--good);
+}
+
+.peek .is-negative {
+  color: var(--bad);
+}
+
 /* -------------------------------------------------- carreiras salvas */
 .careers {
   display: grid;
