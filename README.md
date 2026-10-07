@@ -190,6 +190,9 @@ computador, e segue o modo claro ou noturno do sistema. As regras estão em
 index.html                 página única
 assets/css/style.css       mundo "álbum de figurinhas", claro e noturno
 assets/fonts/              Barlow e Barlow Condensed hospedadas no projeto (OFL)
+assets/avatar/             retratos em camadas (pele, cabelo, barba)
+assets/icons/              ícone da tela de início (iPhone, iPad e Android)
+manifest.webmanifest       nome e ícones do atalho na tela de início
 DESIGN.md                  sistema visual: tokens, regras e componentes
 PRODUCT.md                 quem joga, para quê e o que não pode mudar
 src/
