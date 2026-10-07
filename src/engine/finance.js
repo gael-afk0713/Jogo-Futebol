@@ -1,22 +1,33 @@
 // Dinheiro: salários, estilo de vida, patrocínios e investimentos.
 
-import { clamp, money } from '../core/utils.js';
+import { clamp } from '../core/utils.js';
 import { lifeModifier } from '../data/traits.js';
 import { adjustLife, hasFlag } from './player.js';
-import { weeklyStaffCost } from './shop.js';
+import { getShopItem } from '../data/shop.js';
+import { goodsValue, itemEffects, weeklyStaffCost, weeklyUpkeep } from './shop.js';
 
-/** Gasto semanal com estilo de vida, proporcional à fama e aos luxos. */
-export function weeklyExpenses(player) {
+/**
+ * Gastos da semana separados: custo de vida (cresce com a fama e os luxos,
+ * o contador corta uma parte), equipe e serviços, e manutenção das posses.
+ */
+export function expenseBreakdown(player) {
   const base = 250 + player.life.fame * 22;
   const luxury = (hasFlag(player, 'carro_luxo') ? 900 : 0) + (hasFlag(player, 'casado') ? 600 : 0) + (hasFlag(player, 'filhos') ? 700 : 0);
   const agent = hasFlag(player, 'super_agente') ? (player.contract?.weeklySalary ?? 0) * 0.08 : (player.contract?.weeklySalary ?? 0) * 0.04;
-  return Math.round(base + luxury + agent + weeklyStaffCost(player));
+  const living = Math.round((base + luxury + agent) * (1 - itemEffects(player).expenseCut));
+  const staff = weeklyStaffCost(player);
+  const upkeep = weeklyUpkeep(player);
+  return { living, staff, upkeep, total: living + staff + upkeep };
 }
+
+/** Gasto semanal total. */
+export const weeklyExpenses = (player) => expenseBreakdown(player).total;
 
 /** Receita semanal de patrocínios. */
 export function weeklySponsors(player) {
-  if (!hasFlag(player, 'patrocinio')) return 0;
-  return Math.round(player.life.fame * 95 * (1 + lifeModifier(player.traits, 'contractBonus')));
+  const gear = itemEffects(player);
+  if (!hasFlag(player, 'patrocinio') && !gear.sponsors) return 0;
+  return Math.round(player.life.fame * 95 * (1 + lifeModifier(player.traits, 'contractBonus') + gear.sponsorBonus));
 }
 
 /** Movimentação financeira de uma semana. */
@@ -46,88 +57,49 @@ export function matchBonus(player, report) {
   return total;
 }
 
-export const INVESTMENTS = [
-  {
-    id: 'poupanca',
-    label: 'Renda fixa',
-    icon: 'coins',
-    cost: 50_000,
-    description: 'Rende pouco, mas quase nunca dá problema.',
-    minReturn: 1.02,
-    maxReturn: 1.1,
-    risk: 0.03,
-  },
-  {
-    id: 'imovel',
-    label: 'Apartamento para alugar',
-    icon: 'buildings',
-    cost: 300_000,
-    description: 'Renda passiva estável e valorização no longo prazo.',
-    minReturn: 1.05,
-    maxReturn: 1.22,
-    risk: 0.08,
-  },
-  {
-    id: 'empresa',
-    label: 'Sociedade em uma empresa',
-    icon: 'chart-line-up',
-    cost: 800_000,
-    description: 'Pode multiplicar ou virar pó.',
-    minReturn: 0.6,
-    maxReturn: 2.1,
-    risk: 0.3,
-  },
-  {
-    id: 'escolinha',
-    label: 'Escolinha de futebol',
-    icon: 'soccer-ball',
-    cost: 150_000,
-    description: 'Dá lucro modesto e melhora muito a sua reputação.',
-    minReturn: 1.0,
-    maxReturn: 1.18,
-    risk: 0.06,
-    reputation: 10,
-  },
-];
-
-/** Compra um investimento. */
-export function invest(player, investmentId) {
-  const investment = INVESTMENTS.find((item) => item.id === investmentId);
-  if (!investment) return { ok: false, reason: 'Investimento inválido.' };
-  if (player.money < investment.cost) {
-    return { ok: false, reason: `Você precisa de ${money(investment.cost)} para isso.` };
-  }
-  player.money -= investment.cost;
-  if (!player.assets) player.assets = [];
-  player.assets.push({ id: investment.id, label: investment.label, value: investment.cost, boughtAt: Date.now() });
-  if (investment.reputation) adjustLife(player, 'reputation', investment.reputation);
-  return { ok: true, investment };
-}
-
-/** Rendimento anual dos investimentos. */
+/**
+ * Fechamento anual dos investimentos e da coleção (src/data/lifestyle.js):
+ * cada um paga o rendimento em dinheiro e muda de valor. Ano ruim derruba o
+ * valor e não paga nada; os mais arriscados podem quebrar de vez.
+ */
 export function settleInvestments(player, rng) {
-  if (!player.assets?.length) return { total: 0, lines: [] };
-  const bonus = lifeModifier(player.traits, 'investReturn');
+  if (!player.assets?.length) return { total: 0, change: 0, lines: [] };
+  const trait = lifeModifier(player.traits, 'investReturn');
+  const bonus = itemEffects(player).investBonus;
+  const fameFactor = clamp(player.life.fame / 60, 0.3, 1.6);
   const lines = [];
+  const kept = [];
   let total = 0;
+  let change = 0;
 
   for (const asset of player.assets) {
-    const investment = INVESTMENTS.find((item) => item.id === asset.id);
-    if (!investment) continue;
-    const blewUp = rng.chance(clamp(investment.risk - bonus * 0.2, 0, 0.5));
-    const factor = blewUp
-      ? rng.float(0.5, 0.85)
-      : rng.float(investment.minReturn, investment.maxReturn) * (1 + bonus * 0.25);
-    const newValue = Math.round(asset.value * factor);
-    const delta = newValue - asset.value;
-    asset.value = newValue;
-    total += delta;
-    lines.push({ label: asset.label, value: delta, blewUp });
+    const item = getShopItem(asset.id);
+    const plan = item?.invest;
+    if (!plan) {
+      kept.push(asset);
+      continue;
+    }
+    if (plan.bust && rng.chance(plan.bust)) {
+      change -= asset.value;
+      lines.push({ label: asset.label, value: 0, change: -asset.value, worth: 0, bust: true });
+      continue;
+    }
+    const bad = rng.chance(clamp(plan.risk - trait * 0.2, 0, 0.6));
+    const growth = bad ? rng.float(plan.crash[0], plan.crash[1]) : rng.float(plan.growth[0], plan.growth[1]) + bonus;
+    const rate = bad ? 0 : rng.float(plan.yield[0], plan.yield[1]) * (plan.fameScaled ? fameFactor : 1) * (1 + trait * 0.25);
+    const dividend = Math.round(asset.value * rate);
+    const worth = Math.max(0, Math.round(asset.value * growth));
+    total += dividend;
+    change += worth - asset.value;
+    lines.push({ label: asset.label, value: dividend, change: worth - asset.value, worth, blewUp: bad });
+    kept.push({ ...asset, value: worth });
   }
 
-  player.money = Math.max(0, player.money + total);
-  return { total, lines };
+  player.assets = kept;
+  player.money += total;
+  return { total, change, lines };
 }
 
+/** Dinheiro em conta + investimentos + o que as posses valem na revenda. */
 export const netWorth = (player) =>
-  player.money + (player.assets ?? []).reduce((acc, asset) => acc + asset.value, 0);
+  player.money + (player.assets ?? []).reduce((acc, asset) => acc + asset.value, 0) + goodsValue(player);

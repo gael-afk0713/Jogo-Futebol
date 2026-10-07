@@ -30,6 +30,16 @@ function growthSection(growth, potential, player) {
     </section>`;
 }
 
+/** Uma linha do fechamento dos investimentos: o que pagou e quanto passou a valer. */
+function investmentLine(line) {
+  if (line.bust) {
+    return `<li><span>${esc(line.label)}<small class="ledger__note">Quebrou: o dinheiro investido se perdeu</small></span><strong class="is-negative">−${esc(money(-line.change))}</strong></li>`;
+  }
+  const change = line.change ? `${line.change > 0 ? 'valorizou' : 'desvalorizou'} ${money(Math.abs(line.change))}` : 'valor estável';
+  const note = `${line.blewUp ? 'Ano ruim, não pagou nada. ' : ''}Agora vale ${money(line.worth)} (${change})`;
+  return `<li><span>${esc(line.label)}<small class="ledger__note">${esc(note)}</small></span><strong class="${line.value > 0 ? 'is-positive' : ''}">${esc(money(line.value))}</strong></li>`;
+}
+
 export default {
   id: 'offseason',
 
@@ -120,12 +130,7 @@ export default {
           <h3>Dinheiro</h3>
           <ul class="ledger">
             ${prize.lines.map((line) => `<li><span>${esc(line.label)}</span><strong class="is-positive">${esc(money(line.value))}</strong></li>`).join('')}
-            ${investments.lines
-              .map(
-                (line) =>
-                  `<li><span>${esc(line.label)}${line.blewUp ? ', deu problema' : ''}</span><strong class="${line.value >= 0 ? 'is-positive' : 'is-negative'}">${esc(money(line.value))}</strong></li>`,
-              )
-              .join('')}
+            ${investments.lines.map(investmentLine).join('')}
             <li><span>Em conta agora</span><strong>${esc(money(player.money))}</strong></li>
             <li><span>Valor de mercado</span><strong>${esc(money(offseason.marketValue))}</strong></li>
           </ul>

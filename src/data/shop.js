@@ -15,6 +15,11 @@
 //
 // positions: só aparece para essas posições (sem a lista, serve para todos).
 // group: rótulo curto mostrado na loja para itens de posição.
+//
+// Os itens da aba Vida (lazer, luxo, investimentos...) ficam em
+// src/data/lifestyle.js e usam os mesmos efeitos.
+
+import { LIFESTYLE_ITEMS } from './lifestyle.js';
 
 const GK = ['GOL'];
 const DEF = ['ZAG', 'LAT', 'VOL'];
@@ -239,6 +244,6 @@ export const SHOP_ITEMS = [
   },
 ];
 
-const BY_ID = new Map(SHOP_ITEMS.map((item) => [item.id, item]));
+const BY_ID = new Map([...SHOP_ITEMS, ...LIFESTYLE_ITEMS].map((item) => [item.id, item]));
 
 export const getShopItem = (id) => BY_ID.get(id) ?? null;

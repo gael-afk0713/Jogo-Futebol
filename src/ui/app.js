@@ -289,7 +289,11 @@ export class App {
         const screenId = this.game.state.screen;
         const current = SCREEN_MAP[screenId] ?? authScreen;
         const markup = `${this.topBar()}<main class="app__main" id="conteudo" tabindex="-1" data-screen="${esc(screenId)}">${current.render(this.game.state, this.ctx)}</main>`;
+        // Faixas que rolam de lado (as categorias da loja no celular) voltam
+        // para onde estavam, senão a categoria tocada some da tela.
+        const sideways = new Map([...this.root.querySelectorAll('[data-keep-scroll]')].map((node) => [node.dataset.keepScroll, node.scrollLeft]));
         mount(this.root, markup);
+        for (const node of this.root.querySelectorAll('[data-keep-scroll]')) node.scrollLeft = sideways.get(node.dataset.keepScroll) ?? 0;
         this.motion.settle(this.root, screenId);
         window.scrollTo({ top: scroll, behavior: 'instant' });
       },

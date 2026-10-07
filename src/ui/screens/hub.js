@@ -10,10 +10,23 @@ import { standings } from '../../engine/season.js';
 import { previewTraining, trainingOptionsFor } from '../../engine/training.js';
 import { upgradeCost, attributeCeiling, keyAttributesFor } from '../../engine/overall.js';
 import { attributeLabel } from '../../data/attributes.js';
-import { INVESTMENTS, invest, netWorth, weeklyExpenses, weeklySponsors } from '../../engine/finance.js';
+import { expenseBreakdown, netWorth, weeklySponsors } from '../../engine/finance.js';
 import { marketValue, getRole } from '../../engine/transfers.js';
 import { mainSquadRequirement } from '../../engine/national.js';
-import { isPositionItem, itemEffects, ownsItem, shopItemsFor } from '../../engine/shop.js';
+import {
+  ITEM_CAPS,
+  experienceStatus,
+  holdingValue,
+  holdingsOf,
+  isPositionItem,
+  itemEffects,
+  ownsItem,
+  saleValue,
+  shopItemsFor,
+  upfrontCost,
+} from '../../engine/shop.js';
+import { LIFESTYLE_CATEGORIES, LIFESTYLE_ITEMS } from '../../data/lifestyle.js';
+import { getShopItem } from '../../data/shop.js';
 import { TRAINING_OPTIONS } from '../../engine/training.js';
 import {
   attributeList,
@@ -30,7 +43,7 @@ import {
   traitChips,
 } from '../components.js';
 
-const ui = { tab: 'semana', lastOverall: null, peek: null };
+const ui = { tab: 'semana', lastOverall: null, peek: null, lifeCat: 'lazer', affordOnly: false };
 
 const TABS = [
   { id: 'semana', label: 'Semana', icon: 'calendar-blank' },
@@ -482,27 +495,92 @@ function weekTab(state, ctx) {
 
 const trainingName = (id) => TRAINING_OPTIONS.find((option) => option.id === id)?.label ?? id;
 
-/** O efeito do item em palavras, para a pessoa saber o que está comprando. */
-function itemEffectText(item) {
+// Nome curto de cada medidor da vida, para as frases dos efeitos.
+const LIFE_WORDS = {
+  happiness: 'felicidade',
+  fitness: 'forma',
+  health: 'saúde',
+  discipline: 'disciplina',
+  intelligence: 'inteligência',
+  charisma: 'carisma',
+  fame: 'fama',
+  reputation: 'reputação',
+  morale: 'vestiário',
+  managerRelation: 'técnico',
+  fanRelation: 'torcida',
+};
+
+const percent = (value) => `${Math.round(value * 100)}%`;
+
+/** "+1 felicidade a cada 4 semanas": valor quebrado por semana em palavras. */
+function weeklyText(word, value) {
+  if (Math.abs(value) >= 1) return `${signed(Math.round(value))} ${word} por semana`;
+  const every = Math.max(2, Math.round(1 / Math.abs(value)));
+  return `${value > 0 ? '+' : '−'}1 ${word} a cada ${every} semanas`;
+}
+
+/**
+ * O efeito do item em partes, para a pessoa saber o que está comprando.
+ * Cada parte vem com o tom: up (ajuda) ou down (custa ou atrapalha).
+ */
+function itemEffectParts(item) {
   const effects = item.effects ?? {};
   const parts = [];
+  const up = (text) => parts.push({ text, tone: 'up' });
+  const down = (text) => parts.push({ text, tone: 'down' });
+
+  const lifeChanges = Object.entries(item.onBuy ?? {});
+  const suffix = item.kind === 'experience' ? '' : ' na compra';
+  for (const [id, value] of lifeChanges) (value > 0 ? up : down)(`${signed(value)} ${LIFE_WORDS[id] ?? id}${suffix}`);
+
   const attrs = Object.entries(effects.attributes ?? {});
-  if (attrs.length) parts.push(attrs.map(([id, value]) => `${attributeLabel(id)} +${value}`).join(', '));
+  if (attrs.length) up(attrs.map(([id, value]) => `${attributeLabel(id)} +${value}`).join(', '));
   for (const [id, value] of Object.entries(effects.xp ?? {})) {
     if (id === 'academia_casa') continue;
-    parts.push(`${trainingName(id)} rende +${Math.round((value - 1) * 100)}%`);
+    up(`${trainingName(id)} rende +${Math.round((value - 1) * 100)}%`);
   }
-  for (const id of effects.unlocks ?? []) parts.push(`Libera o treino ${trainingName(id)}`);
-  for (const [id, value] of Object.entries(effects.skillPoints ?? {})) parts.push(`+${plural(value, 'ponto', 'pontos')} no ${trainingName(id)}`);
-  if (effects.injuryRisk) parts.push(`Risco de lesão no treino -${Math.round((1 - effects.injuryRisk) * 100)}%`);
-  if (effects.weeklyFitness) parts.push(`Forma +${effects.weeklyFitness} por semana`);
-  if (effects.trainingFitness) parts.push(`Treino cansa ${effects.trainingFitness} a menos`);
-  if (effects.restBonus) parts.push(`Descanso recupera +${effects.restBonus}`);
-  if (effects.fasterHealing) parts.push('Lesões curam mais rápido');
-  if (effects.weeklyHappiness) parts.push(`Felicidade +${effects.weeklyHappiness} por semana`);
-  if (effects.insight) parts.push('Mostra o XP, a forma e o risco exatos de cada treino');
+  for (const id of effects.unlocks ?? []) up(`Libera o treino ${trainingName(id)}`);
+  for (const [id, value] of Object.entries(effects.skillPoints ?? {})) up(`+${plural(value, 'ponto', 'pontos')} no ${trainingName(id)}`);
+  if (effects.injuryRisk && effects.injuryRisk < 1) up(`Risco de lesão no treino −${Math.round((1 - effects.injuryRisk) * 100)}%`);
+  if (effects.injuryRisk && effects.injuryRisk > 1) down(`Risco de lesão no treino +${Math.round((effects.injuryRisk - 1) * 100)}%`);
+  if (effects.weeklyFitness) up(weeklyText('forma', effects.weeklyFitness));
+  if (effects.trainingFitness) up(`Treino cansa ${effects.trainingFitness} a menos`);
+  if (effects.restBonus) up(`Descanso recupera +${effects.restBonus}`);
+  if (effects.fasterHealing) up('Lesões curam mais rápido');
+  if (effects.weeklyHappiness) up(weeklyText('felicidade', effects.weeklyHappiness));
+  for (const [id, value] of Object.entries(effects.weekly ?? {})) (value > 0 ? up : down)(weeklyText(LIFE_WORDS[id] ?? id, value));
+  if (effects.expenseCut) up(`Custo de vida −${percent(effects.expenseCut)}`);
+  if (effects.sponsors) up('Traz patrocínios conforme a sua fama');
+  if (effects.sponsorBonus) up(`Patrocínios pagam +${percent(effects.sponsorBonus)}`);
+  if (effects.investBonus) up(`Investimentos rendem +${percent(effects.investBonus)} ao ano`);
+  if (effects.agingSlow) up(`Queda física depois do auge −${percent(1 - effects.agingSlow)}`);
+  if (effects.insight) up('Mostra o XP, a forma e o risco exatos de cada treino');
+
+  const plan = item.invest;
+  if (plan) {
+    if (plan.yield[1] > 0) up(`Paga ${percent(plan.yield[0])} a ${percent(plan.yield[1])} ao ano${plan.fameScaled ? ', mais com fama' : ''}`);
+    if (plan.growth[0] !== 1 || plan.growth[1] !== 1) {
+      const low = Math.round((plan.growth[0] - 1) * 100);
+      const high = Math.round((plan.growth[1] - 1) * 100);
+      parts.push({ text: `Valor muda de ${low > 0 ? '+' : low < 0 ? '−' : ''}${Math.abs(low)}% a +${high}% ao ano`, tone: low < 0 ? 'mid' : 'up' });
+    }
+    if (plan.risk) down(`Ano ruim: ${percent(plan.risk)} de chance`);
+    if (plan.bust) down(`Pode quebrar: ${percent(plan.bust)} ao ano`);
+    if (plan.fee) down(`Taxa de resgate ${percent(plan.fee)}`);
+  }
+  if (item.risk) down(`${percent(item.risk.chance)} de chance de dar ruim`);
+  if (item.upkeep) down(`Manutenção ${money(item.upkeep)} por semana`);
+  if (item.cat && item.kind === 'equip') {
+    if (item.resale) parts.push({ text: `Revende por ${percent(item.resale)}`, tone: 'mid' });
+    else parts.push({ text: 'Não dá para revender', tone: 'mid' });
+  }
   return parts;
 }
+
+const effectChips = (item) =>
+  itemEffectParts(item)
+    .map((part) => `<span class="effect--${part.tone}">${esc(part.text)}</span>`)
+    .join('');
 
 function shopRow(player, item) {
   const owned = ownsItem(player, item.id);
@@ -521,7 +599,7 @@ function shopRow(player, item) {
     <div class="shop__text">
       <span class="shop__title">${esc(item.label)}${item.group ? `<span class="shop__pos">${esc(item.group)}</span>` : ''}${owned && staff ? '<span class="train__tag">Na equipe</span>' : ''}</span>
       <span class="train__desc">${esc(item.description)}</span>
-      <span class="option__effects">${itemEffectText(item).map((text) => `<span class="effect--up">${esc(text)}</span>`).join('')}</span>
+      <span class="option__effects">${effectChips(item)}</span>
     </div>
     <div class="shop__buy">
       <strong class="num">${esc(price)}</strong>
@@ -588,10 +666,120 @@ function profileTab(state) {
 
 /* ------------------------------------------------------------------- vida */
 
+const KIND_TAG = { equip: 'Compra única', staff: 'Por semana', invest: 'Investimento' };
+
+function lifeKindTag(item) {
+  if (item.kind === 'experience') {
+    if (item.once) return 'Uma vez na carreira';
+    if (item.cooldown >= 40) return item.cooldown >= 80 ? 'A cada duas temporadas' : 'Uma vez por temporada';
+    return `Repete a cada ${item.cooldown} semanas`;
+  }
+  if (item.kind === 'invest' && item.cat === 'colecao') return 'Coleção';
+  return KIND_TAG[item.kind];
+}
+
+/** O botão de cada item da loja da vida, conforme o tipo e a situação. */
+function lifeAction(player, item) {
+  const label = esc(item.label);
+  const owned = item.kind !== 'experience' && ownsItem(player, item.id);
+  const afford = player.money >= upfrontCost(item);
+  const buy = (verb) =>
+    `<button class="btn btn--sm" data-action="buy-item" data-item="${item.id}" ${afford ? '' : 'disabled'} aria-label="${esc(verb)} ${label}">${esc(verb)}</button>`;
+
+  if (item.minAge && player.age < item.minAge && !owned) return `<button class="btn btn--sm" disabled>Aos ${item.minAge} anos</button>`;
+  if (item.kind === 'experience') {
+    const status = experienceStatus(player, item);
+    if (status.done) return `<span class="shop__owned">${icon('check')}Feito</span>`;
+    if (!status.ready) return `<button class="btn btn--sm" disabled aria-label="${label}: de novo em ${plural(status.weeksLeft, 'semana', 'semanas')}">${icon('hourglass')}${plural(status.weeksLeft, 'semana', 'semanas')}</button>`;
+    return buy('Fazer');
+  }
+  if (item.kind === 'staff') {
+    return owned
+      ? `<button class="btn btn--sm btn--quiet" data-action="dismiss-staff" data-item="${item.id}" aria-label="Dispensar ${label}">Dispensar</button>`
+      : buy('Contratar');
+  }
+  if (item.kind === 'invest') {
+    return owned
+      ? `<button class="btn btn--sm btn--quiet" data-action="sell-item" data-item="${item.id}" aria-label="Resgatar ${label} por ${esc(money(saleValue(player, item)))}">Resgatar ${esc(money(saleValue(player, item)))}</button>`
+      : buy('Investir');
+  }
+  if (!owned) return buy('Comprar');
+  return item.resale
+    ? `<span class="shop__owned">${icon('check')}Seu</span><button class="btn btn--sm btn--quiet" data-action="sell-item" data-item="${item.id}" aria-label="Vender ${label} por ${esc(money(saleValue(player, item)))}">Vender ${esc(money(saleValue(player, item)))}</button>`
+    : `<span class="shop__owned">${icon('check')}Seu</span>`;
+}
+
+function lifeRow(player, item) {
+  const owned = item.kind !== 'experience' && ownsItem(player, item.id);
+  const staff = item.kind === 'staff';
+  let price = staff ? `${money(item.weekly)} por semana` : money(item.price);
+  let note = staff && !owned ? `Contratar: ${money(upfrontCost(item))}` : '';
+  if (item.kind === 'invest' && owned) {
+    const count = holdingsOf(player, item.id).length;
+    price = `Vale ${money(holdingValue(player, item.id))}`;
+    note = `Investiu ${money(item.price * count)}`;
+  }
+  return `<li class="shop__item ${owned ? 'is-owned' : ''}">
+    <span class="option__icon">${icon(item.icon)}</span>
+    <div class="shop__text">
+      <span class="shop__title">${esc(item.label)}<span class="store__kind">${esc(lifeKindTag(item))}</span>${owned && staff ? '<span class="train__tag">Contratado</span>' : ''}</span>
+      <span class="train__desc">${esc(item.description)}</span>
+      <span class="option__effects">${effectChips(item)}</span>
+    </div>
+    <div class="shop__buy">
+      <strong class="num">${esc(price)}</strong>
+      ${note ? `<small>${esc(note)}</small>` : ''}
+      ${lifeAction(player, item)}
+    </div>
+  </li>`;
+}
+
+const lifeOwned = (player, item) => item.kind !== 'experience' && ownsItem(player, item.id);
+
+/** A loja da vida: lazer, luxo, desempenho, casa, imagem, estudo, viagens e investimentos. */
+function lifeStore(player) {
+  const mine = LIFESTYLE_ITEMS.filter((item) => lifeOwned(player, item));
+  const cat = ui.lifeCat === 'meus' || LIFESTYLE_CATEGORIES.some((entry) => entry.id === ui.lifeCat) ? ui.lifeCat : 'lazer';
+  let items = cat === 'meus' ? mine : LIFESTYLE_ITEMS.filter((item) => item.cat === cat);
+  if (ui.affordOnly && cat !== 'meus') items = items.filter((item) => lifeOwned(player, item) || player.money >= upfrontCost(item));
+  items = [...items].sort((a, b) => upfrontCost(a) - upfrontCost(b));
+
+  const chip = (id, label, iconName, count) =>
+    `<button class="store__cat" data-action="life-cat" data-cat="${id}" aria-pressed="${cat === id}">${icon(iconName)}<span>${esc(label)}</span>${count ? `<small class="num">${count}</small>` : ''}</button>`;
+  const ownedIn = (id) => mine.filter((item) => item.cat === id).length;
+  const empty =
+    cat === 'meus'
+      ? 'Você ainda não comprou nada por aqui. Experiências não ficam guardadas: elas mudam a sua vida na hora.'
+      : 'Nada aqui cabe no seu bolso por enquanto. Desligue o filtro para ver tudo.';
+
+  return `
+    <section class="sheet section store" aria-labelledby="loja-vida-titulo">
+      <div class="section__head">
+        <h2 id="loja-vida-titulo">Gastar o dinheiro</h2>
+        <span class="points-pill"><strong class="num">${esc(money(player.money))}</strong> em conta</span>
+      </div>
+      <p class="lede">Compra única vale enquanto você tiver e pode ser revendida. Serviços cobram por semana. Experiências mudam a sua vida na hora e voltam depois de um tempo. Investimentos rendem (ou perdem) no fim da temporada.</p>
+      <div class="store__cats" role="group" aria-label="Categorias" data-keep-scroll="loja-vida">
+        ${LIFESTYLE_CATEGORIES.map((entry) => chip(entry.id, entry.label, entry.icon, ownedIn(entry.id))).join('')}
+        ${chip('meus', 'Seus itens', 'check', mine.length)}
+      </div>
+      <div class="store__bar">
+        <button class="store__toggle" data-action="life-afford" aria-pressed="${ui.affordOnly}">${icon('wallet')}Só o que dá para comprar</button>
+        <span>${plural(items.length, 'item', 'itens')}, do mais barato ao mais caro</span>
+      </div>
+      ${items.length ? `<ul class="shoplist">${items.map((item) => lifeRow(player, item)).join('')}</ul>` : `<p class="muted store__empty">${esc(empty)}</p>`}
+      <p class="store__note">${icon('info')}Os bônus de todos os itens somados têm limite: no máximo +${ITEM_CAPS.attribute} por atributo, +${ITEM_CAPS.weekly.happiness} de felicidade por semana e treinos rendendo até +${Math.round((ITEM_CAPS.xp - 1) * 100)}%.</p>
+    </section>`;
+}
+
 function lifeTab(state) {
   const player = state.player;
   const salary = player.contract?.weeklySalary ?? 0;
   const role = player.contract ? getRole(player.contract.role) : null;
+  const expenses = expenseBreakdown(player);
+  const sponsors = weeklySponsors(player);
+  const net = salary + sponsors - expenses.total;
+  const invested = (player.assets ?? []).reduce((sum, asset) => sum + asset.value, 0);
 
   return `
     <section class="section">
@@ -608,36 +796,16 @@ function lifeTab(state) {
       ])}
       <ul class="ledger">
         <li><span>Salário semanal</span><strong class="is-positive">${esc(money(salary))}</strong></li>
-        <li><span>Patrocínio semanal</span><strong class="is-positive">${esc(money(weeklySponsors(player)))}</strong></li>
-        <li><span>Gastos semanais</span><strong class="is-negative">${esc(money(weeklyExpenses(player)))}</strong></li>
+        <li><span>Patrocínio semanal</span><strong class="is-positive">${esc(money(sponsors))}</strong></li>
+        <li><span>Custo de vida</span><strong class="is-negative">${esc(money(expenses.living))}</strong></li>
+        ${expenses.staff ? `<li><span>Equipe e serviços</span><strong class="is-negative">${esc(money(expenses.staff))}</strong></li>` : ''}
+        ${expenses.upkeep ? `<li><span>Manutenção dos bens</span><strong class="is-negative">${esc(money(expenses.upkeep))}</strong></li>` : ''}
+        <li class="ledger__total"><span>Saldo da semana</span><strong class="${net >= 0 ? 'is-positive' : 'is-negative'}">${esc(money(net))}</strong></li>
+        ${invested ? `<li><span>Investido (rende no fim da temporada)</span><strong>${esc(money(invested))}</strong></li>` : ''}
       </ul>
     </section>
 
-    <section class="section">
-      <h3>Investimentos</h3>
-      <ul class="optionlist optionlist--two">
-        ${INVESTMENTS.map((item) => {
-          const short = player.money < item.cost;
-          return `<li>
-            <button class="option" data-action="invest" data-invest="${item.id}" ${short ? 'disabled' : ''}>
-              <span class="option__icon">${icon(item.icon)}</span>
-              <span class="option__text">
-                <span class="option__title">${esc(item.label)}</span>
-                <span class="option__desc">${esc(item.description)}</span>
-                <span class="option__effects"><span>Custa ${esc(money(item.cost))}</span><span class="effect--down">Risco ${Math.round(item.risk * 100)}%</span></span>
-              </span>
-            </button>
-          </li>`;
-        }).join('')}
-      </ul>
-      ${
-        player.assets?.length
-          ? `<ul class="ledger">${player.assets
-              .map((asset) => `<li><span>${esc(asset.label)}</span><strong>${esc(money(asset.value))}</strong></li>`)
-              .join('')}</ul>`
-          : '<p class="muted">Você ainda não tem investimentos. Eles rendem (ou perdem) no fim de cada temporada.</p>'
-      }
-    </section>
+    ${lifeStore(player)}
 
     <div class="split">
       <section class="section">
@@ -926,13 +1094,49 @@ export default {
       ctx.save.schedule();
     },
     'buy-item': async (ctx, dataset) => {
+      const item = getShopItem(dataset.item);
+      const player = ctx.game.player;
+      // Compra grande pede confirmação: no iPad é fácil tocar sem querer.
+      if (item && upfrontCost(item) >= 100_000 && upfrontCost(item) >= player.money * 0.3) {
+        const ok = await ctx.confirm({
+          title: `${item.label}?`,
+          text: `Sai ${money(upfrontCost(item))} da sua conta (você tem ${money(player.money)}).${item.upkeep ? ` A manutenção é ${money(item.upkeep)} por semana.` : ''}`,
+          confirmLabel: item.kind === 'invest' ? 'Investir' : 'Comprar',
+        });
+        if (!ok) return;
+      }
       const result = ctx.game.buyItem(dataset.item);
       if (!result.ok) {
         toast(result.reason, 'warn');
         return;
       }
-      toast(`${result.item.label}: ${result.item.kind === 'staff' ? 'contratado' : 'comprado'}.`, 'good');
+      const done = { staff: 'contratado', experience: 'feito', invest: 'investimento feito' }[result.item.kind] ?? 'comprado';
+      if (result.mishap) toast(result.mishap, 'warn');
+      else toast(`${result.item.label}: ${done}.`, 'good');
       ctx.save.schedule(300);
+    },
+    'sell-item': async (ctx, dataset) => {
+      const item = getShopItem(dataset.item);
+      if (!item) return;
+      const invest = item.kind === 'invest';
+      const ok = await ctx.confirm({
+        title: invest ? 'Resgatar?' : 'Vender?',
+        text: `Você recebe ${money(saleValue(ctx.game.player, item))}.${invest ? ' O investimento para de render.' : ' O efeito acaba agora e o bônus da compra não volta se comprar de novo.'}`,
+        confirmLabel: invest ? 'Resgatar' : 'Vender',
+        danger: true,
+      });
+      if (!ok) return;
+      const result = ctx.game.sellItem(dataset.item);
+      if (!result.ok) toast(result.reason, 'warn');
+      else ctx.save.schedule(300);
+    },
+    'life-cat': (ctx, dataset) => {
+      ui.lifeCat = dataset.cat;
+      ctx.rerender();
+    },
+    'life-afford': (ctx) => {
+      ui.affordOnly = !ui.affordOnly;
+      ctx.rerender();
     },
     'dismiss-staff': async (ctx, dataset) => {
       const ok = await ctx.confirm({
@@ -949,15 +1153,6 @@ export default {
       const result = ctx.game.spendPoint(dataset.attr);
       if (!result.ok) toast(result.reason, 'warn');
       else ctx.save.schedule();
-    },
-    invest: (ctx, dataset) => {
-      const result = invest(ctx.game.player, dataset.invest);
-      if (!result.ok) toast(result.reason, 'warn');
-      else {
-        toast(`Investimento feito: ${result.investment.label}.`, 'good');
-        ctx.game.notify();
-        ctx.save.schedule();
-      }
     },
     retire: async (ctx) => {
       const ok = await ctx.confirm({

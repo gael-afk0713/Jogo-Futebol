@@ -1,7 +1,7 @@
 // Controlador central do jogo: guarda o estado, executa as ações e avisa a UI.
 
 import { createRng } from './rng.js';
-import { clamp, logistic, plural, round } from './utils.js';
+import { clamp, logistic, money, plural, round } from './utils.js';
 import { getClub, getLeague, squadRating } from '../data/clubs.js';
 import { getNation } from '../data/nations.js';
 import { MOMENTS } from '../data/matchMoments.js';
@@ -15,7 +15,7 @@ import {
 } from '../engine/player.js';
 import { playerOverall } from '../engine/overall.js';
 import { applyTraining, spendSkillPoint } from '../engine/training.js';
-import { buyItem, dismissStaff, itemEffects } from '../engine/shop.js';
+import { applyWeeklyItems, buyItem, dismissStaff, sellItem } from '../engine/shop.js';
 import { drawLifeEvent, resolveLifeOption, weeklyDrift, lifeContext, availableOptions } from '../engine/life.js';
 import {
   COMPETITIONS,
@@ -538,9 +538,8 @@ export class Game {
     weeklyDrift(player, this.rng);
     applyWeeklyFinance(player);
 
-    const gear = itemEffects(player);
-    if (gear.weeklyFitness) adjustLife(player, 'fitness', gear.weeklyFitness);
-    if (gear.weeklyHappiness) adjustLife(player, 'happiness', gear.weeklyHappiness);
+    player.clock = (player.clock ?? 0) + 1;
+    const gear = applyWeeklyItems(player, this.rng).effects;
     if (player.injury) {
       player.injury.weeks -= 1;
       if (gear.fasterHealing && player.injury.weeks > 0 && this.rng.chance(gear.fasterHealing)) player.injury.weeks -= 1;
@@ -782,16 +781,27 @@ export class Game {
   }
 
   // -------------------------------------------------------------- evolução
-  /** Compra um item da loja ou contrata alguém da equipe pessoal. */
+  /** Compra um item, contrata alguém, vive uma experiência ou investe. */
   buyItem(itemId) {
-    const result = buyItem(this.player, itemId);
+    const result = buyItem(this.player, itemId, { rng: this.rng });
+    if (result.ok) {
+      const { item } = result;
+      this.player.overall = playerOverall(this.player);
+      const verb = { staff: 'Você contratou', experience: 'Você aproveitou', invest: 'Você investiu em' }[item.kind] ?? 'Você comprou';
+      this.pushNews(`${verb}: ${item.label}.`, 'good', item.icon);
+      if (result.mishap) this.pushNews(result.mishap, 'bad', 'warning');
+      this.notify();
+    }
+    return result;
+  }
+
+  /** Vende uma posse ou resgata um investimento. */
+  sellItem(itemId) {
+    const result = sellItem(this.player, itemId);
     if (result.ok) {
       this.player.overall = playerOverall(this.player);
-      this.pushNews(
-        result.item.kind === 'staff' ? `Você contratou: ${result.item.label}.` : `Você comprou: ${result.item.label}.`,
-        'good',
-        result.item.icon,
-      );
+      const verb = result.item.kind === 'invest' ? 'Você resgatou' : 'Você vendeu';
+      this.pushNews(`${verb}: ${result.item.label} (${money(result.value)}).`, 'info', result.item.icon);
       this.notify();
     }
     return result;

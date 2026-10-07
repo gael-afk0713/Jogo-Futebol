@@ -5,6 +5,7 @@ import { ATTRIBUTE_IDS } from '../data/attributes.js';
 import { getPosition, isGoalkeeper } from '../data/positions.js';
 import { ageCurve } from './player.js';
 import { attributeCeiling, keyAttributesFor, playerOverall } from './overall.js';
+import { itemEffects } from './shop.js';
 
 const DECLINE_FIRST = ['acceleration', 'sprintSpeed', 'agility', 'stamina', 'jumping', 'balance'];
 const DECLINE_LAST = ['composure', 'vision', 'shortPass', 'defAwareness', 'gkPositioning', 'penalties'];
@@ -84,6 +85,8 @@ export function endOfSeasonGrowth(player, { minutes, rating, difficulty }, rng) 
   } else {
     // Declínio é atenuado por bom condicionamento e minutos regulares.
     decline = Math.abs(curve) * 2.4 * clamp(1.25 - player.life.fitness / 160 - minutesFactor * 0.2, 0.3, 1.5);
+    // Programa de longevidade e afins atrasam a queda (com teto).
+    decline *= itemEffects(player).agingSlow;
     // Veteranos ainda podem lapidar leitura de jogo.
     growth = gap > 0 ? 0.25 * ratingFactor : 0;
   }

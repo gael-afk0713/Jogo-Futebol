@@ -127,8 +127,40 @@ brasileira até Premier League, LaLiga, Bundesliga, Serie A, Saudi Pro League).
   revelação, Luva de Ouro, Golden Boy, melhor do mundo na posição e **Bola de Ouro**
 
 ### 8. Dinheiro e vida
-Salário e gastos semanais, patrocínios, carros, casa da família, investimentos
-(renda fixa, imóvel, sociedade, escolinha) que rendem ou viram pó no fim do ano.
+Salário e gastos semanais (custo de vida, equipe e manutenção dos bens),
+patrocínios, carros, casa da família e investimentos que rendem ou viram pó no
+fim da temporada.
+
+### 8b. Gastar o dinheiro
+Na aba Vida há uma loja com **150 itens** em nove categorias, de €15 por semana
+a €150 milhões, para ter onde gastar do primeiro salário até o fim da carreira:
+
+| Categoria | Exemplos | O que dá |
+| --- | --- | --- |
+| Lazer | streaming, videogame, kart, festa, cinema em casa, kartódromo | felicidade e vestiário |
+| Luxo | relógio, esportivo, iate, jatinho, castelo, ilha particular | fama e felicidade, com manutenção |
+| Desempenho | colchão, óculos estroboscópico, câmara hiperbárica, CT particular, longevidade | treino, forma, lesões, queda mais lenta |
+| Casa e família | cachorro, casa para os pais, chef, motorista, fazenda | felicidade, forma, disciplina |
+| Imagem e social | hospital infantil, instituto, assessor de imprensa, agência de patrocínios | reputação, torcida, patrocínios |
+| Estudo | inglês, xadrez, media training, licença de treinador, MBA | inteligência, carisma, finanças |
+| Viagens | praia, Maldivas, churrasco do elenco, cruzeiro com o elenco, espaço | felicidade, forma, vestiário, técnico |
+| Investimentos | poupança, cripto, franquia, prédio, shopping, comprar o seu clube | rendimento anual com risco |
+| Coleção | álbum da Copa, camisas históricas, quadro, carro clássico | valoriza com o tempo |
+
+- **Compra única**: vale enquanto você tiver; dá para revender por uma parte do
+  preço (a tatuagem e o cachorro, não). O bônus da compra só vem na primeira vez.
+- **Serviço**: cobra por semana e pode ser cancelado.
+- **Experiência**: muda a vida na hora e volta depois de algumas semanas (ou uma
+  vez por temporada, ou uma vez na carreira). Algumas podem dar ruim.
+- **Investimento e coleção**: pagam um rendimento e mudam de valor no fim da
+  temporada; ano ruim derruba o valor e os mais arriscados podem quebrar.
+  Resgate quando quiser pelo valor do momento, menos a taxa.
+
+Para nada ficar roubado, os bônus somados de todos os itens têm teto (no
+máximo +4 por atributo, +2 de felicidade por semana, treino rendendo até +80%,
+risco de lesão no mínimo pela metade). Nos testes, uma carreira que compra
+tudo assim que pode termina com uns 2 de overall a mais no auge do que quem só
+usa a loja de evolução, e gasta quase todo o dinheiro para isso.
 
 ### 9. Aposentadoria
 Pare quando quiser (ou quando a idade decidir) e veja o resumo do legado, com uma
@@ -224,7 +256,8 @@ src/
     nations.js             20 seleções
     traits.js              14 traços com efeitos em campo e fora
     lifeEvents.js          33 eventos de vida com condições e desfechos
-    shop.js                itens da loja: equipamento e equipe pessoal
+    shop.js                itens da loja de evolução: equipamento e equipe
+    lifestyle.js           150 itens da aba Vida: lazer, luxo, investimentos...
     matchMoments.js        24 lances interativos de partida
     names.js               geradores de nome por país
   engine/                  regras puras, sem DOM
@@ -238,8 +271,8 @@ src/
     transfers.js           valor de mercado, propostas, contratos
     national.js            convocações e torneios de seleção
     awards.js              premiações e bônus
-    finance.js             salário, gastos, investimentos
-    shop.js                compra, dispensa e efeitos dos itens
+    finance.js             salário, gastos, patrocínio, fechamento dos investimentos
+    shop.js                compra, venda, dispensa, efeitos e tetos dos itens
   ui/
     app.js                 roteador de telas e delegação de eventos
     components.js          figurinhas, avatar SVG, medidores, tabelas
@@ -267,6 +300,8 @@ editando um arquivo de dados.
   contra um stat).
 - **Novo lance de partida**: adicione em `src/data/matchMoments.js` dizendo as
   zonas do campo, os atributos que pesam e os desfechos.
+- **Novo item da loja da vida**: `src/data/lifestyle.js`, com `own` (compra
+  única), `hire` (por semana), `live` (experiência) ou `asset` (investimento).
 - **Novo traço**: `src/data/traits.js`, com bônus de atributo, modificadores de
   partida (`shoot`, `dribble`, `pass`, `tackle`, `save`, `aerial`, `clutch`,
   `setPiece`, `cardRisk`, `staminaDrain`) ou de vida.
