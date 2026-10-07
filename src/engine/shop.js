@@ -2,7 +2,6 @@
 
 import { money } from '../core/utils.js';
 import { SHOP_ITEMS, getShopItem } from '../data/shop.js';
-import { isGoalkeeper } from '../data/positions.js';
 
 export const ownedItemIds = (player) => new Set(player.items ?? []);
 
@@ -10,9 +9,11 @@ export const ownsItem = (player, id) => (player.items ?? []).includes(id);
 
 /** Itens que fazem sentido para a posição do jogador. */
 export function shopItemsFor(player) {
-  const gk = isGoalkeeper(player.position);
-  return SHOP_ITEMS.filter((item) => (item.goalkeeperOnly ? gk : true) && (item.outfieldOnly ? !gk : true));
+  return SHOP_ITEMS.filter((item) => !item.positions || item.positions.includes(player.position));
 }
+
+/** Item exclusivo de algumas posições (aparece no grupo "Da sua posição"). */
+export const isPositionItem = (item) => Boolean(item.group);
 
 /** Itens ativos do jogador, já com os dados da loja. */
 export function activeItems(player) {
@@ -31,6 +32,7 @@ export function itemEffects(player) {
     weeklyFitness: 0,
     restBonus: 0,
     fasterHealing: 0,
+    weeklyHappiness: 0,
   };
   for (const item of activeItems(player)) {
     const effects = item.effects ?? {};
@@ -42,6 +44,7 @@ export function itemEffects(player) {
     total.trainingFitness += effects.trainingFitness ?? 0;
     total.weeklyFitness += effects.weeklyFitness ?? 0;
     total.restBonus += effects.restBonus ?? 0;
+    total.weeklyHappiness += effects.weeklyHappiness ?? 0;
     total.fasterHealing = Math.max(total.fasterHealing, effects.fasterHealing ?? 0);
   }
   return total;

@@ -10,6 +10,17 @@
 //   skillPoints    -> pontos de evolução extras por treino { treinoId: 1 }
 //   unlocks        -> treinos novos liberados (ver engine/training.js)
 //   fasterHealing  -> chance por semana de a lesão curar uma semana a mais
+//   weeklyHappiness-> felicidade por semana
+//
+// positions: só aparece para essas posições (sem a lista, serve para todos).
+// group: rótulo curto mostrado na loja para itens de posição.
+
+const GK = ['GOL'];
+const DEF = ['ZAG', 'LAT', 'VOL'];
+const MID = ['VOL', 'MC', 'MEI'];
+const ATT = ['MEI', 'PON', 'SA', 'ATA'];
+const WIDE = ['LAT', 'PON', 'SA', 'ATA'];
+const OUTFIELD = ['ZAG', 'LAT', 'VOL', 'MC', 'MEI', 'PON', 'SA', 'ATA'];
 
 export const SHOP_ITEMS = [
   // ---------------------------------------------------------- equipamento
@@ -21,7 +32,7 @@ export const SHOP_ITEMS = [
     price: 6_000,
     description: 'Mais contato com a bola e chute mais limpo.',
     effects: { attributes: { shotPower: 1, ballControl: 1, curve: 1 } },
-    outfieldOnly: true,
+    positions: OUTFIELD,
   },
   {
     id: 'luvas',
@@ -31,7 +42,52 @@ export const SHOP_ITEMS = [
     price: 6_000,
     description: 'Encaixe firme em qualquer clima.',
     effects: { attributes: { gkHandling: 2, gkDiving: 1 } },
-    goalkeeperOnly: true,
+    positions: GK,
+    group: 'Goleiro',
+  },
+  {
+    id: 'maquina_bolas',
+    kind: 'equip',
+    label: 'Máquina lançadora de bolas',
+    icon: 'target',
+    price: 120_000,
+    description: 'Chutes em qualquer ângulo e velocidade. Libera o treino "Reflexo na máquina".',
+    effects: { unlocks: ['reflexo'], xp: { goleiro: 1.15 } },
+    positions: GK,
+    group: 'Goleiro',
+  },
+  {
+    id: 'caneleira',
+    kind: 'equip',
+    label: 'Caneleiras de carbono',
+    icon: 'shield',
+    price: 15_000,
+    description: 'Leves e duras. Você entra na dividida sem medo.',
+    effects: { attributes: { standingTackle: 1, slidingTackle: 1 }, injuryRisk: 0.9 },
+    positions: DEF,
+    group: 'Defesa',
+  },
+  {
+    id: 'rebatedor',
+    kind: 'equip',
+    label: 'Rebatedor de passes',
+    icon: 'arrow-counter-clockwise',
+    price: 90_000,
+    description: 'Uma parede que devolve a bola em ângulos diferentes. Libera o treino "Paredão de passe".',
+    effects: { unlocks: ['paredao'] },
+    positions: MID,
+    group: 'Meio-campo',
+  },
+  {
+    id: 'robo_finalizacao',
+    kind: 'equip',
+    label: 'Gol com alvos e goleiro-robô',
+    icon: 'crosshair',
+    price: 180_000,
+    description: 'Alvos nos cantos e um goleiro que se mexe. Finalização rende mais.',
+    effects: { xp: { finalizacao: 1.25, artilheiro: 1.15 }, skillPoints: { finalizacao: 1 } },
+    positions: ATT,
+    group: 'Ataque',
   },
   {
     id: 'gps',
@@ -97,6 +153,70 @@ export const SHOP_ITEMS = [
     weekly: 8_000,
     description: 'Lesões curam mais rápido e o descanso recupera mais.',
     effects: { fasterHealing: 0.5, restBonus: 3 },
+  },
+  {
+    id: 'psicologo',
+    kind: 'staff',
+    label: 'Psicólogo do esporte',
+    icon: 'brain',
+    weekly: 1_800,
+    description: 'Cabeça fria nos momentos grandes e menos pressão fora de campo.',
+    effects: { attributes: { composure: 2 }, weeklyHappiness: 1 },
+  },
+  {
+    id: 'treinador_goleiros',
+    kind: 'staff',
+    label: 'Treinador de goleiros particular',
+    icon: 'hand-grabbing',
+    weekly: 3_500,
+    description: 'Trabalho específico de posicionamento e saída do gol.',
+    effects: { xp: { goleiro: 1.3, reflexo: 1.2 }, skillPoints: { goleiro: 1 }, attributes: { gkPositioning: 1 } },
+    positions: GK,
+    group: 'Goleiro',
+  },
+  {
+    id: 'treinador_defesa',
+    kind: 'staff',
+    label: 'Treinador de defesa',
+    icon: 'shield',
+    weekly: 3_500,
+    description: 'Ex-zagueiro que ensina tempo de bote e leitura. Libera o treino "Marcação individual".',
+    effects: { unlocks: ['marcacao'], attributes: { defAwareness: 1 } },
+    positions: DEF,
+    group: 'Defesa',
+  },
+  {
+    id: 'coach_visao',
+    kind: 'staff',
+    label: 'Coach de visão de jogo',
+    icon: 'eye',
+    weekly: 4_000,
+    description: 'Exercícios de percepção para enxergar o passe antes de receber a bola.',
+    effects: { attributes: { vision: 2, shortPass: 1 }, xp: { tatico: 1.2, paredao: 1.2 } },
+    positions: MID,
+    group: 'Meio-campo',
+  },
+  {
+    id: 'treinador_velocidade',
+    kind: 'staff',
+    label: 'Treinador de velocidade',
+    icon: 'lightning',
+    weekly: 3_000,
+    description: 'Técnica de corrida e arranque para ganhar no espaço.',
+    effects: { attributes: { acceleration: 1, sprintSpeed: 1 }, xp: { fisico: 1.15 } },
+    positions: WIDE,
+    group: 'Velocidade',
+  },
+  {
+    id: 'treinador_finalizacao',
+    kind: 'staff',
+    label: 'Treinador de finalização',
+    icon: 'soccer-ball',
+    weekly: 4_500,
+    description: 'Ex-artilheiro que corrige o corpo na hora do chute. Libera o treino "Treino de artilheiro".',
+    effects: { unlocks: ['artilheiro'], attributes: { finishing: 1 } },
+    positions: ATT,
+    group: 'Ataque',
   },
   {
     id: 'mentor',

@@ -92,8 +92,14 @@ Na aba Atributos há uma loja para gastar o dinheiro da carreira:
   GPS (treino físico rende mais e machuca menos), academia em casa e centro de
   recuperação (liberam treinos novos).
 - **Equipe pessoal** (custo semanal, pode dispensar): nutricionista, preparador
-  físico, analista de desempenho, fisioterapeuta e mentor ex-craque. Alguns
-  liberam treinos novos: *Análise de vídeo* e *Treino com o mentor*.
+  físico, analista de desempenho, fisioterapeuta, psicólogo do esporte e mentor
+  ex-craque. Alguns liberam treinos novos: *Análise de vídeo* e *Treino com o mentor*.
+- **Da sua posição**: cada área tem profissionais e equipamentos próprios.
+  Goleiro (luvas, máquina lançadora, treinador de goleiros), defesa (caneleiras,
+  treinador de defesa), meio-campo (rebatedor de passes, coach de visão de jogo),
+  ataque (gol com goleiro-robô, treinador de finalização) e velocidade para
+  laterais e atacantes. Liberam *Reflexo na máquina*, *Marcação individual*,
+  *Paredão de passe* e *Treino de artilheiro*.
 
 ### 6. Mercado da bola
 No fim de cada temporada você recebe propostas de verdade, geradas a partir do

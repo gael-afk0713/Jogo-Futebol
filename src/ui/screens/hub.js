@@ -13,7 +13,7 @@ import { attributeLabel } from '../../data/attributes.js';
 import { INVESTMENTS, invest, netWorth, weeklyExpenses, weeklySponsors } from '../../engine/finance.js';
 import { marketValue, getRole } from '../../engine/transfers.js';
 import { mainSquadRequirement } from '../../engine/national.js';
-import { ownsItem, shopItemsFor } from '../../engine/shop.js';
+import { isPositionItem, ownsItem, shopItemsFor } from '../../engine/shop.js';
 import { TRAINING_OPTIONS } from '../../engine/training.js';
 import {
   attributeList,
@@ -453,6 +453,7 @@ function itemEffectText(item) {
   if (effects.trainingFitness) parts.push(`Treino cansa ${effects.trainingFitness} a menos`);
   if (effects.restBonus) parts.push(`Descanso recupera +${effects.restBonus}`);
   if (effects.fasterHealing) parts.push('Lesões curam mais rápido');
+  if (effects.weeklyHappiness) parts.push(`Felicidade +${effects.weeklyHappiness} por semana`);
   return parts;
 }
 
@@ -471,7 +472,7 @@ function shopRow(player, item) {
   return `<li class="shop__item ${owned ? 'is-owned' : ''}">
     <span class="option__icon">${icon(item.icon)}</span>
     <div class="shop__text">
-      <span class="shop__title">${esc(item.label)}${owned && staff ? '<span class="train__tag">Na equipe</span>' : ''}</span>
+      <span class="shop__title">${esc(item.label)}${item.group ? `<span class="shop__pos">${esc(item.group)}</span>` : ''}${owned && staff ? '<span class="train__tag">Na equipe</span>' : ''}</span>
       <span class="train__desc">${esc(item.description)}</span>
       <span class="option__effects">${itemEffectText(item).map((text) => `<span class="effect--up">${esc(text)}</span>`).join('')}</span>
     </div>
@@ -485,8 +486,10 @@ function shopRow(player, item) {
 
 function shopSection(player) {
   const items = shopItemsFor(player);
-  const gear = items.filter((item) => item.kind === 'equip');
-  const staff = items.filter((item) => item.kind === 'staff');
+  const mine = items.filter(isPositionItem).sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'equip' ? -1 : 1));
+  const gear = items.filter((item) => item.kind === 'equip' && !isPositionItem(item));
+  const staff = items.filter((item) => item.kind === 'staff' && !isPositionItem(item));
+  const position = getPosition(player.position);
   return `
     <section class="sheet section" aria-labelledby="loja-titulo">
       <div class="section__head">
@@ -496,11 +499,15 @@ function shopSection(player) {
       <p class="lede">Equipamento é compra única e vale para sempre. A equipe pessoal cobra por semana (entra nos seus gastos) e pode ser dispensada.</p>
       <div class="train__groups shop__groups">
         <div>
-          <h3 class="train__group">Equipamento</h3>
+          <h3 class="train__group">Da sua posição: ${esc(position.name)}</h3>
+          <ul class="shoplist">${mine.map((item) => shopRow(player, item)).join('')}</ul>
+        </div>
+        <div>
+          <h3 class="train__group">Equipamento para todos</h3>
           <ul class="shoplist">${gear.map((item) => shopRow(player, item)).join('')}</ul>
         </div>
         <div>
-          <h3 class="train__group">Equipe pessoal</h3>
+          <h3 class="train__group">Equipe pessoal para todos</h3>
           <ul class="shoplist">${staff.map((item) => shopRow(player, item)).join('')}</ul>
         </div>
       </div>

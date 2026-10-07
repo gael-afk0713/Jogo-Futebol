@@ -2846,6 +2846,16 @@ code {
   font-weight: 600;
 }
 
+.shop__pos {
+  padding: 1px 7px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-cond);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
 .shop__buy {
   grid-area: buy;
   display: flex;

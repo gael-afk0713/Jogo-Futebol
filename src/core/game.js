@@ -540,6 +540,7 @@ export class Game {
 
     const gear = itemEffects(player);
     if (gear.weeklyFitness) adjustLife(player, 'fitness', gear.weeklyFitness);
+    if (gear.weeklyHappiness) adjustLife(player, 'happiness', gear.weeklyHappiness);
     if (player.injury) {
       player.injury.weeks -= 1;
       if (gear.fasterHealing && player.injury.weeks > 0 && this.rng.chance(gear.fasterHealing)) player.injury.weeks -= 1;
