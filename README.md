@@ -55,8 +55,9 @@ você vai jogar e aparecer no primeiro ano.
 ### 3. A semana
 Cada semana tem três etapas:
 
-1. **Treino** — 10 focos diferentes (técnico, físico, musculação, tático, bola
-   parada, finalização, drible, treino de goleiro, descanso, folga), mais os
+1. **Treino** — 11 focos diferentes (técnico, físico, musculação, tático, bola
+   parada, finalização, drible, treino de goleiro, jogo com os pés do goleiro,
+   descanso, folga), mais os
    liberados pela loja. Com o *Tablet de análise de treino*, passar o mouse (ou
    tocar no olho) mostra exatamente o XP de cada atributo, o que sobe, a forma,
    a felicidade, os pontos e o risco de lesão daquele treino. Cada um mexe em
@@ -71,7 +72,9 @@ Se você não for escalado (forma ruim, relação ruim com o técnico, lesão ou
 suspensão), você assiste do banco — e isso cobra o seu preço.
 
 ### 4. Dentro de campo
-O motor sorteia lances compatíveis com a sua posição e mostra a **chance real de
+O motor sorteia lances compatíveis com a sua posição (o goleiro também sai
+jogando com os pés, faz lançamentos, sai da área como líbero, monta a barreira e
+pode até subir no escanteio do último minuto) e mostra a **chance real de
 sucesso** de cada opção, calculada a partir dos seus atributos, dos seus traços,
 da sua energia naquele minuto e da força do adversário. Entre os seus lances, o
 resto do jogo é simulado.
@@ -222,7 +225,7 @@ src/
     traits.js              14 traços com efeitos em campo e fora
     lifeEvents.js          33 eventos de vida com condições e desfechos
     shop.js                itens da loja: equipamento e equipe pessoal
-    matchMoments.js        19 lances interativos de partida
+    matchMoments.js        24 lances interativos de partida
     names.js               geradores de nome por país
   engine/                  regras puras, sem DOM
     player.js              criação e atributos de vida

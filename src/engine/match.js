@@ -145,6 +145,7 @@ function pickMoment(match, player, rng) {
     if (!moment.zones.includes(match.zone)) return false;
     if (moment.lateGameOnly && !lateGame) return false;
     if (moment.requiresTired && !tired) return false;
+    if (moment.requiresLosing && match.score.team >= match.score.opponent) return false;
     if (moment.requiresSetPiece && !isSetPieceTaker(player)) return false;
     if (moment.requiresPenalty && !isPenaltyTaker(player)) return false;
     if (match.usedMomentIds.includes(moment.id) && !moment.requiresPenalty) return false;

@@ -41,7 +41,7 @@ Diferente de um BitLife puro, as partidas são interativas: o jogador decide os 
 
 ## Evidence on Hand
 
-- Conteúdo real do jogo: 18 ligas e 202 clubes (`src/data/clubs.js`), 33 eventos de vida (`src/data/lifeEvents.js`), 19 lances de partida (`src/data/matchMoments.js`), 14 traços, 9 posições, 20 seleções.
+- Conteúdo real do jogo: 18 ligas e 202 clubes (`src/data/clubs.js`), 33 eventos de vida (`src/data/lifeEvents.js`), 24 lances de partida (`src/data/matchMoments.js`), 14 traços, 9 posições, 20 seleções.
 - Não existem logos, escudos, fotos, depoimentos ou métricas de jogadores reais; nada disso deve ser fabricado.
 
 ## Product Principles
