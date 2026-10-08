@@ -28,6 +28,7 @@ import {
 import { LIFESTYLE_CATEGORIES, LIFESTYLE_ITEMS } from '../../data/lifestyle.js';
 import { getShopItem } from '../../data/shop.js';
 import { TRAINING_OPTIONS } from '../../engine/training.js';
+import { recommendTraining } from '../../engine/coach.js';
 import {
   attributeList,
   feed,
@@ -122,18 +123,26 @@ function signed(value) {
   return `${value > 0 ? '+' : ''}${value}`;
 }
 
-function trainingEffects(option) {
+/**
+ * Os efeitos do treino na linha. A evolução vem da conta do preparador: um
+ * treino com tudo no teto não aparece como "evolução alta".
+ */
+function trainingEffects(option, assessed) {
   const effects = [];
-  if (option.xp >= 25) effects.push({ text: 'Evolução alta', up: true });
-  else if (option.xp >= 20) effects.push({ text: 'Evolução média', up: true });
-  if (option.fitness) effects.push({ text: `Forma ${signed(option.fitness)}`, up: option.fitness > 0 });
-  if (option.happiness) effects.push({ text: `Felicidade ${signed(option.happiness)}`, up: option.happiness > 0 });
-  if (option.managerRelation) effects.push({ text: `Técnico ${signed(option.managerRelation)}`, up: true });
-  if (option.health) effects.push({ text: `Saúde ${signed(option.health)}`, up: true });
-  if (option.injuryRisk >= 0.04) effects.push({ text: 'Risco de lesão', up: false });
-  return `<span class="option__effects">${effects
-    .map((effect) => `<span class="${effect.up ? 'effect--up' : 'effect--down'}">${esc(effect.text)}</span>`)
-    .join('')}</span>`;
+  if (option.xp > 0) {
+    const growth = assessed?.growth ?? (option.xp >= 25 ? 1 : 0.5);
+    if (growth >= 0.7) effects.push({ text: 'Evolução alta', tone: 'up' });
+    else if (growth >= 0.35) effects.push({ text: 'Evolução média', tone: 'up' });
+    else if (growth >= 0.08) effects.push({ text: 'Evolução baixa', tone: 'mid' });
+    else effects.push({ text: 'Sem evolução', tone: 'down' });
+  }
+  if (option.fitness) effects.push({ text: `Forma ${signed(option.fitness)}`, tone: option.fitness > 0 ? 'up' : 'down' });
+  if (option.happiness) effects.push({ text: `Felicidade ${signed(option.happiness)}`, tone: option.happiness > 0 ? 'up' : 'down' });
+  if (option.managerRelation) effects.push({ text: `Técnico ${signed(option.managerRelation)}`, tone: 'up' });
+  if (option.health) effects.push({ text: `Saúde ${signed(option.health)}`, tone: 'up' });
+  const risk = assessed?.injuryRisk ?? option.injuryRisk;
+  if (risk >= 0.04) effects.push({ text: `Risco de lesão ${Math.round(risk * 100)}%`, tone: 'down' });
+  return `<span class="option__effects">${effects.map((effect) => `<span class="effect--${effect.tone}">${esc(effect.text)}</span>`).join('')}</span>`;
 }
 
 const RECOVERY = new Set(['descanso', 'livre', 'crioterapia']);
@@ -146,21 +155,6 @@ function trainingTargets(player, option) {
   if (!labels.length) return '';
   const shown = labels.slice(0, 3).join(', ');
   return labels.length > 3 ? `${shown} e mais ${labels.length - 3}` : shown;
-}
-
-/**
- * Sugestão do preparador, a partir do estado real do jogador: corpo
- * cansado pede descanso, cabeça cansada pede folga, o resto pede evolução.
- */
-function suggestedTraining(player, options) {
-  const ids = new Set(options.map((option) => option.id));
-  if (player.injury?.weeks > 0) return { id: 'descanso', why: 'Você está machucado.' };
-  if (player.life.fitness < 45 && ids.has('crioterapia')) return { id: 'crioterapia', why: 'Sua forma física está baixa.' };
-  if (player.life.fitness < 45 && ids.has('descanso')) return { id: 'descanso', why: 'Sua forma física está baixa.' };
-  if (player.life.happiness < 35 && ids.has('livre')) return { id: 'livre', why: 'Sua felicidade está baixa.' };
-  if (player.life.managerRelation < 40 && ids.has('tatico')) return { id: 'tatico', why: 'O técnico anda desconfiado de você.' };
-  if (ids.has('mentor')) return { id: 'mentor', why: 'Corpo e cabeça em dia: aproveite o mentor.' };
-  return { id: ids.has('goleiro') ? 'goleiro' : 'tecnico', why: 'Corpo e cabeça em dia: hora de evoluir.' };
 }
 
 const LIFE_LABELS = { fitness: 'Forma física', happiness: 'Felicidade', health: 'Saúde', managerRelation: 'Técnico', intelligence: 'Inteligência' };
@@ -204,7 +198,14 @@ function trainingPeek(player, option, insight) {
     </ul>`;
 }
 
-function trainingRow(player, option, { blocked, suggested, insight }) {
+/** Quantos atributos do treino já estão no teto (o XP neles é perdido). */
+function capTag(assessed) {
+  if (!assessed?.rows.length || !assessed.capped) return '';
+  const all = assessed.capped === assessed.rows.length;
+  return `<span class="train__cap">${all ? 'Tudo no teto' : `${assessed.capped} no teto`}</span>`;
+}
+
+function trainingRow(player, option, { blocked, suggested, insight, assessed }) {
   const targets = trainingTargets(player, option);
   const open = ui.peek === option.id;
   return `<li class="train-row ${open ? 'is-open' : ''}">
@@ -212,10 +213,10 @@ function trainingRow(player, option, { blocked, suggested, insight }) {
       aria-describedby="peek-${option.id}">
       <span class="option__icon">${icon(option.icon)}</span>
       <span class="train__text">
-        <span class="train__title">${esc(option.label)}${suggested ? '<span class="train__tag">Sugerido</span>' : ''}</span>
+        <span class="train__title">${esc(option.label)}${suggested ? '<span class="train__tag">Sugerido</span>' : ''}${capTag(assessed)}</span>
         <span class="train__desc">${targets ? `Treina ${esc(targets)}` : esc(option.description)}</span>
       </span>
-      ${trainingEffects(option)}
+      ${trainingEffects(option, assessed)}
     </button>
     <button class="train__eye" data-action="peek-training" data-training="${option.id}" aria-expanded="${open}" aria-controls="peek-${option.id}"
       aria-label="${insight ? `Ver o que ${esc(option.label)} vai te dar` : 'Detalhes bloqueados: compre o tablet na loja'}">${icon(insight ? 'eye' : 'lock-simple')}</button>
@@ -223,21 +224,48 @@ function trainingRow(player, option, { blocked, suggested, insight }) {
   </li>`;
 }
 
-function trainingStep(state) {
+/** O cartão do preparador: o treino recomendado, por quê, e um toque para treinar. */
+function coachCard(advice, injured) {
+  const { best, ranked, reasons } = advice;
+  const second = ranked.find((entry) => entry.id !== best.id);
+  const close = second && best.score - second.score < 0.08;
+  return `
+    <div class="coach" aria-labelledby="coach-titulo">
+      <div class="coach__head">
+        <span class="coach__icon">${icon('clipboard-text')}</span>
+        <div class="coach__title">
+          <p class="coach__kicker">O preparador recomenda</p>
+          <h3 class="coach__pick" id="coach-titulo">${esc(best.option.label)}</h3>
+        </div>
+        <button class="btn btn--primary coach__go" data-action="choose-training" data-training="${best.id}">${injured ? 'Descansar' : 'Treinar'}</button>
+      </div>
+      <ul class="coach__why">${reasons.map((reason) => `<li>${esc(reason)}</li>`).join('')}</ul>
+      ${second && !injured ? `<p class="coach__alt">${close ? 'Quase empatado com' : 'Segunda opção:'} <strong>${esc(second.option.label)}</strong></p>` : ''}
+    </div>`;
+}
+
+function trainingStep(state, data) {
   const player = state.player;
   const injured = player.injury?.weeks > 0;
   const options = trainingOptionsFor(player);
-  const tip = suggestedTraining(player, options);
+  const advice = recommendTraining(player, { hasMatch: Boolean(data?.week) && !(player.suspension > 0) });
+  const assessedById = new Map(advice.ranked.map((entry) => [entry.id, entry]));
   const insight = itemEffects(player).insight;
-  const row = (option) => trainingRow(player, option, { blocked: injured && option.id !== 'descanso', suggested: option.id === tip.id, insight });
+  const row = (option) =>
+    trainingRow(player, option, {
+      blocked: injured && option.id !== 'descanso',
+      suggested: option.id === advice.best.id,
+      insight,
+      assessed: assessedById.get(option.id),
+    });
   const grow = options.filter((option) => !RECOVERY.has(option.id));
   const rest = options.filter((option) => RECOVERY.has(option.id));
   return `
-    <section class="sheet section" aria-labelledby="passo-titulo">
+    <section class="sheet section train-sheet" aria-labelledby="passo-titulo">
       <div class="section__head">
         <h2 id="passo-titulo">Treino da semana</h2>
       </div>
-      <p class="train__tip">${icon('clipboard-text')}<span><strong>Preparador:</strong> ${esc(tip.why)}</span></p>
+      ${coachCard(advice, injured)}
       <div class="train__groups">
         <div>
           <h3 class="train__group">Evoluir</h3>
@@ -408,7 +436,7 @@ function weekTab(state, ctx) {
   const stepIndex = STEP_ORDER.indexOf(step);
 
   let stepMarkup;
-  if (step === WEEK_STEPS.TRAINING) stepMarkup = trainingStep(state);
+  if (step === WEEK_STEPS.TRAINING) stepMarkup = trainingStep(state, data);
   else if (step === WEEK_STEPS.LIFE) stepMarkup = lifeStep(state, ctx);
   else if (step === WEEK_STEPS.MATCH) stepMarkup = matchStep(state, ctx);
   else stepMarkup = reportStep(state);

@@ -61,7 +61,8 @@ Cada semana tem três etapas:
    liberados pela loja. Com o *Tablet de análise de treino*, passar o mouse (ou
    tocar no olho) mostra exatamente o XP de cada atributo, o que sobe, a forma,
    a felicidade, os pontos e o risco de lesão daquele treino. Cada um mexe em
-   evolução, forma física, felicidade e na relação com o técnico.
+   evolução, forma física, felicidade e na relação com o técnico. O
+   **preparador** recomenda o treino da semana e explica o porquê (veja abaixo).
 2. **Vida** — eventos no estilo BitLife: festas, relacionamentos, imprensa,
    patrocínios, investimentos, brigas de vestiário, apostas, projetos sociais,
    saúde mental, convite para documentário... Alguns têm resultado garantido,
@@ -70,6 +71,30 @@ Cada semana tem três etapas:
 
 Se você não for escalado (forma ruim, relação ruim com o técnico, lesão ou
 suspensão), você assiste do banco — e isso cobra o seu preço.
+
+#### O preparador
+O cartão no topo do treino faz a mesma conta do treino de verdade
+(`src/engine/coach.js`) e compara todas as opções em "semanas de evolução":
+
+- **Quanto você melhora**: só conta o XP que cai em atributos abaixo do teto,
+  pesado pelo que importa na sua posição (65% o peso no overall, 35% o quanto o
+  atributo aparece nos lances da sua zona). Por isso um goleiro com os atributos
+  de goleiro no teto é mandado para o tático ou o jogo com os pés.
+- **O que custa**: forma antes do jogo (pesa mais quando tem partida na semana),
+  felicidade, relação com o técnico, inteligência, saúde e o risco de lesão.
+  Cada ponto vale mais quando o número está baixo.
+- Cada linha mostra a evolução real (alta, média, baixa ou nenhuma), quantos
+  atributos já estão no teto e o risco de lesão de verdade.
+- **Simular** semanas segue o preparador (antes simulava sempre o treino
+  técnico, mesmo cansado).
+
+Os pesos foram calibrados simulando 200 carreiras de cada jeito:
+
+| Jeito de treinar | Overall no auge | Nota média | Legado | Lesões no treino |
+| --- | --- | --- | --- | --- |
+| Sempre o treino técnico (o simular antigo) | 83,1 | 6,21 | 1333 | 20,6 |
+| A sugestão antiga | 85,0 | 6,47 | 1795 | 7,0 |
+| O preparador | 85,7 | 6,62 | 2276 | 6,8 |
 
 ### 4. Dentro de campo
 O motor sorteia lances compatíveis com a sua posição (o goleiro também sai
@@ -266,6 +291,7 @@ src/
     match.js               motor de partida (máquina de estados)
     season.js              calendário, tabela, copas, resumo
     training.js            treino semanal e XP
+    coach.js               preparador: recomenda o treino e explica o porquê
     life.js                sorteio e resolução de eventos
     progression.js         evolução, declínio, aposentadoria, legado
     transfers.js           valor de mercado, propostas, contratos

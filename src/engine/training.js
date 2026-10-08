@@ -300,7 +300,7 @@ export function grantXp(player, attributeIds, amount) {
  * verdade e a prévia da loja usam esta mesma função, então a prévia mostra
  * exatamente o que vai acontecer (o que é sorte aparece como chance).
  */
-function planTraining(player, option) {
+export function planTraining(player, option) {
   const targets = targetAttributes(player, option);
   const gear = itemEffects(player);
 

@@ -3100,20 +3100,104 @@ code {
 }
 
 /* ------------------------------------------------------------- treino */
-.train__tip {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  color: var(--ink-2);
-  font-size: 0.95rem;
+/* cartão do preparador */
+.coach {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--r-control);
+  background: var(--info-soft);
+  color: var(--ink);
 }
 
-.train__tip .icon {
-  width: 20px;
-  height: 20px;
+.coach__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.coach__icon {
+  display: grid;
+  place-items: center;
   flex: none;
-  margin-top: 1px;
-  color: var(--cover);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--cover);
+  color: var(--cover-ink);
+}
+
+.coach__icon .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.coach__title {
+  flex: 1;
+  min-width: 0;
+}
+
+.coach__kicker {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.coach__pick {
+  margin: 0;
+  font-family: var(--font-cond);
+  font-size: 1.35rem;
+  line-height: 1.1;
+}
+
+.coach__go {
+  flex: none;
+}
+
+.coach__why {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--ink-2);
+  font-size: 0.93rem;
+  line-height: 1.4;
+}
+
+.coach__alt {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 0.88rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .coach__icon {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+}
+
+/* No celular o botão vai para a linha de baixo, largo para o dedo. */
+@media (max-width: 520px) {
+  .coach__head {
+    flex-wrap: wrap;
+  }
+
+  .coach__go {
+    order: 3;
+    width: 100%;
+  }
+}
+
+.train__cap {
+  padding: 1px 7px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 4px;
+  color: var(--ink-3);
+  font-family: var(--font-cond);
+  font-weight: 700;
+  font-size: 0.8rem;
 }
 
 .train__groups {
@@ -3121,7 +3205,13 @@ code {
   gap: 18px;
 }
 
-@media (min-width: 980px) {
+/* As colunas dependem do espaço que o treino tem, não da tela: no iPad a
+   figurinha ao lado come metade da largura. */
+.train-sheet {
+  container: treino / inline-size;
+}
+
+@container treino (min-width: 820px) {
   .train__groups {
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
     gap: 28px;
@@ -3139,6 +3229,7 @@ code {
 
 /* Lista com filetes, não cartões: cada treino é uma linha da ficha. */
 .trainlist {
+  container: lista-treino / inline-size;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -3225,7 +3316,8 @@ code {
   background: var(--sheet-2);
 }
 
-@media (min-width: 760px) {
+/* Com espaço, os efeitos vão para a direita da linha. */
+@container lista-treino (min-width: 540px) {
   .train {
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas: 'icon text effects';
@@ -3237,20 +3329,7 @@ code {
 
   .train .option__effects {
     justify-content: flex-end;
-    max-width: 260px;
-  }
-}
-
-@media (min-width: 980px) {
-  .train__groups > div:last-child .train {
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-      'icon text'
-      'icon effects';
-  }
-
-  .train__groups > div:last-child .train .option__effects {
-    justify-content: flex-start;
+    max-width: 240px;
   }
 }
 

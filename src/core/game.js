@@ -15,6 +15,7 @@ import {
 } from '../engine/player.js';
 import { playerOverall } from '../engine/overall.js';
 import { applyTraining, spendSkillPoint } from '../engine/training.js';
+import { recommendTraining } from '../engine/coach.js';
 import { applyWeeklyItems, buyItem, dismissStaff, sellItem } from '../engine/shop.js';
 import { drawLifeEvent, resolveLifeOption, weeklyDrift, lifeContext, availableOptions } from '../engine/life.js';
 import {
@@ -569,8 +570,9 @@ export class Game {
   /** Simula a semana inteira de uma vez. */
   simulateWeek() {
     if (this.state.week.step === WEEK_STEPS.TRAINING) {
-      const fallback = this.player.injury?.weeks > 0 ? 'descanso' : 'tecnico';
-      this.chooseTraining(fallback);
+      // Simulando, você segue o preparador (o mesmo da tela de treino).
+      const hasMatch = Boolean(this.currentFixture) && !(this.player.suspension > 0);
+      this.chooseTraining(recommendTraining(this.player, { hasMatch }).best.id);
     }
     if (this.state.week.step === WEEK_STEPS.LIFE && this.state.week.eventId) {
       const event = this.currentEvent();
