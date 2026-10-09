@@ -1,13 +1,12 @@
 # Como trabalhar neste projeto
 
-## Combinado: decidimos juntos
+## Combinado: criamos juntos
 
-- Antes de fazer qualquer coisa, pergunte. Nada de mudar código, criar ou apagar
-  arquivos, rodar algo que altere o projeto, fazer commit ou push sem o meu "ok".
-- Quando eu pedir algo, primeiro traga a sua leitura do pedido e as suas
-  sugestões: o que você faria, alternativas, prós e contras, riscos. Discuta
-  comigo até a gente chegar a um acordo.
-- Só comece a executar depois que eu disser que está combinado. Se no meio do
-  trabalho aparecer uma decisão nova, pare e pergunte de novo.
-- Ler arquivos e investigar o código para preparar a sugestão pode (isso não
-  muda nada no projeto).
+- Ideias e decisões do jogo são conversadas antes. Quando eu pedir algo (ou
+  você tiver uma ideia), traga a sua leitura, sugestões, alternativas, prós e
+  contras, e a gente discute até chegar a um acordo.
+- Depois do acordo, pode executar o que foi combinado sem pedir licença a cada
+  passo: mudar o código, rodar testes, fazer commit e push.
+- Se no meio aparecer uma decisão nova de design ou de jogo que não estava no
+  combinado, pare e traga para a conversa.
+- Ler o código e investigar pode sempre, sem perguntar.
