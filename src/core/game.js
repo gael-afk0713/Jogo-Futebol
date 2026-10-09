@@ -4,7 +4,6 @@ import { createRng } from './rng.js';
 import { clamp, logistic, money, plural, round } from './utils.js';
 import { getClub, getLeague, squadRating } from '../data/clubs.js';
 import { getNation } from '../data/nations.js';
-import { MOMENTS } from '../data/matchMoments.js';
 import { LIFE_EVENTS } from '../data/lifeEvents.js';
 import {
   adjustLife,
@@ -38,6 +37,7 @@ import {
   autoPlay,
   choose as chooseInMatch,
   createMatch,
+  findMoment,
   matchPreview,
   simulateWithoutPlayer,
 } from '../engine/match.js';
@@ -132,7 +132,7 @@ export class Game {
     fillMissingAttributes(this.state.player);
     // Reconecta o lance pendente da partida com os dados estáticos.
     if (this.state.match?.pending?.id) {
-      const moment = MOMENTS.find((item) => item.id === this.state.match.pending.id);
+      const moment = findMoment(this.state.match.pending.id);
       if (moment) this.state.match.pending.raw = moment;
       else this.state.match.pending = null;
     }
@@ -453,6 +453,9 @@ export class Game {
     stats.ratingSum += report.rating;
     stats.ratingCount += 1;
     stats.benchedStreak = 0;
+
+    // Lances deste jogo ficam um pouco menos prováveis no próximo.
+    player.recentMoments = [...(match.usedMomentIds ?? [])];
 
     // Vida
     adjustLife(player, 'fitness', -Math.round(report.minutesPlayed / 14));

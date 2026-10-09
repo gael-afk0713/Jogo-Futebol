@@ -117,6 +117,25 @@ Os desfechos viram gol, assistência, defesa, desarme, falta, cartão, pênalti,
 lesão — e a sua nota da partida, que é a média da qualidade das suas decisões
 (não a soma: participar de muitos lances não infla nada).
 
+São 54 lances, uns 20 por posição, e cada um tem dois ou três jeitos de ser
+contado, na situação e no resultado. Lances do jogo anterior ficam um pouco
+menos prováveis no seguinte. Nas simulações, um lance do jogo anterior volta
+em uns 15 a 20% das vezes (antes eram 45 a 67%).
+
+Fora da bola também acontece coisa, em média uma vez por jogo:
+
+- **No começo:** chuva forte (passe, drible e defesa ficam mais difíceis, a
+  não ser que você troque para a trava alta) e clima de decisão em mata-mata ou
+  contra um gigante (você começa confiante ou nervoso).
+- **Depois do seu gol:** o VAR pode revisar (e anular), e você escolhe como
+  comemorar.
+- **No meio do jogo:** o técnico grita "segura!" ou "pressiona!" (muda quantos
+  gols saem dos dois lados), empurra-empurra, a braçadeira de capitão, a torcida
+  cantando o seu nome ou vaiando, e o juiz errando contra você.
+
+Esses eventos mexem na relação com o técnico, na torcida, no vestiário, na fama
+e na confiança para o resto do jogo, que aparece em "Seu jogo".
+
 ### 5. Evolução
 - **XP automático** nos atributos treinados
 - **Pontos de evolução** para gastar à mão, com custo crescente
@@ -292,7 +311,10 @@ src/
     lifeEvents.js          33 eventos de vida com condições e desfechos
     shop.js                itens da loja de evolução: equipamento e equipe
     lifestyle.js           150 itens da aba Vida: lazer, luxo, investimentos...
-    matchMoments.js        24 lances interativos de partida
+    matchMoments.js        lances interativos de partida (54 com os novos)
+    matchMomentsNew.js     os 30 lances escolhidos junto com o jogador
+    momentVariants.js      outros jeitos de contar os lances antigos
+    matchEvents.js         eventos fora da bola (VAR, chuva, técnico...)
     names.js               geradores de nome por país
   engine/                  regras puras, sem DOM
     player.js              criação e atributos de vida

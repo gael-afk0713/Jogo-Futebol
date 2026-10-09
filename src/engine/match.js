@@ -10,6 +10,7 @@ import { getPosition } from '../data/positions.js';
 import { matchModifier } from '../data/traits.js';
 import { randomFullName } from '../data/names.js';
 import { MOMENTS } from '../data/matchMoments.js';
+import { MATCH_EVENTS } from '../data/matchEvents.js';
 import { effectiveAttributes, playerOverall } from './overall.js';
 
 export const PLAYER_ROLE = {
@@ -18,6 +19,23 @@ export const PLAYER_ROLE = {
   BENCH: 'banco',
   OUT: 'fora',
 };
+
+const MOMENT_INDEX = new Map([...MOMENTS, ...MATCH_EVENTS].map((moment) => [moment.id, moment]));
+
+/** Lance ou evento pelo id (para reconectar o save com os dados). */
+export const findMoment = (id) => MOMENT_INDEX.get(id) ?? null;
+
+/** Texto que pode ter variações: sorteia uma. */
+function pickText(value, rng) {
+  if (Array.isArray(value)) return rng ? rng.pick(value) : value[0];
+  return value ?? '';
+}
+
+// Na chuva, passe, drible e defesa de goleiro ficam mais difíceis.
+const RAIN_MODS = new Set(['pass', 'dribble', 'save']);
+const RAIN_PENALTY = 4;
+// Eventos fora da bola por jogo, no máximo (para não travar a partida).
+const MAX_OFF_BALL = 3;
 
 /** Expectativa de gols de um time contra outro. */
 function expectedGoals(attackRating, defenseRating) {
@@ -43,6 +61,18 @@ export function createMatch({ player, clubId, opponentId, competition, isHome, r
 
   const baseMoments = playing ? clamp(Math.round(position.involvement * rng.int(3, 4)), 3, 6) : 0;
   const totalMoments = role === PLAYER_ROLE.SUB ? Math.max(2, Math.round(baseMoments * 0.5)) : baseMoments;
+
+  // Clima e peso do jogo, anunciados no começo como eventos.
+  const queue = [];
+  const conditions = { skill: 0 };
+  if (rng.chance(0.12)) {
+    conditions.rain = true;
+    queue.push('chuva');
+  }
+  // Mata-mata de copa ou adversário muito mais forte: às vezes bate o nervoso.
+  const knockout = competition?.id === 'copa' || competition?.id === 'continental';
+  const giant = opponentRating >= teamRating + 6;
+  if (role === PLAYER_ROLE.STARTER && (knockout || giant) && rng.chance(knockout ? 0.45 : 0.25)) queue.push('jogo_grande');
 
   return {
     id: `${clubId}_${opponentId}_${roundNumber}`,
@@ -73,13 +103,21 @@ export function createMatch({ player, clubId, opponentId, competition, isHome, r
     momentsPlayed: 0,
     totalMoments,
     usedMomentIds: [],
+    // Lances do jogo anterior aparecem um pouco menos (memória leve).
+    recent: [...(player.recentMoments ?? [])],
+    queue,
+    conditions,
+    xg: { team: 1, opponent: 1 },
+    // Um evento fora da bola sorteado no meio do jogo, em 45% das partidas.
+    contextMinute: rng.chance(0.45) ? rng.int(25, 82) : null,
+    offBall: 0,
     pending: null,
     pendingPenalty: false,
     finished: false,
     sentOff: false,
     substituted: false,
     injured: false,
-    lifeDelta: { morale: 0, discipline: 0, fame: 0 },
+    lifeDelta: { morale: 0, discipline: 0, fame: 0, managerRelation: 0, fanRelation: 0, happiness: 0, reputation: 0 },
   };
 }
 
@@ -117,7 +155,7 @@ function log(match, text, type = 'info', icon = null, minute = match.minute, mar
 const shortName = (name = '') => name.trim().split(/\s+/).pop();
 
 function fillText(template, match, player) {
-  return template
+  return String(template ?? '')
     .replaceAll('{minute}', String(match.minute))
     .replaceAll('{opponent}', match.opponentName)
     .replaceAll('{club}', match.clubName)
@@ -146,6 +184,8 @@ function pickMoment(match, player, rng) {
     if (moment.lateGameOnly && !lateGame) return false;
     if (moment.requiresTired && !tired) return false;
     if (moment.requiresLosing && match.score.team >= match.score.opponent) return false;
+    if (moment.requiresWinning && match.score.team <= match.score.opponent) return false;
+    if (moment.positions && !moment.positions.includes(player.position)) return false;
     if (moment.requiresSetPiece && !isSetPieceTaker(player)) return false;
     if (moment.requiresPenalty && !isPenaltyTaker(player)) return false;
     if (match.usedMomentIds.includes(moment.id) && !moment.requiresPenalty) return false;
@@ -158,6 +198,7 @@ function pickMoment(match, player, rng) {
     if (moment.requiresTired && tired) weight *= 3;
     if (moment.lateGameOnly && lateGame) weight *= 2.5;
     if (moment.tag === 'penalti') weight *= 0.6;
+    if (match.recent?.includes(moment.id)) weight *= 0.7;
     // O jogo tende a procurar quem sabe jogar: um meia técnico recebe mais
     // lances de passe e drible do que disputas aéreas. Sem zerar nenhum lance:
     // às vezes a bola cai na sua cabeça mesmo.
@@ -175,6 +216,13 @@ const KIND_PENALTY = { goal: 11, assist: 8 };
 
 /** Chance de sucesso de uma opção, de 5% a 95%. */
 export function successChance(player, option, match) {
+  // Eventos fora da bola: chance fixa (o VAR não liga para atributo) ou um
+  // teste de vida (carisma para separar uma briga).
+  if (typeof option.chance === 'number') return option.chance;
+  if (option.lifeCheck) {
+    const value = player.life[option.lifeCheck] ?? 50;
+    return clamp(logistic(value - 50 - (option.difficulty ?? 0), 0, 14), 0.08, 0.92);
+  }
   const attrs = effectiveAttributes(player);
   const skill = average((option.attrs ?? ['composure']).map((id) => attrs[id] ?? 40));
   const kindPenalty = KIND_PENALTY[option.success?.kind] ?? 0;
@@ -183,7 +231,11 @@ export function successChance(player, option, match) {
   const staminaPenalty = (1 - match.stamina / 100) * 16;
   const condition = (player.life.fitness - 60) * 0.1 + (player.life.morale - 50) * 0.05 + (player.life.happiness - 50) * 0.03;
 
-  const effective = skill + traitBonus + clutchBonus + condition - staminaPenalty - (option.difficulty ?? 0) - kindPenalty;
+  // Condições do jogo: confiança ou nervosismo, chuva.
+  const mood = match.conditions?.skill ?? 0;
+  const rain = match.conditions?.rain && !match.conditions.rainProof && RAIN_MODS.has(option.mod) ? RAIN_PENALTY : 0;
+
+  const effective = skill + traitBonus + clutchBonus + condition + mood - rain - staminaPenalty - (option.difficulty ?? 0) - kindPenalty;
   // O -4 e o spread largo evitam dois extremos chatos: o iniciante que nunca
   // acerta nada e o craque que nunca erra.
   const probability = logistic(effective - (match.opponentRating - 4), 0, 11);
@@ -208,8 +260,8 @@ function simulateBackground(match, player, rng, minutes) {
   const share = minutes / 90;
   const playerBoost = match.onField ? (playerOverall(player) - match.teamRating) * 0.02 : -0.05;
 
-  const teamXg = expectedGoals(match.teamRating, match.opponentRating) * share * (1 + playerBoost);
-  const oppXg = expectedGoals(match.opponentRating, match.teamRating) * share;
+  const teamXg = expectedGoals(match.teamRating, match.opponentRating) * share * (1 + playerBoost) * (match.xg?.team ?? 1);
+  const oppXg = expectedGoals(match.opponentRating, match.teamRating) * share * (match.xg?.opponent ?? 1);
 
   // O gol acontece em algum minuto dentro do trecho simulado, não no início dele.
   const goalMinute = () => clamp(match.minute + rng.int(1, Math.max(1, Math.round(minutes))), 1, 90);
@@ -220,6 +272,45 @@ function simulateBackground(match, player, rng, minutes) {
   if (rng.chance(clamp(oppXg, 0, 0.9))) {
     concede(match, 'Falha coletiva na marcação.', goalMinute());
   }
+}
+
+/** Monta o lance (ou evento) pendente, com um dos textos sorteado. */
+function present(match, player, moment, rng, { offBall = false } = {}) {
+  if (offBall) match.offBall += 1;
+  match.pending = {
+    id: moment.id,
+    title: moment.title,
+    text: fillText(pickText(moment.text, rng), match, player),
+    tag: moment.tag ?? (offBall ? 'fora' : 'jogo'),
+    offBall,
+    options: moment.options.map((option, index) => ({
+      index,
+      label: option.label,
+      hint: option.hint ?? '',
+      chance: successChance(player, option, match),
+      sure: option.chance === 1,
+    })),
+    raw: moment,
+  };
+  return match.pending;
+}
+
+/** Sorteia um evento fora da bola que combine com o momento do jogo. */
+function pickContextEvent(match, player, rng) {
+  const diff = match.score.team - match.score.opponent;
+  const pool = MATCH_EVENTS.filter((event) => {
+    if (event.trigger !== 'context') return false;
+    const when = event.when ?? {};
+    if (when.minMinute && match.minute < when.minMinute) return false;
+    if (when.close && Math.abs(diff) > 1) return false;
+    if (when.winning && diff <= 0) return false;
+    if (when.notWinning && diff > 0) return false;
+    if (when.cheered && !(match.rating >= 7 || player.life.fanRelation >= 65)) return false;
+    if (when.booed && !(match.rating < 6 || player.life.fanRelation < 35)) return false;
+    if (when.notCaptain && match.conditions.captain) return false;
+    return true;
+  });
+  return pool.length ? rng.weighted(pool) : null;
 }
 
 /**
@@ -243,6 +334,17 @@ export function advance(match, player, rng) {
   }
 
   const stillActive = match.onField && !match.sentOff && !match.substituted && !match.injured;
+
+  // Eventos na fila (chuva no começo, VAR e comemoração depois do seu gol,
+  // pênalti que você sofreu) acontecem na hora, sem o relógio andar.
+  while (stillActive && match.queue?.length) {
+    const queued = findMoment(match.queue.shift());
+    if (!queued) continue;
+    const ball = MOMENTS.includes(queued);
+    if (!ball && match.offBall >= MAX_OFF_BALL) continue;
+    return { type: 'moment', moment: present(match, player, queued, rng, { offBall: !ball }) };
+  }
+
   const hasMomentsLeft = match.momentsPlayed < match.totalMoments;
 
   if (stillActive && hasMomentsLeft) {
@@ -255,23 +357,17 @@ export function advance(match, player, rng) {
     if (match.onField) match.minutesPlayed += step;
     match.stamina = clamp(match.stamina - step * 0.35 * (1 + matchModifier(player.traits, 'staminaDrain')), 0, 100);
 
+    // Um evento fora da bola sorteado para algum momento do jogo.
+    if (match.contextMinute && match.minute >= match.contextMinute && match.offBall < MAX_OFF_BALL) {
+      match.contextMinute = null;
+      const event = pickContextEvent(match, player, rng);
+      if (event) return { type: 'moment', moment: present(match, player, event, rng, { offBall: true }) };
+    }
+
     const moment = pickMoment(match, player, rng);
     match.usedMomentIds.push(moment.id);
     match.momentsPlayed += 1;
-    match.pending = {
-      id: moment.id,
-      title: moment.title,
-      text: fillText(moment.text, match, player),
-      tag: moment.tag ?? 'jogo',
-      options: moment.options.map((option, index) => ({
-        index,
-        label: option.label,
-        hint: option.hint ?? '',
-        chance: successChance(player, option, match),
-      })),
-      raw: moment,
-    };
-    return { type: 'moment', moment: match.pending };
+    return { type: 'moment', moment: present(match, player, moment, rng) };
   }
 
   // Nada mais a decidir: simula o resto e encerra.
@@ -293,18 +389,26 @@ export function choose(match, player, optionIndex, rng) {
   const chance = successChance(player, option, match);
   const success = rng.chance(chance);
   const outcome = success ? option.success : option.failure;
+  const offBall = Boolean(match.pending.offBall);
   match.stamina = clamp(match.stamina - (option.stamina ?? 2), 0, 100);
   match.pending = null;
 
   const resolution = {
     success,
     chance,
-    text: fillText(outcome?.text ?? '', match, player),
+    offBall,
+    text: fillText(pickText(outcome?.text, rng), match, player),
     kind: outcome?.kind ?? 'neutral',
     extras: [],
   };
 
-  addRatingPoints(match, outcome?.rating ?? 0);
+  // Evento fora da bola mexe pouco na nota e não conta como lance.
+  if (offBall) {
+    match.ratingPoints += outcome?.rating ?? 0;
+    match.rating = round(computeRating(match), 1);
+  } else {
+    addRatingPoints(match, outcome?.rating ?? 0);
+  }
   log(match, resolution.text, success ? 'good' : 'bad', success ? 'check' : 'x');
 
   const before = { ...match.score };
@@ -313,13 +417,21 @@ export function choose(match, player, optionIndex, rng) {
   resolution.teamGoal = match.score.team > before.team;
   resolution.opponentGoal = match.score.opponent > before.opponent;
 
-  // Efeitos extras declarados no lance (moral, disciplina, fama).
-  for (const key of ['morale', 'discipline', 'fame']) {
+  // Depois do seu gol: às vezes o VAR chama, às vezes é hora de comemorar.
+  if (resolution.kind === 'goal' && resolution.teamGoal) {
+    if (rng.chance(0.12)) match.queue.push('var_gol');
+    else if (rng.chance(0.4)) match.queue.push('comemoracao');
+  }
+
+  // Efeitos extras declarados no lance (vida e condições do jogo).
+  for (const [key, label] of Object.entries(LIFE_LABELS)) {
     if (outcome?.[key]) {
-      match.lifeDelta[key] += outcome[key];
-      resolution.extras.push(`${key === 'morale' ? 'Vestiário' : key === 'fame' ? 'Fama' : 'Disciplina'} ${outcome[key] > 0 ? '+' : ''}${outcome[key]}`);
+      match.lifeDelta[key] = (match.lifeDelta[key] ?? 0) + outcome[key];
+      resolution.extras.push(`${label} ${outcome[key] > 0 ? '+' : ''}${outcome[key]}`);
     }
   }
+  if (outcome?.effect) applyEffect(match, outcome.effect, resolution);
+  if (outcome?.then) match.queue.push(outcome.then);
 
   // Riscos independentes do sucesso.
   const cardRisk = (option.risk?.card ?? 0) * (1 + matchModifier(player.traits, 'cardRisk'));
@@ -379,6 +491,31 @@ function applyKind(match, player, kind, rng, resolution) {
     case 'card':
       giveCard(match, player, rng, resolution);
       break;
+    case 'yellow':
+      giveCard(match, player, rng, resolution, { yellowOnly: true });
+      break;
+    case 'penaltyWon':
+      // Você sofreu o pênalti: se é o cobrador, a bola é sua.
+      if (isPenaltyTaker(player)) {
+        match.queue.push('penalti');
+      } else if (rng.chance(0.78)) {
+        const scorer = rng.pick(match.teammates);
+        teamScores(match, `${scorer} cobra o pênalti que você sofreu.`, match.minute, scorer);
+      } else {
+        log(match, 'O companheiro perdeu o pênalti que você sofreu.', 'info');
+      }
+      break;
+    case 'goalAnnulled': {
+      // O VAR anulou o seu gol.
+      const index = (match.goals ?? []).map((goal) => goal.mine).lastIndexOf(true);
+      if (index >= 0) {
+        match.goals.splice(index, 1);
+        match.score.team = Math.max(0, match.score.team - 1);
+        match.stats.goals = Math.max(0, match.stats.goals - 1);
+        log(match, 'Gol anulado pelo VAR.', 'bad', 'x');
+      }
+      break;
+    }
     case 'injury':
       injure(match, resolution);
       break;
@@ -397,8 +534,49 @@ function applyKind(match, player, kind, rng, resolution) {
   }
 }
 
-function giveCard(match, player, rng, resolution) {
-  if (match.stats.yellowCards >= 1 || rng.chance(0.12)) {
+const LIFE_LABELS = {
+  morale: 'Vestiário',
+  discipline: 'Disciplina',
+  fame: 'Fama',
+  managerRelation: 'Técnico',
+  fanRelation: 'Torcida',
+  happiness: 'Felicidade',
+  reputation: 'Reputação',
+};
+
+/** Muda as condições do jogo depois de um evento (confiança, chuva, tática). */
+function applyEffect(match, effect, resolution) {
+  const conditions = match.conditions;
+  if (effect.skill) {
+    conditions.skill = clamp((conditions.skill ?? 0) + effect.skill, -6, 6);
+    resolution.extras.push(effect.skill > 0 ? `Confiante: +${effect.skill} nos lances` : `Nervoso: ${effect.skill} nos lances`);
+  }
+  if (effect.rainProof) {
+    conditions.rainProof = true;
+    resolution.extras.push('A chuva não te atrapalha mais');
+  }
+  if (effect.captain) {
+    conditions.captain = true;
+    resolution.extras.push('Você é o capitão');
+  }
+  if (effect.tactic === 'segurar') {
+    conditions.tactic = 'segurar';
+    match.xg = { team: 0.7, opponent: 0.7 };
+    resolution.extras.push('Time fechado: menos gols dos dois lados');
+  }
+  if (effect.tactic === 'pressionar') {
+    conditions.tactic = 'pressionar';
+    match.xg = { team: 1.3, opponent: 1.25 };
+    resolution.extras.push('Time no ataque: mais gols dos dois lados');
+  }
+  if (effect.stamina) {
+    match.stamina = clamp(match.stamina + effect.stamina, 0, 100);
+    resolution.extras.push(`Energia ${effect.stamina > 0 ? '+' : ''}${effect.stamina}`);
+  }
+}
+
+function giveCard(match, player, rng, resolution, { yellowOnly = false } = {}) {
+  if (match.stats.yellowCards >= 1 || (!yellowOnly && rng.chance(0.12))) {
     match.stats.redCards = 1;
     match.sentOff = true;
     match.onField = false;

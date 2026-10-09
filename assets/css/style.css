@@ -1875,6 +1875,66 @@ code {
   font-variant-numeric: tabular-nums;
 }
 
+/* Evento fora da bola: sem campo, com uma etiqueta no lugar. */
+.moment__kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-family: var(--font-cond);
+  font-weight: 700;
+  font-size: 0.9rem;
+  align-self: flex-start;
+}
+
+.moment__kind .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.conditions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.condition {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--sheet-2);
+  color: var(--ink-2);
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.condition .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.condition--up {
+  border-color: var(--good);
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+.condition--down {
+  border-color: var(--bad);
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
 .moment__text {
   color: var(--ink-2);
   font-size: 1.05rem;
@@ -4017,6 +4077,13 @@ code {
     grid-row: 1 / span 8;
     max-width: none;
     margin: 0;
+  }
+
+  /* Evento fora da bola não tem campo: uma coluna só. */
+  .moment.moment--off,
+  .resolution.resolution--off {
+    display: flex;
+    flex-direction: column;
   }
 }
 

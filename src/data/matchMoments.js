@@ -13,7 +13,10 @@
 //   goal, assist, chance, save, tackle, possession, lost, foul, penaltyWon,
 //   penaltyConceded, card, injury, neutral
 
-export const MOMENTS = [
+import { NEW_MOMENTS } from './matchMomentsNew.js';
+import { withVariants } from './momentVariants.js';
+
+const BASE_MOMENTS = [
   // ---------------------------------------------------------------- ATAQUE
   {
     id: 'cara_a_cara',
@@ -909,3 +912,7 @@ export const MOMENTS = [
     ],
   },
 ];
+
+// Os lances antigos ganham mais jeitos de ser contados (momentVariants.js) e
+// se juntam aos lances novos.
+export const MOMENTS = [...BASE_MOMENTS.map(withVariants), ...NEW_MOMENTS];
