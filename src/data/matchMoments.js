@@ -533,8 +533,8 @@ export const MOMENTS = [
     options: [
       {
         label: 'Sair da área e fechar o ângulo',
-        hint: 'Posicionamento · Reflexos',
-        attrs: ['gkPositioning', 'gkReflexes'],
+        hint: 'Saída do gol · Posicionamento',
+        attrs: ['gkRushing', 'gkPositioning'],
         mod: 'save',
         difficulty: 7,
         stamina: 3,
@@ -573,8 +573,8 @@ export const MOMENTS = [
     options: [
       {
         label: 'Sair de soco',
-        hint: 'Elasticidade · Força',
-        attrs: ['gkDiving', 'strength', 'jumping'],
+        hint: 'Jogo aéreo · Força · Impulsão',
+        attrs: ['gkAerial', 'strength', 'jumping'],
         mod: 'save',
         difficulty: 6,
         stamina: 3,
@@ -583,8 +583,8 @@ export const MOMENTS = [
       },
       {
         label: 'Sair de mãos e segurar',
-        hint: 'Manejo · Posicionamento',
-        attrs: ['gkHandling', 'gkPositioning', 'jumping'],
+        hint: 'Jogo aéreo · Manejo · Impulsão',
+        attrs: ['gkAerial', 'gkHandling', 'jumping'],
         mod: 'save',
         difficulty: 9,
         stamina: 3,
@@ -593,8 +593,8 @@ export const MOMENTS = [
       },
       {
         label: 'Ficar na linha e organizar a marcação',
-        hint: 'Seguro',
-        attrs: ['gkPositioning'],
+        hint: 'Comando de área · seguro',
+        attrs: ['gkCommand', 'gkPositioning'],
         difficulty: -5,
         stamina: 1,
         success: { kind: 'neutral', rating: 0.2, text: 'Você fica na linha, a zaga afasta. Jogada controlada.' },
@@ -728,8 +728,8 @@ export const MOMENTS = [
     options: [
       {
         label: 'Sair da área e cortar antes dele',
-        hint: 'Aceleração · Reação · Impulsão',
-        attrs: ['acceleration', 'reactions', 'jumping'],
+        hint: 'Saída do gol · Aceleração · Reação',
+        attrs: ['gkRushing', 'acceleration', 'reactions'],
         difficulty: 7,
         stamina: 3,
         success: { kind: 'tackle', rating: 1.3, text: 'Você chega antes, corta de cabeça fora da área. Goleiro-líbero!' },
@@ -764,8 +764,8 @@ export const MOMENTS = [
     options: [
       {
         label: 'Organizar a barreira e cobrir o seu canto',
-        hint: 'Visão · Senso defensivo · Posicionamento',
-        attrs: ['vision', 'defAwareness', 'gkPositioning'],
+        hint: 'Comando de área · Visão · Posicionamento',
+        attrs: ['gkCommand', 'vision', 'gkPositioning'],
         difficulty: 6,
         stamina: 1,
         success: { kind: 'save', rating: 1.0, text: 'Barreira bem montada, a bola vem no seu canto e você encaixa.' },

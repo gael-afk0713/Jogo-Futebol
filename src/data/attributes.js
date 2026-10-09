@@ -84,6 +84,9 @@ export const ATTRIBUTE_GROUPS = [
       { id: 'gkKicking', label: 'Reposição' },
       { id: 'gkPositioning', label: 'Posicionamento' },
       { id: 'gkReflexes', label: 'Reflexos' },
+      { id: 'gkRushing', label: 'Saída do gol' },
+      { id: 'gkAerial', label: 'Jogo aéreo' },
+      { id: 'gkCommand', label: 'Comando de área' },
     ],
   },
 ];

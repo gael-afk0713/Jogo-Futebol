@@ -210,6 +210,36 @@ export function ageCurve(age) {
   return -1;
 }
 
+/**
+ * Curva de idade do jogador. O goleiro amadurece mais tarde e dura mais:
+ * a curva dele anda um ano atrasada.
+ */
+export function careerAgeCurve(player) {
+  return ageCurve(isGoalkeeper(player.position) ? player.age - GOALKEEPER_AGE_SHIFT : player.age);
+}
+
+const GOALKEEPER_AGE_SHIFT = 1;
+
+/**
+ * Save antigo, atributo novo: quem não tem um atributo recebe um valor
+ * calculado dos que já tem. O goleiro ganha os de goleiro um pouco abaixo da
+ * média dos outros, para ter o que treinar.
+ */
+export function fillMissingAttributes(player) {
+  if (!player?.attributes) return false;
+  const missing = ATTRIBUTE_IDS.filter((id) => typeof player.attributes[id] !== 'number');
+  if (!missing.length) return false;
+  const gkValues = ATTRIBUTE_IDS.filter((id) => id.startsWith('gk') && typeof player.attributes[id] === 'number').map((id) => player.attributes[id]);
+  const gkAverage = gkValues.length ? gkValues.reduce((sum, value) => sum + value, 0) / gkValues.length : 30;
+  const goalkeeper = isGoalkeeper(player.position);
+  for (const id of missing) {
+    if (id.startsWith('gk')) player.attributes[id] = clamp(Math.round(gkAverage - (goalkeeper ? 5 : 0)), 12, 99);
+    else player.attributes[id] = 40;
+  }
+  player.overall = playerOverall(player);
+  return true;
+}
+
 /** Ajusta um stat de vida mantendo-o em 0..100. */
 export function adjustLife(player, statId, delta) {
   if (!LIFE_STAT_IDS.includes(statId)) return;

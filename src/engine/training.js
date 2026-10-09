@@ -4,7 +4,7 @@ import { clamp } from '../core/utils.js';
 import { attributeLabel } from '../data/attributes.js';
 import { lifeModifier } from '../data/traits.js';
 import { isGoalkeeper } from '../data/positions.js';
-import { adjustLife, ageCurve } from './player.js';
+import { adjustLife, careerAgeCurve } from './player.js';
 import { attributeCeiling, effectiveAttributes, keyAttributesFor, upgradeCost } from './overall.js';
 import { itemEffects } from './shop.js';
 
@@ -50,7 +50,7 @@ export const TRAINING_OPTIONS = [
     label: 'Treino tático',
     icon: 'clipboard-text',
     description: 'Posicionamento e leitura de jogo. Agrada a comissão técnica.',
-    targets: ['defAwareness', 'interceptions', 'vision', 'reactions', 'composure', 'gkPositioning'],
+    targets: ['defAwareness', 'interceptions', 'vision', 'reactions', 'composure', 'gkPositioning', 'gkCommand'],
     fitness: -1,
     happiness: -1,
     skillPoints: 1,
@@ -108,17 +108,45 @@ export const TRAINING_OPTIONS = [
     xp: 25,
     injuryRisk: 0.01,
   },
+  // O goleiro tem três treinos específicos, cada um com uma parte dos oito
+  // atributos de goleiro: dá para evoluir tudo, mas não de uma vez.
   {
     id: 'goleiro',
-    label: 'Treino de goleiro',
+    label: 'Reflexos e elasticidade',
     icon: 'hand-grabbing',
-    description: 'Reflexos, encaixe e saída de gol.',
+    description: 'Bolas de perto, rebote e voo nos cantos.',
     goalkeeperOnly: true,
-    targets: ['gkReflexes', 'gkDiving', 'gkHandling', 'gkPositioning', 'gkKicking'],
+    targets: ['gkReflexes', 'gkDiving', 'reactions'],
     fitness: -2,
     happiness: 0,
     skillPoints: 1,
-    xp: 27,
+    xp: 38,
+    injuryRisk: 0.02,
+  },
+  {
+    id: 'gk_posicionamento',
+    label: 'Posicionamento e saída',
+    icon: 'crosshair',
+    description: 'Ângulo, linha de impedimento e saída nos lançamentos.',
+    goalkeeperOnly: true,
+    targets: ['gkPositioning', 'gkRushing', 'gkCommand'],
+    fitness: -2,
+    happiness: 0,
+    skillPoints: 1,
+    xp: 38,
+    injuryRisk: 0.02,
+  },
+  {
+    id: 'gk_maos',
+    label: 'Mãos e jogo aéreo',
+    icon: 'arrow-up',
+    description: 'Encaixe, cruzamentos e escanteios no meio do trânsito.',
+    goalkeeperOnly: true,
+    targets: ['gkHandling', 'gkAerial', 'jumping'],
+    fitness: -2,
+    happiness: 0,
+    skillPoints: 1,
+    xp: 38,
     injuryRisk: 0.02,
   },
   // Treinos liberados por itens da loja (src/data/shop.js).
@@ -262,14 +290,16 @@ export function trainingOptionsFor(player) {
   return TRAINING_OPTIONS.filter((option) => {
     if (option.requires && !unlocked.has(option.requires)) return false;
     if (option.goalkeeperOnly && !gk) return false;
-    if (gk && ['finalizacao', 'bola_parada', 'drible'].includes(option.id)) return false;
+    // O goleiro não tem o treino técnico genérico: os três treinos de goleiro
+    // fazem esse papel, cada um com uma parte dos atributos.
+    if (gk && ['tecnico', 'finalizacao', 'bola_parada', 'drible'].includes(option.id)) return false;
     return true;
   });
 }
 
 function targetAttributes(player, option) {
-  if (option.targets === 'key') return keyAttributesFor(player.position, 6);
   const gk = isGoalkeeper(player.position);
+  if (option.targets === 'key') return keyAttributesFor(player.position, gk ? 4 : 6);
   return (option.targets ?? []).filter((id) => (id.startsWith('gk') ? gk : true));
 }
 
@@ -305,7 +335,7 @@ export function planTraining(player, option) {
   const gear = itemEffects(player);
 
   const trainingBonus = 1 + lifeModifier(player.traits, 'trainingGain');
-  const ageFactor = clamp(1 + ageCurve(player.age) * 0.3, 0.45, 1.4);
+  const ageFactor = clamp(1 + careerAgeCurve(player) * 0.3, 0.45, 1.4);
   const intelligenceFactor = 0.85 + player.life.intelligence / 300;
   const happinessFactor = 0.8 + player.life.happiness / 250;
   const gearXp = gear.xp[option.id] ?? 1;

@@ -55,9 +55,10 @@ você vai jogar e aparecer no primeiro ano.
 ### 3. A semana
 Cada semana tem três etapas:
 
-1. **Treino** — 11 focos diferentes (técnico, físico, musculação, tático, bola
-   parada, finalização, drible, treino de goleiro, jogo com os pés do goleiro,
-   descanso, folga), mais os
+1. **Treino** — focos diferentes (técnico, físico, musculação, tático, bola
+   parada, finalização, drible, descanso, folga) e, para o goleiro, quatro
+   treinos próprios no lugar do técnico: reflexos e elasticidade, posicionamento
+   e saída, mãos e jogo aéreo, e jogo com os pés. Mais os
    liberados pela loja. Com o *Tablet de análise de treino*, passar o mouse (ou
    tocar no olho) mostra exatamente o XP de cada atributo, o que sobe, a forma,
    a felicidade, os pontos e o risco de lesão daquele treino. Cada um mexe em
@@ -71,6 +72,14 @@ Cada semana tem três etapas:
 
 Se você não for escalado (forma ruim, relação ruim com o técnico, lesão ou
 suspensão), você assiste do banco — e isso cobra o seu preço.
+
+#### O goleiro
+O goleiro tem oito atributos próprios: reflexos, elasticidade, manejo de bola,
+posicionamento, reposição, **saída do gol**, **jogo aéreo** e **comando de
+área**. Nenhum treino sobe todos de uma vez, a curva de idade dele anda um ano
+atrasada (amadurece e para mais tarde) e, nas simulações, ele chega perto do
+potencial por volta dos 27 a 28 anos, no mesmo ritmo do jogador de linha. Saves
+antigos ganham os três atributos novos com a média dos outros de goleiro menos 5.
 
 #### O preparador
 O cartão no topo do treino faz a mesma conta do treino de verdade
@@ -275,7 +284,7 @@ src/
     storage.js             várias carreiras: navegador + nuvem, migração
     utils.js               helpers (dinheiro, clamp, logística, datas)
   data/                    conteúdo do jogo, separado das regras
-    attributes.js          34 atributos em 7 grupos
+    attributes.js          37 atributos em 7 grupos
     positions.js           9 posições, pesos de overall e perfis
     clubs.js               18 ligas, 202 clubes, prestígio e salários
     nations.js             20 seleções

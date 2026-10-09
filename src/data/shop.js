@@ -185,7 +185,11 @@ export const SHOP_ITEMS = [
     icon: 'hand-grabbing',
     weekly: 3_500,
     description: 'Trabalho específico de posicionamento e saída do gol.',
-    effects: { xp: { goleiro: 1.3, reflexo: 1.2 }, skillPoints: { goleiro: 1 }, attributes: { gkPositioning: 1 } },
+    effects: {
+      xp: { goleiro: 1.3, gk_posicionamento: 1.3, gk_maos: 1.3, reflexo: 1.2 },
+      skillPoints: { goleiro: 1 },
+      attributes: { gkPositioning: 1 },
+    },
     positions: GK,
     group: 'Goleiro',
   },

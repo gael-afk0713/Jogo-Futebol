@@ -10,6 +10,7 @@ import {
   adjustLife,
   createPlayer,
   emptySeasonStats,
+  fillMissingAttributes,
   fullName,
   seasonRating,
 } from '../engine/player.js';
@@ -128,6 +129,7 @@ export class Game {
     }
     this.state = { ...this.emptyState(), ...saved };
     this.rng = createRng(saved.seed ?? Date.now());
+    fillMissingAttributes(this.state.player);
     // Reconecta o lance pendente da partida com os dados estáticos.
     if (this.state.match?.pending?.id) {
       const moment = MOMENTS.find((item) => item.id === this.state.match.pending.id);

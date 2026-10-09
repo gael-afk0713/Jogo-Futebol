@@ -3,12 +3,12 @@
 import { clamp } from '../core/utils.js';
 import { ATTRIBUTE_IDS } from '../data/attributes.js';
 import { getPosition, isGoalkeeper } from '../data/positions.js';
-import { ageCurve } from './player.js';
+import { careerAgeCurve } from './player.js';
 import { attributeCeiling, keyAttributesFor, playerOverall } from './overall.js';
 import { itemEffects } from './shop.js';
 
 const DECLINE_FIRST = ['acceleration', 'sprintSpeed', 'agility', 'stamina', 'jumping', 'balance'];
-const DECLINE_LAST = ['composure', 'vision', 'shortPass', 'defAwareness', 'gkPositioning', 'penalties'];
+const DECLINE_LAST = ['composure', 'vision', 'shortPass', 'defAwareness', 'gkPositioning', 'gkCommand', 'penalties'];
 
 function candidateAttributes(player) {
   const gk = isGoalkeeper(player.position);
@@ -71,7 +71,7 @@ export function declineOverall(player, points, rng) {
  */
 export function endOfSeasonGrowth(player, { minutes, rating, difficulty }, rng) {
   const gap = Math.max(0, player.potential - player.overall);
-  const curve = ageCurve(player.age);
+  const curve = careerAgeCurve(player);
   const minutesFactor = clamp(minutes / 1800, 0.15, 1.25);
   const ratingFactor = clamp((rating - 6) / 2 + 1, 0.55, 1.7);
   const conditionFactor = clamp(0.7 + player.life.fitness / 250 + player.life.happiness / 400, 0.6, 1.35);

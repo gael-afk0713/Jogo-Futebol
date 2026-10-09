@@ -107,17 +107,19 @@ function pointValue(player, relevance, ceiling) {
 }
 
 /**
- * Quanto um treino completo te faria evoluir se nada estivesse no teto: a
- * régua das "semanas de evolução".
+ * A régua das "semanas de evolução": quanto o melhor treino básico da sua
+ * posição te faria evoluir se nada estivesse no teto. Treinos da loja não
+ * entram, para a régua não mudar quando você compra algo.
  */
 function referenceGrowth(player, relevance) {
-  const base = trainingOptionsFor(player).find((option) => option.id === 'goleiro') ?? trainingOptionsFor(player).find((option) => option.id === 'tecnico');
-  const xp = planTraining(player, base).xp;
-  const key = Object.entries(relevance)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6);
-  const total = key.reduce((sum, [id, weight]) => sum + (weight * xp) / xpThreshold(player.attributes[id] ?? 40), 0);
-  return Math.max(total, 0.001);
+  let best = 0;
+  for (const option of trainingOptionsFor(player)) {
+    if (option.requires || !(option.xp > 0)) continue;
+    const plan = planTraining(player, option);
+    const total = plan.targets.reduce((sum, id) => sum + ((relevance[id] ?? 0) * plan.xp) / xpThreshold(player.attributes[id] ?? 40), 0);
+    best = Math.max(best, total);
+  }
+  return Math.max(best, 0.001);
 }
 
 /** A conta de uma opção de treino, em semanas de evolução. */
