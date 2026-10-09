@@ -458,7 +458,8 @@ export class Game {
     player.recentMoments = [...(match.usedMomentIds ?? [])];
 
     // Vida
-    adjustLife(player, 'fitness', -Math.round(report.minutesPlayed / 14));
+    // Um jogo inteiro custa 5 de forma (meio jogo, uns 3).
+    adjustLife(player, 'fitness', -Math.round(report.minutesPlayed / 18));
     adjustLife(player, 'fame', report.stats.goals * 1.6 + (report.motm ? 2.5 : 0) + 0.3);
     adjustLife(player, 'morale', report.result === 'V' ? 2 : report.result === 'D' ? -2 : 0);
     adjustLife(player, 'fanRelation', (report.rating - 6.4) * 2.4 + report.stats.goals * 1.5);
