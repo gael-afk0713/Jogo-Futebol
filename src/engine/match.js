@@ -48,7 +48,7 @@ function clubName(clubId) {
 }
 
 /** Cria o estado de uma nova partida. */
-export function createMatch({ player, clubId, opponentId, competition, isHome, role, rng, round: roundNumber = 1 }) {
+export function createMatch({ player, clubId, opponentId, competition, isHome, role, rng, round: roundNumber = 1, derby = null }) {
   const position = getPosition(player.position);
   const teamRating = squadRating(clubId);
   const opponentRating = squadRating(opponentId);
@@ -69,10 +69,12 @@ export function createMatch({ player, clubId, opponentId, competition, isHome, r
     conditions.rain = true;
     queue.push('chuva');
   }
-  // Mata-mata de copa ou adversário muito mais forte: às vezes bate o nervoso.
+  // Clássico, mata-mata de copa ou adversário muito mais forte: às vezes
+  // bate o nervoso.
   const knockout = competition?.id === 'copa' || competition?.id === 'continental';
   const giant = opponentRating >= teamRating + 6;
-  if (role === PLAYER_ROLE.STARTER && (knockout || giant) && rng.chance(knockout ? 0.45 : 0.25)) queue.push('jogo_grande');
+  if (role === PLAYER_ROLE.STARTER && derby && rng.chance(0.75)) queue.push('classico');
+  else if (role === PLAYER_ROLE.STARTER && (knockout || giant) && rng.chance(knockout ? 0.45 : 0.25)) queue.push('jogo_grande');
 
   return {
     id: `${clubId}_${opponentId}_${roundNumber}`,
@@ -108,8 +110,10 @@ export function createMatch({ player, clubId, opponentId, competition, isHome, r
     queue,
     conditions,
     xg: { team: 1, opponent: 1 },
-    // Um evento fora da bola sorteado no meio do jogo, em 45% das partidas.
-    contextMinute: rng.chance(0.45) ? rng.int(25, 82) : null,
+    // Um evento fora da bola sorteado no meio do jogo, em 45% das partidas
+    // (70% nos clássicos, que são mais quentes).
+    contextMinute: rng.chance(derby ? 0.7 : 0.45) ? rng.int(25, 82) : null,
+    derby,
     offBall: 0,
     pending: null,
     pendingPenalty: false,
@@ -134,8 +138,9 @@ export function computeRating(match) {
     6.2 +
     zoneBonus +
     average * 1.35 +
-    match.stats.goals * 0.25 +
-    match.stats.assists * 0.15 +
+    // Gol e assistência são o que mais aparece na nota de quem joga na frente.
+    match.stats.goals * 0.5 +
+    match.stats.assists * 0.3 +
     match.stats.saves * 0.08 +
     match.stats.tackles * 0.09;
   return clamp(raw, 1, 10);
@@ -160,7 +165,8 @@ function fillText(template, match, player) {
     .replaceAll('{opponent}', match.opponentName)
     .replaceAll('{club}', match.clubName)
     .replaceAll('{teammate}', match.teammates[0])
-    .replaceAll('{player}', player.nickname);
+    .replaceAll('{player}', player.nickname)
+    .replaceAll('{derby}', match.derby ?? 'clássico');
 }
 
 /** É o jogador quem bate as faltas / pênaltis? */
@@ -279,7 +285,7 @@ function present(match, player, moment, rng, { offBall = false } = {}) {
   if (offBall) match.offBall += 1;
   match.pending = {
     id: moment.id,
-    title: moment.title,
+    title: fillText(moment.title, match, player),
     text: fillText(pickText(moment.text, rng), match, player),
     tag: moment.tag ?? (offBall ? 'fora' : 'jogo'),
     offBall,
@@ -310,7 +316,8 @@ function pickContextEvent(match, player, rng) {
     if (when.notCaptain && match.conditions.captain) return false;
     return true;
   });
-  return pool.length ? rng.weighted(pool) : null;
+  // No clássico, briga, torcida e juiz aparecem mais.
+  return pool.length ? rng.weighted(pool, (event) => (event.weight ?? 5) * (match.derby ? event.derbyBoost ?? 1 : 1)) : null;
 }
 
 /**

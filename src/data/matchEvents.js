@@ -12,6 +12,7 @@
 //   effect    -> muda o resto do jogo: skill (+/- nos lances), rainProof,
 //                captain, tactic ('segurar' | 'pressionar'), stamina
 //   then      -> evento que vem logo depois (ex.: comemorar após o VAR)
+//   derbyBoost-> quanto o evento fica mais provável num clássico
 // Os efeitos na vida (morale, discipline, fame, managerRelation, fanRelation,
 // happiness, reputation) entram no fim do jogo.
 
@@ -103,6 +104,58 @@ export const MATCH_EVENTS = [
           kind: 'neutral',
           rating: -0.1,
           text: ['Ansioso demais, você corre errado e cansa cedo.', 'Muita vontade, pouca cabeça. A energia vai embora rápido.'],
+          effect: { skill: -1, stamina: -8 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'classico',
+    trigger: 'queue',
+    title: 'Dia de {derby}',
+    text: [
+      'É {derby}. A cidade parou, e metade dela torce contra você.',
+      'Clássico contra o {opponent}. Bandeiras, sinalizadores e nenhum lugar vazio.',
+      '{derby} vale mais que três pontos. A torcida avisou na concentração.',
+    ],
+    options: [
+      {
+        label: 'Respirar e jogar como sempre',
+        hint: 'Frieza',
+        attrs: ['composure'],
+        difficulty: 4,
+        stamina: 0,
+        success: {
+          kind: 'neutral',
+          rating: 0.1,
+          text: ['Cabeça fria no meio do caldeirão. Você entra no jogo no seu ritmo.', 'O barulho fica do lado de fora. É só mais um jogo, pensa você.'],
+          effect: { skill: 2 },
+        },
+        failure: {
+          kind: 'neutral',
+          rating: -0.1,
+          text: ['O peso do clássico te pega. As pernas demoram a soltar.', 'Você erra os primeiros passes e a torcida rival percebe.'],
+          effect: { skill: -3 },
+        },
+      },
+      {
+        label: 'Usar a rivalidade a seu favor',
+        hint: 'Agressividade · Entrega · gasta energia',
+        attrs: ['aggression', 'workRate'],
+        difficulty: 5,
+        stamina: 0,
+        success: {
+          kind: 'neutral',
+          rating: 0.1,
+          text: ['Primeira dividida, primeira vitória. A sua torcida explode.', 'Você joga com sangue nos olhos e puxa o time junto.'],
+          effect: { skill: 3, stamina: -5 },
+          fanRelation: 1,
+        },
+        failure: {
+          kind: 'neutral',
+          rating: -0.1,
+          text: ['Muita raiva e pouca cabeça: você cansa cedo e quase leva cartão.', 'Você entra pilhado demais e se perde nas primeiras jogadas.'],
           effect: { skill: -1, stamina: -8 },
         },
       },
@@ -305,6 +358,7 @@ export const MATCH_EVENTS = [
     id: 'empurra_empurra',
     trigger: 'context',
     weight: 4,
+    derbyBoost: 2.5,
     title: 'Empurra-empurra',
     text: [
       'Uma entrada dura vira confusão. Os dois times se empurram no meio do campo.',
@@ -414,6 +468,7 @@ export const MATCH_EVENTS = [
     id: 'torcida_canta',
     trigger: 'context',
     weight: 4,
+    derbyBoost: 1.5,
     when: { cheered: true },
     title: 'A torcida canta o seu nome',
     text: [
@@ -457,6 +512,7 @@ export const MATCH_EVENTS = [
     id: 'torcida_vaia',
     trigger: 'context',
     weight: 4,
+    derbyBoost: 1.5,
     when: { booed: true },
     title: 'Vaias para você',
     text: [
@@ -524,6 +580,7 @@ export const MATCH_EVENTS = [
     id: 'juiz_erra',
     trigger: 'context',
     weight: 4,
+    derbyBoost: 1.5,
     title: 'O juiz erra contra você',
     text: [
       'Falta clara em você, e o árbitro manda seguir.',

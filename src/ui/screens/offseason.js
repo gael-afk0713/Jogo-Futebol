@@ -55,6 +55,9 @@ export default {
       ...(national.trophy ? [{ name: national.trophy.name, icon: 'flag' }] : []),
     ];
     const offers = [...(offseason.renewal ? [offseason.renewal] : []), ...offseason.offers, ...offseason.loans];
+    // Destaque só para a renovação ou a subida da base, e só se ninguém pagar mais.
+    const homeOffer = offseason.renewal ?? offseason.offers.find((offer) => offer.promotion) ?? null;
+    const featured = homeOffer && offers.every((offer) => offer === homeOffer || offer.loan || offer.weeklySalary <= homeOffer.weeklySalary) ? homeOffer : null;
 
     return `
       <div class="screen">
@@ -119,17 +122,44 @@ export default {
             <ul class="ledger">
               <li><span>Copa nacional</span><strong>${esc(summary.cupStage)}</strong></li>
               ${summary.continental ? `<li><span>Torneio continental</span><strong>${esc(summary.continental)}</strong></li>` : ''}
-              <li><span>Seleção</span><strong>${national.caps ? `<span class="num">${national.caps}</span> jogos, <span class="num">${national.goals}</span> gols` : 'Sem convocação'}</strong></li>
+              <li><span>Seleção</span><strong>${national.caps ? `<span class="num">${national.caps}</span> ${national.caps === 1 ? 'jogo' : 'jogos'}, <span class="num">${national.goals}</span> ${national.goals === 1 ? 'gol' : 'gols'}` : 'Sem convocação'}</strong></li>
               ${national.tournament ? `<li><span>${esc(national.tournament.name)}</span><strong>${esc(national.tournament.result)}</strong></li>` : ''}
             </ul>
             ${offseason.nextContinental ? `<div class="notice notice--good">${icon('star')}<div>Classificado para o torneio continental do ano que vem.</div></div>` : ''}
           </section>
         </div>
 
+        ${
+          offseason.objectives?.results?.length
+            ? `<section class="section" aria-labelledby="metas-fim-titulo">
+                <h3 id="metas-fim-titulo">Metas da temporada</h3>
+                <ul class="goals">
+                  ${offseason.objectives.results
+                    .map(
+                      (result) => `<li class="goal ${result.achieved ? 'is-done' : 'is-missed'}">
+                        <span class="goal__icon">${icon(result.achieved ? 'check' : 'x')}</span>
+                        <div class="goal__text">
+                          <span class="goal__label">${esc(result.label)}</span>
+                          <span class="goal__meta">${esc(result.progress)} · ${
+                            result.achieved
+                              ? `bônus ${esc(money(result.reward.money))}, técnico +${result.reward.managerRelation}`
+                              : `técnico ${result.reward.missManager}`
+                          }</span>
+                        </div>
+                      </li>`,
+                    )
+                    .join('')}
+                </ul>
+                <p class="muted">${esc(offseason.objectives.verdict)}</p>
+              </section>`
+            : ''
+        }
+
         <section class="section">
           <h3>Dinheiro</h3>
           <ul class="ledger">
             ${prize.lines.map((line) => `<li><span>${esc(line.label)}</span><strong class="is-positive">${esc(money(line.value))}</strong></li>`).join('')}
+            ${offseason.objectives?.bonus ? `<li><span>Bônus por metas cumpridas</span><strong class="is-positive">${esc(money(offseason.objectives.bonus))}</strong></li>` : ''}
             ${investments.lines.map(investmentLine).join('')}
             <li><span>Em conta agora</span><strong>${esc(money(player.money))}</strong></li>
             <li><span>Valor de mercado</span><strong>${esc(money(offseason.marketValue))}</strong></li>
@@ -150,9 +180,11 @@ export default {
               <p class="num">${plural(offers.length, 'proposta', 'propostas')}</p>
             </div>
             ${
-              offseason.contractExpired
-                ? `<div class="notice notice--warn">${icon('warning')}<div><strong>Seu contrato terminou.</strong> Escolha um clube ou fique em condições modestas.</div></div>`
-                : `<p class="lede">Você tem contrato com o ${esc(getClub(player.club)?.name ?? 'clube atual')}, mas pode ouvir propostas.</p>`
+              offseason.agedOut
+                ? `<div class="notice notice--warn">${icon('warning')}<div><strong>Você passou da idade da base.</strong> O ${esc(getClub(player.club)?.name ?? 'time Sub-20')} não pode mais te segurar: escolha um clube profissional.</div></div>`
+                : offseason.contractExpired
+                  ? `<div class="notice notice--warn">${icon('warning')}<div><strong>Seu contrato terminou.</strong> Escolha um clube ou fique em condições modestas.</div></div>`
+                  : `<p class="lede">Você tem contrato com o ${esc(getClub(player.club)?.name ?? 'clube atual')}, mas pode ouvir propostas.</p>`
             }
             ${
               offers.length
@@ -160,10 +192,10 @@ export default {
                     .map((offer, index) =>
                       offerSticker(offer, player, {
                         action: `data-action="accept-offer" data-offer="${esc(offer.id)}"`,
-                        label: offer.renewal ? 'Renovar' : offer.loan ? 'Aceitar empréstimo' : 'Assinar',
-                        ariaLabel: `${offer.renewal ? 'Renovar com o' : offer.loan ? 'Ir emprestado ao' : 'Assinar com o'} ${offer.clubName}`,
-                        highlight: Boolean(offer.renewal),
-                        primary: Boolean(offer.renewal),
+                        label: offer.renewal ? 'Renovar' : offer.promotion ? 'Subir para o profissional' : offer.loan ? 'Aceitar empréstimo' : 'Assinar',
+                        ariaLabel: `${offer.renewal ? 'Renovar com o' : offer.promotion ? 'Subir para o profissional do' : offer.loan ? 'Ir emprestado ao' : 'Assinar com o'} ${offer.clubName}`,
+                        highlight: offer === featured,
+                        primary: offer === featured,
                         isNew: true,
                         index,
                       }),
@@ -172,7 +204,7 @@ export default {
                 : '<p class="muted">Ninguém procurou você neste mercado. Siga trabalhando.</p>'
             }
             <div class="actions">
-              <button class="btn" data-action="stay-club">Ficar no ${esc(getClub(player.club)?.name ?? 'clube atual')}</button>
+              ${offseason.agedOut ? '' : `<button class="btn" data-action="stay-club">Ficar no ${esc(getClub(player.club)?.name ?? 'clube atual')}</button>`}
               <button class="btn btn--quiet" data-action="retire-now">Me aposentar</button>
             </div>
           </section>`

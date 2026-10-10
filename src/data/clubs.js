@@ -3,6 +3,8 @@
 // prestige (0-100) é o "tamanho" do clube: define a força do plantel, o salário
 // que ele paga, a pressão da torcida e a chance de ele te procurar.
 // level (0-100) na liga define o nível médio de dificuldade das partidas.
+// parent (só nos times de base) é o time profissional do mesmo clube, que
+// pode subir o jogador quando ele sai da idade da base.
 // Os nomes são usados apenas como referência de fãs, sem vínculo oficial.
 
 export const LEAGUES = [
@@ -21,10 +23,10 @@ export const LEAGUES = [
       { id: 'base_juventus', name: 'Juventus-SP Sub-20', prestige: 22 },
       { id: 'base_audax', name: 'Audax Sub-20', prestige: 25 },
       { id: 'base_ferroviaria', name: 'Ferroviária Sub-20', prestige: 27 },
-      { id: 'base_novorizontino', name: 'Novorizontino Sub-20', prestige: 29 },
-      { id: 'base_ponte', name: 'Ponte Preta Sub-20', prestige: 31 },
-      { id: 'base_guarani', name: 'Guarani Sub-20', prestige: 30 },
-      { id: 'base_mirassol', name: 'Mirassol Sub-20', prestige: 28 },
+      { id: 'base_novorizontino', name: 'Novorizontino Sub-20', prestige: 29, parent: 'bra2_novorizontino' },
+      { id: 'base_ponte', name: 'Ponte Preta Sub-20', prestige: 31, parent: 'bra2_ponte' },
+      { id: 'base_guarani', name: 'Guarani Sub-20', prestige: 30, parent: 'bra2_guarani' },
+      { id: 'base_mirassol', name: 'Mirassol Sub-20', prestige: 28, parent: 'bra2_mirassol' },
     ],
   },
   {

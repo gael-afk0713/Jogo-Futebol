@@ -9,6 +9,8 @@ import { WEEK_STEPS } from '../../core/game.js';
 import { standings } from '../../engine/season.js';
 import { previewTraining, trainingOptionsFor } from '../../engine/training.js';
 import { upgradeCost, attributeCeiling, keyAttributesFor } from '../../engine/overall.js';
+import { careerTotals } from '../../engine/player.js';
+import { objectiveProgress } from '../../engine/objectives.js';
 import { attributeLabel } from '../../data/attributes.js';
 import { expenseBreakdown, netWorth, weeklySponsors } from '../../engine/finance.js';
 import { marketValue, getRole } from '../../engine/transfers.js';
@@ -27,6 +29,7 @@ import {
 } from '../../engine/shop.js';
 import { LIFESTYLE_CATEGORIES, LIFESTYLE_ITEMS } from '../../data/lifestyle.js';
 import { getShopItem } from '../../data/shop.js';
+import { rivalryBetween } from '../../data/rivals.js';
 import { TRAINING_OPTIONS } from '../../engine/training.js';
 import { recommendTraining } from '../../engine/coach.js';
 import {
@@ -352,7 +355,10 @@ function matchStep(state, ctx) {
     <section class="sheet fixture ticket" aria-labelledby="jogo-titulo">
       <div class="fixture__meta ticket__head">
         <span>${esc(fixture.competition)}${fixture.stage ? `, ${esc(fixture.stage)}` : ''}</span>
-        <span class="tag ${home ? 'tag--home' : 'tag--away'}">${home ? 'Em casa' : 'Fora de casa'}</span>
+        <span class="ticket__tags">
+          ${fixture.derby ? `<span class="tag tag--derby">${icon('fire')}${esc(fixture.derby)}</span>` : ''}
+          <span class="tag ${home ? 'tag--home' : 'tag--away'}">${home ? 'Em casa' : 'Fora de casa'}</span>
+        </span>
       </div>
       <h2 id="jogo-titulo" class="visually-hidden">${esc(club?.name ?? '')} contra ${esc(fixture.opponent)}</h2>
       <div class="fixture__teams">
@@ -426,6 +432,37 @@ function reportStep(state) {
     </section>`;
 }
 
+const OBJECTIVE_ICONS = { starts: 'user', apps: 'user', goals: 'soccer-ball', contributions: 'handshake', saves: 'hand-grabbing', rating: 'star', position: 'trophy' };
+
+/** As metas que o clube combinou com você, com o quanto falta para cada uma. */
+function objectivesSection(state) {
+  const objectives = state.season?.objectives ?? [];
+  if (!objectives.length) return '';
+  return `
+    <section class="section" aria-labelledby="metas-titulo">
+      <div class="section__head">
+        <h3 id="metas-titulo">Metas da temporada</h3>
+        <p>Cada meta cumprida paga bônus e agrada o técnico</p>
+      </div>
+      <ul class="goals">
+        ${objectives
+          .map((objective) => {
+            const progress = objectiveProgress(objective, state.player, state.season);
+            const done = progress.done === true;
+            return `<li class="goal ${done ? 'is-done' : ''}">
+              <span class="goal__icon">${icon(done ? 'check' : OBJECTIVE_ICONS[objective.type] ?? 'target')}</span>
+              <div class="goal__text">
+                <span class="goal__label">${esc(objective.label)}</span>
+                <span class="goal__meta">${esc(progress.text)} · bônus ${esc(money(objective.reward.money))}</span>
+                <span class="goal__bar" aria-hidden="true"><span style="--p:${Math.min(1, progress.ratio || 0).toFixed(3)}"></span></span>
+              </div>
+            </li>`;
+          })
+          .join('')}
+      </ul>
+    </section>`;
+}
+
 function weekTab(state, ctx) {
   const data = ctx.game.hubData();
   const season = state.season;
@@ -490,6 +527,8 @@ function weekTab(state, ctx) {
       ])}
     </section>
 
+    ${objectivesSection(state)}
+
     <div class="split">
       <section class="section" aria-labelledby="agenda-titulo">
         <h3 id="agenda-titulo">Próximos jogos</h3>
@@ -500,7 +539,11 @@ function weekTab(state, ctx) {
             <li class="fixtures__item">
               ${monogram(getClub(item.opponentId)?.name ?? '')}
               <span class="fixtures__opp">${item.isHome ? '' : '@ '}${esc(getClub(item.opponentId)?.name ?? '')}
-                <span class="fixtures__comp">${esc(item.competitionName)}</span></span>
+                <span class="fixtures__comp">${esc(item.competitionName)}${
+                  rivalryBetween(state.player.club, item.opponentId)
+                    ? ` <span class="tag tag--derby">${icon('fire')}${esc(rivalryBetween(state.player.club, item.opponentId).name)}</span>`
+                    : ''
+                }</span></span>
               <span class="fixtures__stage">${esc(item.stage ?? '')}</span>
             </li>`,
             )
@@ -867,7 +910,7 @@ function lifeTab(state) {
 function milestones(player) {
   const trophies = player.career.trophies;
   const awards = player.career.awards;
-  const totals = player.career.totals;
+  const totals = careerTotals(player);
   const firstOf = (list, test) => list.find(test)?.year ?? null;
   return [
     { label: 'Primeiro título', icon: 'trophy', year: trophies[0]?.year ?? null },
@@ -900,7 +943,7 @@ function seasonSticker(season, index) {
 
 function careerTab(state) {
   const player = state.player;
-  const totals = player.career.totals;
+  const totals = careerTotals(player);
   const avg = totals.ratingCount ? totals.ratingSum / totals.ratingCount : 0;
   const seasons = player.career.seasons;
   const nextNumber = seasons.length + 1;
@@ -917,13 +960,16 @@ function careerTab(state) {
         { label: 'Melhor em campo', value: totals.motm },
         { label: 'Nota média', value: avg ? round(avg, 2).toFixed(2) : '-' },
         { label: 'Seleção', value: `${totals.nationalCaps}/${totals.nationalGoals}` },
+        ...(player.career.derbies
+          ? [{ label: 'Clássicos (V-E-D)', value: `${player.career.derbies.won}-${player.career.derbies.drawn}-${player.career.derbies.lost}` }]
+          : []),
       ])}
     </section>
 
     <section class="section">
       <div class="section__head">
         <h3>Temporadas</h3>
-        <p>Uma figurinha por temporada completa</p>
+        <p>Uma figurinha por temporada completa. Os números acima já contam a atual.</p>
       </div>
       <div class="album">
         ${seasons.map(seasonSticker).join('')}

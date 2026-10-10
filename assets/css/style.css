@@ -1713,6 +1713,40 @@ code {
   color: var(--cover);
 }
 
+/* Clássico: a rivalidade aparece no calendário, no ingresso e no placar. */
+.tag--derby {
+  background: var(--bad-soft);
+  color: var(--bad);
+  font-weight: 700;
+}
+
+.tag--derby .icon,
+.placard__derby .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.ticket__tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.placard__derby {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-cond);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
 @media (prefers-color-scheme: dark) {
   .tag--away {
     color: var(--ink);
@@ -2971,6 +3005,111 @@ code {
 @media (min-width: 980px) {
   .train__groups.shop__groups {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* -------------------------------------------------- metas da temporada */
+.goals {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 760px) {
+  .goals {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.goal {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-control);
+  background: var(--sheet);
+}
+
+.goal__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--info-soft);
+  color: var(--cover);
+}
+
+.goal__icon .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.goal__text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.goal__label {
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.goal__meta {
+  color: var(--ink-3);
+  font-size: 0.84rem;
+}
+
+.goal__bar {
+  display: block;
+  height: 6px;
+  margin-top: 3px;
+  border-radius: 999px;
+  background: var(--rule);
+  overflow: hidden;
+}
+
+.goal__bar > span {
+  display: block;
+  width: calc(var(--p, 0) * 100%);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cover);
+}
+
+.goal.is-done {
+  border-color: var(--good);
+  background: var(--good-soft);
+}
+
+.goal.is-done .goal__icon {
+  background: var(--good);
+  color: var(--sheet);
+}
+
+.goal.is-done .goal__bar > span {
+  background: var(--good);
+}
+
+.goal.is-missed .goal__icon {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
+@media (prefers-color-scheme: dark) {
+  .goal__icon,
+  .goal__bar > span {
+    color: var(--ink);
+  }
+
+  .goal__bar > span {
+    background: var(--accent);
   }
 }
 

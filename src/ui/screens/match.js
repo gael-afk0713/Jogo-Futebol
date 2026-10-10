@@ -152,6 +152,7 @@ export default {
             </div>
             <span class="placard__half">${match.minute >= 90 ? 'Fim de jogo' : match.minute > 45 ? '2º tempo' : '1º tempo'}</span>
             <span class="scoreboard__comp">${esc(match.competition?.name ?? '')}</span>
+            ${match.derby ? `<span class="placard__derby">${icon('fire')}${esc(match.derby)}</span>` : ''}
           </div>
           <div class="scoreboard__team scoreboard__team--away">
             <div class="placard__side"><span class="scoreboard__name">${esc(match.opponentName)}</span>${goalScorers(match, 'opponent')}</div>

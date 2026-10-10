@@ -86,6 +86,18 @@ export function emptySeasonStats() {
   };
 }
 
+const SEASON_TOTAL_KEYS = ['apps', 'goals', 'assists', 'saves', 'cleanSheets', 'yellowCards', 'redCards', 'motm', 'ratingSum', 'ratingCount'];
+
+/**
+ * Totais da carreira contando a temporada em andamento (o fim de temporada
+ * só soma ao histórico quando ela acaba).
+ */
+export function careerTotals(player) {
+  const totals = { ...player.career.totals };
+  for (const key of SEASON_TOTAL_KEYS) totals[key] = (totals[key] ?? 0) + (player.season?.[key] ?? 0);
+  return totals;
+}
+
 export function emptyCareerTotals() {
   return {
     apps: 0,

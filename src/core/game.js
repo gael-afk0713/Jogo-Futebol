@@ -4,10 +4,13 @@ import { createRng } from './rng.js';
 import { clamp, logistic, money, plural, round } from './utils.js';
 import { getClub, getLeague, squadRating } from '../data/clubs.js';
 import { getNation } from '../data/nations.js';
+import { rivalryBetween } from '../data/rivals.js';
+import { createObjectives, settleObjectives } from '../engine/objectives.js';
 import { LIFE_EVENTS } from '../data/lifeEvents.js';
 import {
   adjustLife,
   createPlayer,
+  careerTotals,
   emptySeasonStats,
   fillMissingAttributes,
   fullName,
@@ -50,6 +53,9 @@ import {
   getRole,
   marketValue,
   renewalOffer,
+  agedOutOfYouth,
+  firstProOffers,
+  promotionOffer,
   signContract,
 } from '../engine/transfers.js';
 import { evaluateAwards, seasonPrizeMoney } from '../engine/awards.js';
@@ -130,6 +136,10 @@ export class Game {
     this.state = { ...this.emptyState(), ...saved };
     this.rng = createRng(saved.seed ?? Date.now());
     fillMissingAttributes(this.state.player);
+    // Save de antes das metas: a temporada em andamento ganha as dela.
+    if (this.state.season && this.state.player && !this.state.season.objectives) {
+      this.state.season.objectives = createObjectives(this.state.player, this.state.season);
+    }
     // Reconecta o lance pendente da partida com os dados estáticos.
     if (this.state.match?.pending?.id) {
       const moment = findMoment(this.state.match.pending.id);
@@ -203,6 +213,7 @@ export class Game {
   beginSeason(year, continental) {
     this.state.season = createSeason({ year, clubId: this.player.club, rng: this.rng, continental });
     this.player.season = emptySeasonStats();
+    this.state.season.objectives = createObjectives(this.player, this.state.season);
     this.state.week = { step: WEEK_STEPS.TRAINING, trainingReport: null, eventId: null, eventResult: null, matchReport: null };
     this.state.offseason = null;
     const league = getLeague(this.season.leagueId);
@@ -325,6 +336,7 @@ export class Game {
       role,
       rng: this.rng,
       round: week.week,
+      derby: rivalryBetween(this.player.club, week.opponentId)?.name ?? null,
     });
     this.state.match = match;
     this.state.screen = SCREENS.MATCH;
@@ -381,6 +393,7 @@ export class Game {
       role,
       rng: this.rng,
       round: week.week,
+      derby: rivalryBetween(this.player.club, week.opponentId)?.name ?? null,
     });
     this.state.match = match;
     autoPlay(match, this.player, this.rng);
@@ -487,9 +500,30 @@ export class Game {
 
     player.overall = playerOverall(player);
 
+    // Clássico: a torcida cobra e comemora em dobro.
+    const derby = match.derby;
+    if (derby) {
+      const won = report.result === 'V';
+      const lost = report.result === 'D';
+      adjustLife(player, 'fanRelation', won ? 4 + report.stats.goals * 2 : lost ? -4 : 0);
+      adjustLife(player, 'happiness', won ? 3 : lost ? -3 : 0);
+      if (report.stats.goals) adjustLife(player, 'fame', report.stats.goals);
+      const record = (player.career.derbies ??= { won: 0, drawn: 0, lost: 0 });
+      record[won ? 'won' : lost ? 'lost' : 'drawn'] += 1;
+    }
+
+    const score = `${report.score.team}x${report.score.opponent}`;
     const headline = report.didNotPlay
       ? report.reason
-      : `${report.score.team}x${report.score.opponent} contra o ${report.opponentName}. Nota ${report.rating}${report.stats.goals ? `, ${plural(report.stats.goals, 'gol', 'gols')}` : ''}.`;
+      : derby
+        ? report.result === 'V'
+          ? report.stats.goals
+            ? `Você decidiu o ${derby}: ${score}, ${plural(report.stats.goals, 'gol seu', 'gols seus')}. A torcida não esquece.`
+            : `Vitória no ${derby}: ${score}. Nota ${report.rating}.`
+          : report.result === 'D'
+            ? `Derrota no ${derby}: ${score}. A torcida cobra.`
+            : `Empate no ${derby}: ${score}. Nota ${report.rating}.`
+        : `${score} contra o ${report.opponentName}. Nota ${report.rating}${report.stats.goals ? `, ${plural(report.stats.goals, 'gol', 'gols')}` : ''}.`;
     this.pushNews(headline, report.result === 'V' ? 'good' : report.result === 'D' ? 'bad' : 'info', 'soccer-ball');
 
     this.applyWeekResult(week, report);
@@ -629,6 +663,10 @@ export class Game {
     const prize = seasonPrizeMoney(player, { summary });
     const national = playNationalSeason(player, { year: season.year, seasonRatingValue: rating || 6.4, rng: this.rng });
     const investments = settleInvestments(player, this.rng);
+    const objectives = settleObjectives(player, season, adjustLife);
+    if (objectives.results.length) {
+      this.pushNews(`Metas da temporada: ${objectives.achieved} de ${objectives.results.length} cumpridas.${objectives.bonus ? ` Bônus de ${objectives.bonusText}.` : ''}`, objectives.achieved >= 2 ? 'good' : objectives.achieved ? 'info' : 'bad', 'target');
+    }
 
     const growth = endOfSeasonGrowth(
       player,
@@ -702,9 +740,15 @@ export class Game {
     player.overall = playerOverall(player);
 
     const forcedRetirement = shouldForceRetirement(player);
+    // Passou da idade da base: o contrato com o time Sub-20 acaba aqui.
+    const agedOut = agedOutOfYouth(player);
+    if (agedOut && player.contract) player.contract.years = 0;
     const contractExpired = (player.contract?.years ?? 0) <= 0;
     const offers = generateOffers(player, { seasonRatingValue: rating || 6.2, rng: this.rng });
-    const loans = player.season.apps < 8 && player.age <= 23 ? generateLoanOffers(player, { rng: this.rng }) : [];
+    const promotion = promotionOffer(player, this.rng);
+    if (promotion) offers.unshift(promotion);
+    if (agedOut && !offers.length) offers.push(...firstProOffers(player, this.rng));
+    const loans = player.season.apps < 8 && player.age <= 23 && !agedOut ? generateLoanOffers(player, { rng: this.rng }) : [];
     const renewal = contractExpired || player.flags.includes('segurou_renovacao') ? null : renewalOffer(player, this.rng);
 
     this.state.offseason = {
@@ -714,6 +758,7 @@ export class Game {
       prize,
       national,
       investments,
+      objectives,
       growth,
       potentialChange,
       record,
@@ -721,6 +766,7 @@ export class Game {
       loans,
       renewal,
       contractExpired,
+      agedOut,
       forcedRetirement,
       freeAgent: contractExpired && !renewal,
       nextContinental: qualifiesForContinental(season),
@@ -751,6 +797,9 @@ export class Game {
     adjustLife(this.player, 'happiness', 8);
     if (offer.renewal) {
       this.pushNews(`Renovação assinada com o ${offer.clubName}.`, 'good', 'handshake');
+    } else if (offer.promotion) {
+      this.pushNews(`Você subiu da base para o time profissional do ${offer.clubName}.`, 'good', 'arrow-up');
+      adjustLife(this.player, 'fame', 3);
     } else if (offer.loan) {
       this.pushNews(`Emprestado ao ${offer.clubName} por uma temporada.`, 'info', 'airplane-tilt');
     } else {
@@ -764,6 +813,21 @@ export class Game {
   stayAtClub() {
     const offseason = this.state.offseason;
     if (!offseason) return;
+    // Quem passou da idade da base não pode ficar: vai para a melhor proposta.
+    if (offseason.agedOut) {
+      const best = offseason.offers[0];
+      if (best) {
+        this.acceptOffer(best.id);
+        return;
+      }
+      const fallback = firstProOffers(this.player, this.rng, 1)[0];
+      if (fallback) {
+        signContract(this.player, fallback, { year: offseason.year + 1 });
+        this.pushNews(`Fora da idade da base, você assina com o ${fallback.clubName}.`, 'info', 'handshake');
+      }
+      this.startNextSeason();
+      return;
+    }
     if (offseason.contractExpired && !this.player.contract?.years) {
       // Sem contrato e sem proposta: aceita um vínculo modesto para seguir jogando.
       const fallback = renewalOffer(this.player, this.rng);
@@ -841,6 +905,11 @@ export class Game {
   // --------------------------------------------------------------- carreira
   retire(forced = false) {
     const player = this.player;
+    // Aposentou no meio da temporada: os jogos dela entram no histórico.
+    if (this.state.screen !== SCREENS.OFFSEASON && player.season?.apps) {
+      player.career.totals = careerTotals(player);
+      player.season = emptySeasonStats();
+    }
     player.retired = true;
     player.legacy = legacyScore(player);
     player.retirementYear = this.state.offseason?.year ?? this.season?.year ?? null;
@@ -877,6 +946,7 @@ export class Game {
             opponent: getClub(week.opponentId)?.name ?? '',
             isHome: week.isHome,
             opponentRating: squadRating(week.opponentId),
+            derby: rivalryBetween(player.club, week.opponentId)?.name ?? null,
           }
         : null,
       marketValue: marketValue(player),

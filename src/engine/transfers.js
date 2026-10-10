@@ -157,9 +157,50 @@ export function generateLoanOffers(player, { rng, max = 3 }) {
     .map((club) => buildOffer(player, club.id, rng, { loan: true, interest: 0.6 }));
 }
 
+// Idade máxima na base: depois disso o jogador precisa subir para o profissional.
+export const YOUTH_AGE_LIMIT = 19;
+
+export const isYouthClub = (clubId) => Boolean(getLeague(getClub(clubId)?.leagueId)?.youth);
+
+/** O jogador estourou a idade da base (a idade já é a da próxima temporada). */
+export const agedOutOfYouth = (player) => isYouthClub(player.club) && player.age > YOUTH_AGE_LIMIT;
+
+/** O time profissional do mesmo clube chama o jogador da base. */
+export function promotionOffer(player, rng) {
+  const parentId = getClub(player.club)?.parent;
+  if (!parentId || !isYouthClub(player.club) || player.age < 18) return null;
+  // Antes de estourar a idade, só sobe quem já está perto do nível do time de cima.
+  if (!agedOutOfYouth(player) && player.overall < squadRating(parentId) - 8) return null;
+  const parent = getClub(parentId);
+  const offer = buildOffer(player, parentId, rng, { interest: 0.7 });
+  return {
+    ...offer,
+    promotion: true,
+    transferFee: 0,
+    signingBonus: Math.round(offer.weeklySalary * rng.int(2, 6)),
+    pitch: `O ${parent.name} quer subir você da base para o time profissional.`,
+  };
+}
+
+/**
+ * Quem estourou a idade da base e não recebeu nenhuma proposta ainda arranja
+ * um clube profissional pequeno do próprio país para começar.
+ */
+export function firstProOffers(player, rng, count = 2) {
+  const nation = getLeague(getClub(player.club)?.leagueId)?.nation;
+  const pool = ALL_CLUBS.filter((club) => {
+    const league = getLeague(club.leagueId);
+    return !league.youth && league.nation === nation;
+  }).sort((a, b) => Math.abs(squadRating(a.id) - player.overall + 4) - Math.abs(squadRating(b.id) - player.overall + 4));
+  return pool.slice(0, count * 3).filter((_, index) => index % 3 === 0).slice(0, count).map((club) => buildOffer(player, club.id, rng, { interest: 0.5 }));
+}
+
 /** Oferta de renovação do clube atual. */
 export function renewalOffer(player, rng) {
   if (!player.club) return null;
+  // A base não renova com quem já passou da idade e não prende ninguém além dela.
+  const youth = isYouthClub(player.club);
+  if (youth && player.age > YOUTH_AGE_LIMIT) return null;
   const role = roleFor(player, player.club);
   const current = player.contract?.weeklySalary ?? salaryBand(player.club);
   const performance = clamp((seasonRating(player.season) || 6.5) - 6.4, -0.6, 1.6);
@@ -175,7 +216,7 @@ export function renewalOffer(player, rng) {
     role: role.id,
     roleLabel: role.label,
     weeklySalary,
-    years: rng.int(2, 4),
+    years: youth ? Math.max(1, Math.min(rng.int(2, 4), YOUTH_AGE_LIMIT + 1 - player.age)) : rng.int(2, 4),
     signingBonus: Math.round(weeklySalary * rng.int(4, 14)),
     releaseClause: Math.round(marketValue(player) * rng.float(2, 3.5)),
     renewal: true,

@@ -52,6 +52,12 @@ escolha a branch e a pasta raiz (`/`). O jogo é 100% estático.
 Você não começa num clube grande: três peneiras aparecem, e a escolha muda quanto
 você vai jogar e aparecer no primeiro ano.
 
+Time Sub-20 só segura jogador até os **19 anos**. Os times de base que têm um
+time profissional no jogo (Novorizontino, Ponte Preta, Guarani e Mirassol)
+podem subir você para o profissional antes disso, se você estiver perto do nível
+do elenco. Quem passa da idade sem escolher vai para a melhor proposta
+profissional.
+
 ### 3. A semana
 Cada semana tem três etapas:
 
@@ -71,7 +77,33 @@ Cada semana tem três etapas:
 3. **Partida** — entrar em campo e decidir os lances, ou simular.
 
 Se você não for escalado (forma ruim, relação ruim com o técnico, lesão ou
-suspensão), você assiste do banco — e isso cobra o seu preço.
+suspensão), você assiste do banco — e isso cobra o seu preço. Cada jogo inteiro
+custa 5 de forma física.
+
+#### Metas da temporada
+No começo de cada ano o clube combina três metas com você, e elas aparecem na
+aba Semana com o quanto falta:
+
+- **Tempo de jogo**: ser titular em N jogos (estrela e titular) ou entrar em
+  campo em N jogos (rotação e promessa).
+- **Produção da posição**: gols para centroavante e segundo atacante,
+  participações em gol (gols + assistências) para pontas e meias, defesas
+  importantes para o goleiro e nota média para volantes, zagueiros e laterais.
+  Quem é bem melhor que o elenco recebe meta maior.
+- **Objetivo do time**, pela força do elenco: ser campeão, classificar para o
+  torneio continental, terminar na metade de cima ou fugir das últimas posições.
+
+Cada meta cumprida paga bônus (4 salários semanais nas pessoais, 3 na do time)
+e melhora a relação com o técnico; meta perdida deixa o técnico desconfiado. Nas
+simulações, cada meta é cumprida entre metade e dois terços das vezes.
+
+#### Clássicos
+São 54 rivalidades reais (Fla-Flu, Gre-Nal, Superclásico, El Clásico, Derby
+della Madonnina, Der Klassiker...). O clássico aparece marcado no calendário,
+no ingresso e no placar, costuma começar com o evento "Dia de clássico" e deixa
+mais provável o empurra-empurra, a torcida e o juiz errando. Ganhar o clássico
+agrada muito mais a torcida (e cada gol vale fama); perder dói. O histórico de
+vitórias, empates e derrotas em clássicos fica no álbum.
 
 #### O goleiro
 O goleiro tem oito atributos próprios: reflexos, elasticidade, manejo de bola,
@@ -115,7 +147,9 @@ resto do jogo é simulado.
 
 Os desfechos viram gol, assistência, defesa, desarme, falta, cartão, pênalti,
 lesão — e a sua nota da partida, que é a média da qualidade das suas decisões
-(não a soma: participar de muitos lances não infla nada).
+(não a soma: participar de muitos lances não infla nada). Gol e assistência
+pesam bastante: um gol leva a nota para perto de 7,2, e dois ou mais, para uns
+8,4.
 
 São 54 lances, uns 20 por posição, e cada um tem dois ou três jeitos de ser
 contado, na situação e no resultado. Lances do jogo anterior ficam um pouco
@@ -280,7 +314,8 @@ no primeiro login.
 
 A interface é desenhada como um **álbum de figurinhas**: você é uma figurinha, cada
 temporada completa é colada num espaço numerado, títulos e prêmios viram figurinhas
-brilhantes e o que ainda falta aparece como espaço vazio. Funciona no celular e no
+brilhantes e o que ainda falta aparece como espaço vazio. Os totais da carreira no
+álbum já contam a temporada em andamento. Funciona no celular e no
 computador, e segue o modo claro ou noturno do sistema. As regras estão em
 [`DESIGN.md`](DESIGN.md).
 
@@ -315,6 +350,7 @@ src/
     matchMomentsNew.js     os 30 lances escolhidos junto com o jogador
     momentVariants.js      outros jeitos de contar os lances antigos
     matchEvents.js         eventos fora da bola (VAR, chuva, técnico...)
+    rivals.js              clássicos: 54 rivalidades entre clubes do jogo
     names.js               geradores de nome por país
   engine/                  regras puras, sem DOM
     player.js              criação e atributos de vida
@@ -325,7 +361,8 @@ src/
     coach.js               preparador: recomenda o treino e explica o porquê
     life.js                sorteio e resolução de eventos
     progression.js         evolução, declínio, aposentadoria, legado
-    transfers.js           valor de mercado, propostas, contratos
+    transfers.js           valor de mercado, propostas, contratos, subida da base
+    objectives.js          metas da temporada: criação, progresso e bônus
     national.js            convocações e torneios de seleção
     awards.js              premiações e bônus
     finance.js             salário, gastos, patrocínio, fechamento dos investimentos
