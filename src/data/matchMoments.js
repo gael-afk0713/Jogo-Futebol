@@ -830,7 +830,7 @@ const BASE_MOMENTS = [
         difficulty: 11,
         stamina: 3,
         success: { kind: 'goal', rating: 2.2, text: 'NO ÚLTIMO SEGUNDO! Gol decisivo, você vira herói da partida.' },
-        failure: { kind: 'lost', rating: -0.6, text: 'Chutou por cima no último lance. Fim de jogo.' },
+        failure: { kind: 'neutral', rating: -0.6, text: 'Chutou por cima no último lance. Fim de jogo.' },
       },
       {
         label: 'Achar o companheiro melhor posicionado',
@@ -840,7 +840,7 @@ const BASE_MOMENTS = [
         difficulty: 7,
         stamina: 3,
         success: { kind: 'assist', rating: 1.6, text: 'Passe perfeito e {teammate} marca no apagar das luzes!' },
-        failure: { kind: 'lost', rating: -0.4, text: 'O passe foi bloqueado. Acabou.' },
+        failure: { kind: 'neutral', rating: -0.4, text: 'O passe foi bloqueado. Acabou.' },
       },
     ],
   },

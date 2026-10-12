@@ -43,6 +43,28 @@ function expectedGoals(attackRating, defenseRating) {
   return clamp(1.25 + diff * 0.055, 0.25, 3.8);
 }
 
+// Os seus lances são parte do jogo, não um extra. Cada lance seu, num jogo
+// equilibrado e com você no nível do time, vale em média esta fração dos gols
+// esperados de cada lado; o jogo de fundo deixa de contar essa parte enquanto
+// você está em campo. Assim, no nível do time você deixa o time como ele é;
+// melhor que o time, melhora; pior, piora. (calibrado em simulação)
+const MOMENT_SHARE = {
+  gol: { team: 0.014, opponent: 0.383 },
+  defesa: { team: 0.019, opponent: 0.15 },
+  meio: { team: 0.061, opponent: 0.093 },
+  ataque: { team: 0.091, opponent: 0.028 },
+};
+
+/** Quanto do jogo de fundo continua valendo com você em campo. */
+function backgroundShare(zone, moments, minutesOnPitch) {
+  const share = MOMENT_SHARE[zone] ?? { team: 0, opponent: 0 };
+  const scale = minutesOnPitch > 0 ? (moments * 90) / minutesOnPitch : 0;
+  return {
+    team: clamp(1 - share.team * scale, 0, 1),
+    opponent: clamp(1 - share.opponent * scale, 0, 1),
+  };
+}
+
 function clubName(clubId) {
   return getClub(clubId)?.name ?? 'Time Desconhecido';
 }
@@ -110,6 +132,7 @@ export function createMatch({ player, clubId, opponentId, competition, isHome, r
     queue,
     conditions,
     xg: { team: 1, opponent: 1 },
+    background: backgroundShare(position.zone, totalMoments, role === PLAYER_ROLE.SUB ? 90 - entryMinute : 90),
     // Um evento fora da bola sorteado no meio do jogo, em 45% das partidas
     // (70% nos clássicos, que são mais quentes).
     contextMinute: rng.chance(derby ? 0.7 : 0.45) ? rng.int(25, 82) : null,
@@ -266,8 +289,11 @@ function simulateBackground(match, player, rng, minutes) {
   const share = minutes / 90;
   const playerBoost = match.onField ? (playerOverall(player) - match.teamRating) * 0.02 : -0.05;
 
-  const teamXg = expectedGoals(match.teamRating, match.opponentRating) * share * (1 + playerBoost) * (match.xg?.team ?? 1);
-  const oppXg = expectedGoals(match.opponentRating, match.teamRating) * share * (match.xg?.opponent ?? 1);
+  // Com você em campo, parte dos gols já sai dos seus lances.
+  const background = match.onField ? match.background ?? { team: 1, opponent: 1 } : { team: 1, opponent: 1 };
+
+  const teamXg = expectedGoals(match.teamRating, match.opponentRating) * share * (1 + playerBoost) * (match.xg?.team ?? 1) * background.team;
+  const oppXg = expectedGoals(match.opponentRating, match.teamRating) * share * (match.xg?.opponent ?? 1) * background.opponent;
 
   // O gol acontece em algum minuto dentro do trecho simulado, não no início dele.
   const goalMinute = () => clamp(match.minute + rng.int(1, Math.max(1, Math.round(minutes))), 1, 90);

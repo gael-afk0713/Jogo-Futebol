@@ -145,6 +145,12 @@ sucesso** de cada opção, calculada a partir dos seus atributos, dos seus traç
 da sua energia naquele minuto e da força do adversário. Entre os seus lances, o
 resto do jogo é simulado.
 
+Os seus lances são parte do jogo, não um extra: enquanto você está em campo, a
+simulação deixa de contar os gols que os seus lances representam. No nível do
+time, você deixa o time como ele é; melhor que o time, melhora; pior, piora.
+Por isso o goleiro passa em branco em uns 25% dos jogos ao longo da carreira (e
+a Luva de Ouro sai), em vez de sofrer gols a mais só por estar em campo.
+
 Os desfechos viram gol, assistência, defesa, desarme, falta, cartão, pênalti,
 lesão — e a sua nota da partida, que é a média da qualidade das suas decisões
 (não a soma: participar de muitos lances não infla nada). Gol e assistência
