@@ -8,6 +8,7 @@ onde veio cada um. Foram cortados, normalizados e convertidos para WAV mono.
 | --- | --- | --- |
 | `toque.wav` | toque em botão | "UI Button Click", benzix2 (Freesound 467951) |
 | `confirmar.wav` | treinar, assinar, entrar em campo, escolher no evento | "Videogame Menu Select", Fupicat (Freesound 471937) |
+| `voltar.wav` | fechar os detalhes do treino, voltar, cancelar, dispensar | "guiclick2", farpro (Freesound 264763) |
 | `erro.wav` | compra que não dá certo | Kenney, Interface Sounds (`error_006`) |
 | `compra.wav` | compra na loja | "Retro, Coin 02", LilMati (Freesound 402288) |
 | `certo.wav` | lance que dá certo | "Powerup/success", GabrielAraujo (Freesound 242501) |

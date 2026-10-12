@@ -384,13 +384,13 @@ no primeiro login.
 
 ## Sons
 
-Efeitos curtos nos toques e nos momentos do jogo: confirmar, compra, lance que
-dá certo ou errado, chute, gol (torcida), apito no começo e no fim da partida,
-evento da semana, overall que sobe e a figurinha colada no fim do ano. Durante a
-partida, um clima de estádio toca baixinho. O botão de alto-falante na barra de
-cima liga e desliga tudo, e a escolha fica guardada no aparelho. Nas simulações,
-só o resultado final faz som. No iPad, a chave de silencioso também cala o jogo.
-Todos os sons são CC0; a lista está em
+Efeitos curtos nos toques e nos momentos do jogo: confirmar, voltar ou cancelar,
+compra, lance que dá certo ou errado, chute, gol (torcida), apito no começo e no
+fim da partida, evento da semana, overall que sobe e a figurinha colada no fim do
+ano. Durante a partida, um clima de estádio toca baixinho. O botão de
+alto-falante na barra de cima liga e desliga tudo, e a escolha fica guardada no
+aparelho. Nas simulações, só o resultado final faz som. No iPad, a chave de
+silencioso também cala o jogo. Todos os sons são CC0; a lista está em
 [`assets/sounds/CREDITOS.md`](assets/sounds/CREDITOS.md).
 
 ## Visual

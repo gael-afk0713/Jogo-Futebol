@@ -5,7 +5,8 @@
 import { SCREENS, WEEK_STEPS } from '../core/game.js';
 
 // Som de cada ação. O que não está na lista faz o toque comum. null: a tela
-// decide (compra deu certo ou não, resultado do lance) ou não faz som.
+// decide (compra deu certo ou não, abrir ou fechar o treino, resultado do
+// lance) ou não faz som.
 const ACTION_SOUNDS = {
   'choose-training': 'confirmar',
   'accept-trial': 'confirmar',
@@ -14,7 +15,9 @@ const ACTION_SOUNDS = {
   'start-match': 'confirmar',
   'confirm-create': 'confirmar',
   'resolve-event': 'confirmar',
+  'back-auth': 'voltar',
   'buy-item': null,
+  'peek-training': null,
   'match-choose': null,
   'toggle-sound': null,
   noop: null,

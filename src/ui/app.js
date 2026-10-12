@@ -68,7 +68,12 @@ export class App {
       rerender: () => this.render(),
       motion: this.motion,
       sound: this.sound,
-      confirm: confirmDialog,
+      // Cancelar (ou tocar fora) faz o som de voltar; o "sim" deixa o som para a ação.
+      confirm: async (options) => {
+        const ok = await confirmDialog(options);
+        if (!ok) this.sound.play('voltar');
+        return ok;
+      },
       careers: this.careers,
       maxCareers: MAX_CAREERS,
       onSignedIn: (user) => this.handleSignedIn(user),

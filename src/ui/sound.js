@@ -6,12 +6,13 @@
 // primeiro toque em qualquer lugar cria o contexto de áudio e carrega os sons.
 // No iPad, a chave de silencioso também cala o jogo.
 
-const SOUNDS = ['toque', 'confirmar', 'erro', 'compra', 'certo', 'errado', 'conquista', 'aviso', 'apito', 'gol', 'chute', 'figurinha'];
+const SOUNDS = ['toque', 'confirmar', 'voltar', 'erro', 'compra', 'certo', 'errado', 'conquista', 'aviso', 'apito', 'gol', 'chute', 'figurinha'];
 
 // Volume de cada som (0 a 1): o toque, que se repete o tempo todo, é o mais baixo.
 const VOLUME = {
   toque: 0.45,
   confirmar: 0.7,
+  voltar: 0.5,
   erro: 0.6,
   compra: 0.8,
   certo: 0.7,

@@ -1149,7 +1149,9 @@ export default {
       ctx.rerender();
     },
     'peek-training': (ctx, dataset) => {
-      ui.peek = ui.peek === dataset.training ? null : dataset.training;
+      const closing = ui.peek === dataset.training;
+      ctx.sound.play(closing ? 'voltar' : 'toque');
+      ui.peek = closing ? null : dataset.training;
       ctx.rerender();
     },
     'choose-training': (ctx, dataset) => {
@@ -1245,6 +1247,7 @@ export default {
         danger: true,
       });
       if (!ok) return;
+      ctx.sound.play('voltar');
       ctx.game.dismissStaff(dataset.item);
       ctx.save.schedule(300);
     },
