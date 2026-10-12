@@ -382,6 +382,17 @@ no primeiro login.
 
 ---
 
+## Sons
+
+Efeitos curtos nos toques e nos momentos do jogo: confirmar, compra, lance que
+dá certo ou errado, chute, gol (torcida), apito no começo e no fim da partida,
+evento da semana, overall que sobe e a figurinha colada no fim do ano. Durante a
+partida, um clima de estádio toca baixinho. O botão de alto-falante na barra de
+cima liga e desliga tudo, e a escolha fica guardada no aparelho. Nas simulações,
+só o resultado final faz som. No iPad, a chave de silencioso também cala o jogo.
+Todos os sons são CC0; a lista está em
+[`assets/sounds/CREDITOS.md`](assets/sounds/CREDITOS.md).
+
 ## Visual
 
 A interface é desenhada como um **álbum de figurinhas**: você é uma figurinha, cada
@@ -399,6 +410,7 @@ assets/css/style.css       mundo "álbum de figurinhas", claro e noturno
 assets/fonts/              Barlow e Barlow Condensed hospedadas no projeto (OFL)
 assets/avatar/             retratos em camadas (pele, cabelo, barba)
 assets/icons/              ícone da tela de início (iPhone, iPad e Android)
+assets/sounds/             efeitos sonoros (CC0) e os créditos de cada um
 manifest.webmanifest       nome e ícones do atalho na tela de início
 DESIGN.md                  sistema visual: tokens, regras e componentes
 PRODUCT.md                 quem joga, para quê e o que não pode mudar
@@ -445,6 +457,8 @@ src/
     components.js          figurinhas, avatar SVG, medidores, tabelas
     icons.js               ícones Phosphor usados no jogo (MIT)
     dom.js                 helpers, toast, modal
+    sound.js               toca os sons, clima de estádio, liga e desliga
+    soundCues.js           quando cada som toca (ações e momentos do jogo)
     screens/               auth, create, trials, hub, match, offseason, retired
   firebase/
     config.js              suas chaves (opcional)

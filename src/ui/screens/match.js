@@ -1,6 +1,7 @@
 // Tela de partida: os lances em que você decide o que fazer.
 
 import { esc } from '../dom.js';
+import { isKick } from '../soundCues.js';
 import { round } from '../../core/utils.js';
 import { feed, icon, meter, momentSpot, monogram, pitch, ratingBadge, statline, tierClass } from '../components.js';
 
@@ -199,8 +200,17 @@ export default {
 
   actions: {
     'match-choose': (ctx, dataset) => {
-      ui.lastMoment = ctx.game.state.match?.pending?.id ?? null;
+      const pending = ctx.game.state.match?.pending;
+      // Chute ou passe faz o som da bola; o resultado vem logo depois (o gol
+      // do time tem o som da torcida, tocado em ui/soundCues.js).
+      const kick = isKick(pending, pending?.raw?.options?.[Number(dataset.index)]);
+      ctx.sound.play(kick ? 'chute' : 'toque');
+      ui.lastMoment = pending?.id ?? null;
       ui.resolution = ctx.game.matchChoose(Number(dataset.index));
+      const result = ui.resolution;
+      if (result && !result.teamGoal && !(result.offBall && result.chance >= 1)) {
+        ctx.sound.play(result.success ? 'certo' : 'errado', { delay: kick ? 280 : 80 });
+      }
       ctx.rerender();
     },
     'match-continue': (ctx) => {

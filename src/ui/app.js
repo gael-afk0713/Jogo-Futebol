@@ -3,6 +3,8 @@
 import { confirmDialog, esc, mount, toast } from './dom.js';
 import { icon } from './components.js';
 import { Motion } from './motion.js';
+import { Sound } from './sound.js';
+import { actionSound, BULK_ACTIONS, soundCues } from './soundCues.js';
 import { game, SCREENS } from '../core/game.js';
 import { MAX_CAREERS, SaveManager } from '../core/storage.js';
 import { authErrorMessage, firebaseAvailable, onAuthChange, signOutUser } from '../firebase/firebase.js';
@@ -49,9 +51,12 @@ export class App {
     this.adoptedFor = null;
     this.rendering = false;
     this.motion = new Motion();
+    this.sound = new Sound();
+    this.cues = soundCues(this.sound);
 
     this.save.onStatus = () => this.renderStatus();
     this.game.subscribe(() => {
+      this.cues.observe(this.game.state);
       this.render();
       if (this.game.state.player) this.save.schedule();
     });
@@ -62,6 +67,7 @@ export class App {
       auth: this.auth,
       rerender: () => this.render(),
       motion: this.motion,
+      sound: this.sound,
       confirm: confirmDialog,
       careers: this.careers,
       maxCareers: MAX_CAREERS,
@@ -163,6 +169,11 @@ export class App {
 
   // ------------------------------------------------------------------ eventos
   bindEvents() {
+    // O primeiro toque libera o áudio (exigência do navegador, sobretudo no iPad).
+    const unlock = () => this.sound.unlock();
+    document.addEventListener('pointerdown', unlock, { capture: true, passive: true });
+    document.addEventListener('keydown', unlock, { capture: true, passive: true });
+
     this.root.addEventListener('click', (event) => {
       const target = event.target.closest('[data-action]');
       if (!target || target.disabled) return;
@@ -198,15 +209,28 @@ export class App {
         toast(this.game.state.settings.fastMode ? 'Modo rápido ligado.' : 'Modo rápido desligado.', 'info');
       },
       'app-sign-out': () => this.handleSignOut(),
+      'toggle-sound': () => {
+        const on = this.sound.toggle();
+        if (on) this.sound.play('toque');
+        toast(on ? 'Som ligado.' : 'Som desligado.', 'info');
+        this.render();
+      },
     };
 
     const screen = SCREEN_MAP[this.game.state.screen];
     const handler = screen?.actions?.[action] ?? globalActions[action];
     if (!handler) return;
-    Promise.resolve(handler(this.ctx, dataset, event)).catch((error) => {
-      console.error('[app] erro na ação', action, error);
-      toast('Algo deu errado nessa ação.', 'warn');
-    });
+    this.sound.play(actionSound(action));
+    const bulk = BULK_ACTIONS.has(action);
+    if (bulk) this.cues.hold();
+    Promise.resolve(handler(this.ctx, dataset, event))
+      .catch((error) => {
+        console.error('[app] erro na ação', action, error);
+        toast('Algo deu errado nessa ação.', 'warn');
+      })
+      .finally(() => {
+        if (bulk) this.cues.release(this.game.state);
+      });
   }
 
   // --------------------------------------------------------------- navegação
@@ -268,6 +292,8 @@ export class App {
               ? `<button class="iconbtn" data-action="save-now" aria-label="Salvar agora" title="Salvar agora">${icon('floppy-disk')}</button>
                  <button class="iconbtn ${state.settings.fastMode ? 'is-active' : ''}" data-action="toggle-fast"
                    aria-pressed="${state.settings.fastMode}" aria-label="Modo rápido: menos eventos de vida" title="Modo rápido: menos eventos de vida">${icon('fast-forward')}</button>
+                 <button class="iconbtn" data-action="toggle-sound" aria-pressed="${this.sound.enabled}"
+                   aria-label="${this.sound.enabled ? 'Desligar o som' : 'Ligar o som'}" title="${this.sound.enabled ? 'Desligar o som' : 'Ligar o som'}">${icon(this.sound.enabled ? 'speaker-high' : 'speaker-slash')}</button>
                  <button class="iconbtn" data-action="go-album" aria-label="Minhas carreiras" title="Minhas carreiras">${icon('book-open-text')}</button>`
               : ''
           }

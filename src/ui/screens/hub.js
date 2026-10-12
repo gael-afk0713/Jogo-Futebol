@@ -1204,6 +1204,7 @@ export default {
         if (!ok) return;
       }
       const result = ctx.game.buyItem(dataset.item);
+      ctx.sound.play(result.ok ? 'compra' : 'erro');
       if (!result.ok) {
         toast(result.reason, 'warn');
         return;
