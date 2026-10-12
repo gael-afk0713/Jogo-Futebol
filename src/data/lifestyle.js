@@ -55,7 +55,8 @@ const asset = (cat, id, label, icon, price, description, invest, extra = {}) => 
   ...extra,
 });
 
-// Uma temporada longa tem uns 40 jogos de semana: "uma vez por temporada".
+// "Uma vez por temporada": 40 aqui vira uma temporada de verdade (36 a 38
+// semanas), contada em engine/shop.js; 80, duas temporadas.
 const SEASON = 40;
 
 export const LIFESTYLE_ITEMS = [
@@ -243,23 +244,23 @@ export const LIFESTYLE_ITEMS = [
   }),
 
   // ------------------------------------------------------------- desempenho
-  own('desempenho', 'kit_treino', 'Kit de treino em casa', 'traffic-cone', 250, 'Cones, escada de agilidade e elásticos.', {
+  own('desempenho', 'kit_treino', 'Kit de treino em casa', 'traffic-cone', 300, 'Cones, escada de agilidade e elásticos.', {
     effects: { xp: { fisico: 1.05, tecnico: 1.05 } },
     resale: 0.3,
   }),
-  own('desempenho', 'smartwatch', 'Relógio de sono e carga', 'watch', 800, 'Avisa quando você está cansado antes de você sentir.', {
+  own('desempenho', 'smartwatch', 'Relógio de sono e carga', 'watch', 1_000, 'Avisa quando você está cansado antes de você sentir.', {
     effects: { weeklyFitness: 0.5, injuryRisk: 0.97 },
     resale: 0.3,
   }),
-  own('desempenho', 'mini_gol', 'Mini-gol e bolas oficiais no quintal', 'soccer-ball', 1_500, 'Mil toques por dia, como na infância.', {
+  own('desempenho', 'mini_gol', 'Mini-gol e bolas oficiais no quintal', 'soccer-ball', 2_000, 'Mil toques por dia, como na infância.', {
     effects: { xp: { tecnico: 1.05, finalizacao: 1.05, drible: 1.05 } },
     resale: 0.3,
   }),
-  own('desempenho', 'colchao', 'Colchão de alta performance', 'bed', 3_000, 'Dormir bem também é treinar.', {
+  own('desempenho', 'colchao', 'Colchão de alta performance', 'bed', 4_000, 'Dormir bem também é treinar.', {
     effects: { restBonus: 2 },
     resale: 0.2,
   }),
-  own('desempenho', 'oculos_estrobo', 'Óculos de treino estroboscópico', 'eyeglasses', 4_000, 'Pisca enquanto você treina e ensina o cérebro a reagir mais rápido.', {
+  own('desempenho', 'oculos_estrobo', 'Óculos de treino estroboscópico', 'eyeglasses', 5_000, 'Pisca enquanto você treina e ensina o cérebro a reagir mais rápido.', {
     effects: { attributes: { reactions: 1 } },
     resale: 0.3,
   }),
@@ -278,31 +279,31 @@ export const LIFESTYLE_ITEMS = [
   hire('desempenho', 'medico', 'Médico particular', 'stethoscope', 12_000, 'Exames toda semana e prevenção antes da dor.', {
     effects: { injuryRisk: 0.85, fasterHealing: 0.25, weekly: { health: 0.2 } },
   }),
-  own('desempenho', 'exames', 'Mapeamento genético e plano de treino', 'flask', 180_000, 'Treino feito para o seu corpo, não para o de todo mundo.', {
+  own('desempenho', 'exames', 'Mapeamento genético e plano de treino', 'flask', 240_000, 'Treino feito para o seu corpo, não para o de todo mundo.', {
     effects: { xp: { fisico: 1.1, academia: 1.1, academia_casa: 1.1 }, injuryRisk: 0.92 },
     resale: 0,
   }),
-  own('desempenho', 'simulador_vr', 'Simulador de realidade virtual', 'virtual-reality', 250_000, 'Milhares de lances vistos do seu ponto de vista.', {
+  own('desempenho', 'simulador_vr', 'Simulador de realidade virtual', 'virtual-reality', 320_000, 'Milhares de lances vistos do seu ponto de vista.', {
     effects: { xp: { tatico: 1.15, video: 1.1 }, attributes: { reactions: 1 } },
     resale: 0.4,
   }),
-  own('desempenho', 'hiperbarica', 'Câmara hiperbárica', 'thermometer', 450_000, 'Oxigênio sob pressão: o músculo se recupera mais rápido.', {
+  own('desempenho', 'hiperbarica', 'Câmara hiperbárica', 'thermometer', 600_000, 'Oxigênio sob pressão: o músculo se recupera mais rápido.', {
     effects: { fasterHealing: 0.35, weekly: { health: 0.1 } },
   }),
-  own('desempenho', 'hidroterapia', 'Piscina de hidroterapia', 'person-simple-swim', 900_000, 'Treino sem impacto e recuperação na água.', {
+  own('desempenho', 'hidroterapia', 'Piscina de hidroterapia', 'person-simple-swim', 1_200_000, 'Treino sem impacto e recuperação na água.', {
     effects: { weeklyFitness: 1, injuryRisk: 0.9 },
     upkeep: 2_000,
   }),
-  own('desempenho', 'campo_society', 'Campo de futebol em casa', 'soccer-ball', 1_800_000, 'Gramado e iluminação para treinar quando quiser.', {
+  own('desempenho', 'campo_society', 'Campo de futebol em casa', 'soccer-ball', 2_400_000, 'Gramado e iluminação para treinar quando quiser.', {
     effects: { xp: { tecnico: 1.1, drible: 1.1, finalizacao: 1.1, bola_parada: 1.1, goleiro: 1.1, jogo_pes: 1.1 }, weekly: { happiness: 0.2 } },
     upkeep: 3_000,
     resale: 0.6,
   }),
-  own('desempenho', 'hipoxia', 'Quarto de hipóxia', 'mountains', 2_200_000, 'Dormir como se estivesse na altitude aumenta o fôlego.', {
+  own('desempenho', 'hipoxia', 'Quarto de hipóxia', 'mountains', 2_800_000, 'Dormir como se estivesse na altitude aumenta o fôlego.', {
     effects: { attributes: { stamina: 2 }, xp: { fisico: 1.1 } },
     resale: 0.4,
   }),
-  own('desempenho', 'ct_particular', 'Centro de treinamento particular', 'buildings', 14_000_000, 'Gramado oficial, academia e fisioterapia só para você.', {
+  own('desempenho', 'ct_particular', 'Centro de treinamento particular', 'buildings', 18_000_000, 'Gramado oficial, academia e fisioterapia só para você.', {
     effects: {
       xp: { tecnico: 1.1, fisico: 1.1, tatico: 1.1, finalizacao: 1.1, drible: 1.1, goleiro: 1.1, jogo_pes: 1.1, bola_parada: 1.1 },
       restBonus: 2,

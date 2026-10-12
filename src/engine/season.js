@@ -356,6 +356,7 @@ export function seasonSummary(season) {
     clubName: getClub(season.clubId)?.name ?? '',
     position,
     teams: rows.length,
+    continentalSpots: league.continentalSpots ?? 0,
     points: row?.points ?? 0,
     record: row ? `${row.wins}V ${row.draws}E ${row.losses}D` : '',
     trophies: seasonTrophies(season),

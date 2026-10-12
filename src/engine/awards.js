@@ -112,7 +112,8 @@ export function seasonPrizeMoney(player, { summary }) {
     total += bonus;
     lines.push({ label: `Bônus por título: ${trophy.name}`, value: bonus });
   }
-  if (summary.position && summary.position <= 4) {
+  // Só quem termina nas vagas continentais da própria liga (a Série B não tem).
+  if (summary.position && summary.position <= (summary.continentalSpots ?? 0)) {
     const bonus = Math.round(weekly * 5);
     total += bonus;
     lines.push({ label: 'Bônus por classificação continental', value: bonus });
