@@ -9,6 +9,7 @@ import { getClub, squadRating } from '../data/clubs.js';
 import { money } from '../core/utils.js';
 import { getTrait } from '../data/traits.js';
 import { LIFE_STATS } from '../engine/player.js';
+import { DISCIPLINE_RISK } from '../engine/life.js';
 import { effectiveAttributes } from '../engine/overall.js';
 
 /* ------------------------------------------------------------------ ícones */
@@ -325,7 +326,7 @@ export const ratingTier = (rating) => {
   return 'fraco';
 };
 
-export function meter({ label, value, iconName = null, tier = null, suffix = '', pulse = null }) {
+export function meter({ label, value, iconName = null, tier = null, suffix = '', pulse = null, note = '' }) {
   const safe = clamp(Math.round(value ?? 0), 0, 100);
   const attrs = pulse ? `data-pulse="${esc(pulse)}" data-value="${safe}"` : '';
   return `
@@ -335,13 +336,21 @@ export function meter({ label, value, iconName = null, tier = null, suffix = '',
       <div class="meter__track" role="meter" aria-label="${esc(label)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${safe}">
         <div class="meter__fill" style="--v:${safe / 100}"></div>
       </div>
+      ${note ? `<span class="meter__note">${esc(note)}</span>` : ''}
     </div>`;
 }
+
+// Recado curto embaixo de uma barra da vida, só quando ela pede atenção.
+const LIFE_NOTES = {
+  discipline: (value) => (value < DISCIPLINE_RISK ? 'Risco de multa, banco e menos propostas' : ''),
+};
 
 /** Atributos de vida (todos ou só alguns). */
 export function lifeMeters(player, ids = null) {
   const stats = ids ? LIFE_STATS.filter((stat) => ids.includes(stat.id)) : LIFE_STATS;
-  return stats.map((stat) => meter({ label: stat.label, value: player.life[stat.id], iconName: stat.icon })).join('');
+  return stats
+    .map((stat) => meter({ label: stat.label, value: player.life[stat.id], iconName: stat.icon, note: LIFE_NOTES[stat.id]?.(player.life[stat.id]) ?? '' }))
+    .join('');
 }
 
 export function ratingBadge(rating, { pulse = null } = {}) {

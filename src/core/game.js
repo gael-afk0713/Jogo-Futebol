@@ -20,7 +20,7 @@ import { playerOverall } from '../engine/overall.js';
 import { applyTraining, spendSkillPoint } from '../engine/training.js';
 import { recommendTraining } from '../engine/coach.js';
 import { applyWeeklyItems, buyItem, dismissStaff, sellItem } from '../engine/shop.js';
-import { drawLifeEvent, resolveLifeOption, weeklyDrift, lifeContext, availableOptions } from '../engine/life.js';
+import { drawLifeEvent, resolveLifeOption, weeklyDrift, lifeContext, availableOptions, DISCIPLINE_RISK } from '../engine/life.js';
 import {
   COMPETITIONS,
   applyResult,
@@ -250,6 +250,8 @@ export class Game {
       (player.life.fitness - 60) * 0.06 +
       form * 4 +
       rotation -
+      // Indisciplina pesa na escalação.
+      Math.max(0, DISCIPLINE_RISK - player.life.discipline) * 0.13 -
       5;
 
     const starterChance = clamp(logistic(score, 0, 5.5), 0.03, 0.97);
@@ -419,6 +421,8 @@ export class Game {
 
     this.player.season.benchedStreak += 1;
     if (role === PLAYER_ROLE.BENCH) adjustLife(this.player, 'happiness', -2);
+    // Quem não entra em campo vai saindo dos holofotes (a fama não cai abaixo de 20).
+    if (this.player.life.fame > 20) adjustLife(this.player, 'fame', -1);
 
     const report = {
       competition: { id: week.competition, name: week.competitionName, stage: week.stage },
@@ -576,7 +580,7 @@ export class Game {
     const season = this.season;
     const player = this.player;
 
-    weeklyDrift(player, this.rng);
+    for (const note of weeklyDrift(player, this.rng)) this.pushNews(note.text, note.type, note.icon);
     applyWeeklyFinance(player);
 
     player.clock = (player.clock ?? 0) + 1;

@@ -1,5 +1,6 @@
 // Mercado da bola: valor de mercado, propostas, renovações e empréstimos.
 
+import { DISCIPLINE_RISK } from './life.js';
 import { clamp, logistic, money, uid } from '../core/utils.js';
 import { ALL_CLUBS, getClub, getLeague, salaryBand, squadRating } from '../data/clubs.js';
 import { lifeModifier } from '../data/traits.js';
@@ -41,7 +42,8 @@ export function clubInterest(player, clubId, { seasonRatingValue = 6.5 } = {}) {
   const formBonus = (seasonRatingValue - 6.5) * 3.2;
   const ageMalus = player.age >= 32 ? (player.age - 31) * 2.4 : 0;
   const prestigeBarrier = Math.max(0, (club.prestige - 58) * 0.3);
-  const disciplineMalus = player.life.discipline < 35 ? 3 : 0;
+  // Clube desconfia de quem é indisciplinado: com disciplina 12, é como ter 7 de overall a menos.
+  const disciplineMalus = Math.max(0, DISCIPLINE_RISK - player.life.discipline) * 0.25;
   const scandalMalus = player.flags.includes('doping') || player.flags.includes('investigado') ? 12 : 0;
 
   const score =

@@ -224,6 +224,15 @@ Salário e gastos semanais (custo de vida, equipe e manutenção dos bens),
 patrocínios, carros, casa da família e investimentos que rendem ou viram pó no
 fim da temporada.
 
+- **Fama**: cai 1 ponto a cada jogo em que você não entra em campo (banco,
+  lesão ou suspensão), até o mínimo de 20, e acima de 80 volta devagar sozinha.
+  Quem joga sempre e decide continua no alto.
+- **Disciplina**: abaixo de 40 começa a custar caro. O clube aplica multas de um
+  salário semanal (raras perto de 40, uma semana em cada quatro perto de 10), o
+  técnico pesa a indisciplina na escalação e os clubes fazem propostas piores.
+  A barra de Disciplina avisa quando está nessa faixa. Com 75 ou mais, você vira
+  exemplo no elenco: técnico e vestiário melhoram aos poucos.
+
 ### 8b. Gastar o dinheiro
 Na aba Vida há uma loja com **150 itens** em nove categorias, de €15 por semana
 a €150 milhões, para ter onde gastar do primeiro salário até o fim da carreira:

@@ -1,6 +1,6 @@
 // Eventos de vida: sorteio, condições e aplicação dos efeitos.
 
-import { clamp, plural } from '../core/utils.js';
+import { clamp, money, plural } from '../core/utils.js';
 import { attributeLabel } from '../data/attributes.js';
 import { LIFE_EVENTS } from '../data/lifeEvents.js';
 import { lifeModifier } from '../data/traits.js';
@@ -166,15 +166,39 @@ export function resolveLifeOption(player, event, optionIndex, rng) {
   return { text, notes, label: option.label };
 }
 
-/** Desgaste natural da semana (sem treino/eventos). */
+// Disciplina abaixo disto começa a custar caro: multa, banco e propostas.
+export const DISCIPLINE_RISK = 40;
+
+const FINE_TEXTS = [
+  'Chegou atrasado ao treino e o clube aplicou uma multa de {money}.',
+  'Foi visto na balada na véspera do jogo. Multa de {money}.',
+  'Faltou à reunião do elenco. O clube descontou {money} do salário.',
+  'Discutiu com o roupeiro e levou uma multa de {money}.',
+];
+
+/** Desgaste natural da semana (sem treino/eventos). Devolve as notícias. */
 export function weeklyDrift(player, rng) {
   const notes = [];
   adjustLife(player, 'fitness', player.injury ? 2 : -1);
   if (player.life.happiness < 30) adjustLife(player, 'fitness', -2);
   if (player.life.fame > 70 && rng.chance(0.2)) adjustLife(player, 'happiness', -2);
-  if (player.life.discipline < 30 && rng.chance(0.25)) {
-    adjustLife(player, 'managerRelation', -3);
-    notes.push('Sua indisciplina está incomodando a comissão técnica.');
+
+  // A fama lá no alto volta devagar: perto de 100, 1 ponto por semana.
+  if (player.life.fame > 80 && rng.chance((player.life.fame - 80) / 20)) adjustLife(player, 'fame', -1);
+
+  const discipline = player.life.discipline;
+  if (discipline < 30 && rng.chance(0.25)) adjustLife(player, 'managerRelation', -3);
+  // Multa: rara perto de 40, uma semana em cada quatro perto de 10.
+  // A multa é um salário semanal (ou o que tiver em conta, se for menos).
+  const fine = Math.min(player.contract?.weeklySalary ?? 0, Math.max(0, player.money));
+  if (discipline < DISCIPLINE_RISK && fine > 0 && rng.chance(clamp(0.02 + ((DISCIPLINE_RISK - discipline) / 30) * 0.23, 0, 0.3))) {
+    player.money -= fine;
+    notes.push({ text: rng.pick(FINE_TEXTS).replace('{money}', money(fine)), type: 'bad', icon: 'warning' });
+  }
+  // Disciplina alta: exemplo no elenco.
+  if (discipline >= 75) {
+    if (rng.chance(0.15)) adjustLife(player, 'managerRelation', 1);
+    if (rng.chance(0.15)) adjustLife(player, 'morale', 1);
   }
   return notes;
 }
