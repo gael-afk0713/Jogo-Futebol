@@ -71,6 +71,7 @@ export const MATCH_EVENTS = [
     options: [
       {
         label: 'Respirar fundo e manter a calma',
+        pressure: true,
         hint: 'Frieza',
         attrs: ['composure'],
         difficulty: 2,
@@ -90,6 +91,7 @@ export const MATCH_EVENTS = [
       },
       {
         label: 'Usar a pressão a seu favor',
+        pressure: true,
         hint: 'Agressividade · Entrega · gasta energia',
         attrs: ['aggression', 'workRate'],
         difficulty: 4,
@@ -122,6 +124,7 @@ export const MATCH_EVENTS = [
     options: [
       {
         label: 'Respirar e jogar como sempre',
+        pressure: true,
         hint: 'Frieza',
         attrs: ['composure'],
         difficulty: 4,
@@ -141,6 +144,7 @@ export const MATCH_EVENTS = [
       },
       {
         label: 'Usar a rivalidade a seu favor',
+        pressure: true,
         hint: 'Agressividade · Entrega · gasta energia',
         attrs: ['aggression', 'workRate'],
         difficulty: 5,

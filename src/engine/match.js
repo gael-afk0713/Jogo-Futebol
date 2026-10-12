@@ -12,6 +12,7 @@ import { randomFullName } from '../data/names.js';
 import { MOMENTS } from '../data/matchMoments.js';
 import { MATCH_EVENTS } from '../data/matchEvents.js';
 import { effectiveAttributes, playerOverall } from './overall.js';
+import { experience } from './player.js';
 
 export const PLAYER_ROLE = {
   STARTER: 'titular',
@@ -257,6 +258,8 @@ export function successChance(player, option, match) {
   const kindPenalty = KIND_PENALTY[option.success?.kind] ?? 0;
   const traitBonus = option.mod ? matchModifier(player.traits, option.mod) * 55 : 0;
   const clutchBonus = match.minute >= 80 ? matchModifier(player.traits, 'clutch') * 20 : 0;
+  // Rodagem: nos lances decisivos e na pressão dos jogos grandes, até +3.
+  const experienceBonus = option.mod === 'clutch' || option.pressure ? experience(player).factor * 3 : 0;
   const staminaPenalty = (1 - match.stamina / 100) * 16;
   const condition = (player.life.fitness - 60) * 0.1 + (player.life.morale - 50) * 0.05 + (player.life.happiness - 50) * 0.03;
 
@@ -264,7 +267,8 @@ export function successChance(player, option, match) {
   const mood = match.conditions?.skill ?? 0;
   const rain = match.conditions?.rain && !match.conditions.rainProof && RAIN_MODS.has(option.mod) ? RAIN_PENALTY : 0;
 
-  const effective = skill + traitBonus + clutchBonus + condition + mood - rain - staminaPenalty - (option.difficulty ?? 0) - kindPenalty;
+  const effective =
+    skill + traitBonus + clutchBonus + experienceBonus + condition + mood - rain - staminaPenalty - (option.difficulty ?? 0) - kindPenalty;
   // O -4 e o spread largo evitam dois extremos chatos: o iniciante que nunca
   // acerta nada e o craque que nunca erra.
   const probability = logistic(effective - (match.opponentRating - 4), 0, 11);

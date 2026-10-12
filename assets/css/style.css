@@ -2318,6 +2318,25 @@ code {
   color: var(--cover);
 }
 
+.trait-chip.is-current {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.trait-chip.is-current .icon {
+  color: inherit;
+}
+
+.trait-chip.is-ahead {
+  color: var(--ink-3);
+  background: transparent;
+}
+
+.trait-chip.is-ahead .icon {
+  color: var(--ink-3);
+}
+
 @media (prefers-color-scheme: dark) {
   .trait-chip .icon {
     color: var(--accent);

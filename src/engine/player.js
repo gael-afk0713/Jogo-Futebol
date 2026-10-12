@@ -86,14 +86,41 @@ export function emptySeasonStats() {
   };
 }
 
-const SEASON_TOTAL_KEYS = ['apps', 'goals', 'assists', 'saves', 'cleanSheets', 'yellowCards', 'redCards', 'motm', 'ratingSum', 'ratingCount'];
+const SEASON_TOTAL_KEYS = ['apps', 'minutes', 'goals', 'assists', 'saves', 'cleanSheets', 'yellowCards', 'redCards', 'motm', 'ratingSum', 'ratingCount'];
 
 /**
  * Totais da carreira contando a temporada em andamento (o fim de temporada
  * só soma ao histórico quando ela acaba).
  */
+// Experiência (rodagem): minutos em campo na carreira. Cresce rápido no
+// começo e estabiliza perto dos 8 mil minutos (umas três temporadas de
+// titular). Pesa nos lances decisivos, no nervosismo dos jogos grandes e nas
+// propostas para jovens; não mexe na evolução (os minutos da temporada já mexem).
+export const EXPERIENCE_LEVELS = [
+  { id: 'estreante', label: 'Estreante', min: 0 },
+  { id: 'rodado', label: 'Rodado', min: 1000 },
+  { id: 'experiente', label: 'Experiente', min: 3500 },
+  { id: 'cascudo', label: 'Cascudo', min: 8000 },
+];
+
+/** Minutos em campo na carreira, contando a temporada em andamento. */
+export function careerMinutes(player) {
+  const totals = player.career?.totals ?? {};
+  // Saves antigos não guardavam minutos: estima pelos jogos.
+  const past = totals.minutes ?? Math.round((totals.apps ?? 0) * 65);
+  return past + (player.season?.counted ? 0 : player.season?.minutes ?? 0);
+}
+
+/** Nível e peso (0 a 1) da experiência. */
+export function experience(player) {
+  const minutes = careerMinutes(player);
+  const level = [...EXPERIENCE_LEVELS].reverse().find((item) => minutes >= item.min);
+  return { minutes, level, factor: 1 - Math.exp(-minutes / 3000) };
+}
+
 export function careerTotals(player) {
   const totals = { ...player.career.totals };
+  if (player.season?.counted) return totals;
   for (const key of SEASON_TOTAL_KEYS) totals[key] = (totals[key] ?? 0) + (player.season?.[key] ?? 0);
   return totals;
 }
@@ -101,6 +128,7 @@ export function careerTotals(player) {
 export function emptyCareerTotals() {
   return {
     apps: 0,
+    minutes: 0,
     goals: 0,
     assists: 0,
     saves: 0,

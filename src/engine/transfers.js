@@ -4,7 +4,7 @@ import { DISCIPLINE_RISK } from './life.js';
 import { clamp, logistic, money, uid } from '../core/utils.js';
 import { ALL_CLUBS, getClub, getLeague, salaryBand, squadRating, YOUTH_TIERS } from '../data/clubs.js';
 import { lifeModifier } from '../data/traits.js';
-import { seasonRating } from './player.js';
+import { experience, seasonRating } from './player.js';
 
 export const ROLES = {
   STAR: { id: 'estrela', label: 'Estrela do time', salaryFactor: 2.3, minutesBias: 0.95, gap: 2 },
@@ -50,9 +50,11 @@ export function clubInterest(player, clubId, { seasonRatingValue = 6.5 } = {}) {
   const scandalMalus = player.flags.includes('doping') || player.flags.includes('investigado') ? 12 : 0;
   // Vitrine: quem joga na base de um clube grande é mais visto pelos olheiros.
   const showcase = SHOWCASE[getClub(player.club)?.tier] ?? 0;
+  // Rodagem: clube gosta de jovem que já joga (até 22 anos, até +4).
+  const rodagem = player.age <= 22 ? experience(player).factor * 4 : 0;
 
   const score =
-    gap + potentialBonus + reputationBonus + formBonus + showcase - ageMalus - prestigeBarrier - disciplineMalus - scandalMalus;
+    gap + potentialBonus + reputationBonus + formBonus + showcase + rodagem - ageMalus - prestigeBarrier - disciplineMalus - scandalMalus;
   return clamp(logistic(score, 0, 6), 0, 1);
 }
 

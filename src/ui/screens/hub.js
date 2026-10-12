@@ -9,7 +9,7 @@ import { WEEK_STEPS } from '../../core/game.js';
 import { standings } from '../../engine/season.js';
 import { previewTraining, trainingOptionsFor } from '../../engine/training.js';
 import { upgradeCost, attributeCeiling, keyAttributesFor } from '../../engine/overall.js';
-import { careerTotals } from '../../engine/player.js';
+import { careerTotals, experience, EXPERIENCE_LEVELS } from '../../engine/player.js';
 import { objectiveProgress } from '../../engine/objectives.js';
 import { attributeLabel } from '../../data/attributes.js';
 import { expenseBreakdown, netWorth, weeklySponsors } from '../../engine/finance.js';
@@ -95,6 +95,7 @@ function profile(state, data) {
           <span><strong>${esc(position.name)}</strong>, ${player.age} anos, ${esc(nation.name)}</span>
           <span><strong>${esc(club?.name ?? 'Sem clube')}</strong>${league ? `, ${esc(league.name)}` : ''}</span>
           ${data.position ? `<span>${data.position}º lugar na tabela</span>` : ''}
+          <span>Experiência: <strong>${esc(experience(player).level.label)}</strong></span>
           <span><strong class="num">${esc(money(player.money))}</strong> em conta</span>
         </div>
       </div>
@@ -728,10 +729,28 @@ function profileTab(state) {
       </p>
     </section>
     ${attributeList(player, { spendable: true, skillPoints: player.skillPoints, costOf: upgradeCost, ceiling })}
-    ${shopSection(player)}
     <section class="section">
       <h3>Traços</h3>
       ${traitChips(player.traits)}
+    </section>
+    ${experienceSection(player)}
+    ${shopSection(player)}`;
+}
+
+/** Rodagem: o nível atual e o caminho até o próximo. */
+function experienceSection(player) {
+  const { level } = experience(player);
+  const index = EXPERIENCE_LEVELS.indexOf(level);
+  return `
+    <section class="section" aria-labelledby="experiencia-titulo">
+      <h3 id="experiencia-titulo">Experiência</h3>
+      <p class="lede">A rodagem vem dos minutos em campo. Ela ajuda nos lances decisivos, segura o nervosismo dos jogos grandes e, até os 22 anos, deixa os clubes mais interessados em você.</p>
+      <div class="traits">
+        ${EXPERIENCE_LEVELS.map(
+          (item, i) =>
+            `<span class="trait-chip ${i === index ? 'is-current' : i > index ? 'is-ahead' : ''}">${icon(i <= index ? 'check' : 'hourglass')}${esc(item.label)}</span>`,
+        ).join('')}
+      </div>
     </section>`;
 }
 

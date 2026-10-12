@@ -189,6 +189,15 @@ Fora da bola também acontece coisa, em média uma vez por jogo:
 Esses eventos mexem na relação com o técnico, na torcida, no vestiário, na fama
 e na confiança para o resto do jogo, que aparece em "Seu jogo".
 
+#### Experiência
+A rodagem vem dos minutos em campo na carreira e aparece no perfil como nível:
+**Estreante**, **Rodado** (1.000 minutos), **Experiente** (3.500) e **Cascudo**
+(8.000). Ela cresce rápido no começo e estabiliza perto dos 8 mil minutos. Ajuda
+nos lances decisivos e de pressão (pênalti, último lance, começo de jogo grande e
+de clássico, até +3 de frieza), e até os 22 anos deixa os clubes mais
+interessados em você. Não mexe na evolução: os minutos da temporada já pesam nela.
+Quem escolhe a base de clube pequeno joga mais e chega antes ao nível Rodado.
+
 ### 5. Evolução
 - **XP automático** nos atributos treinados
 - **Pontos de evolução** para gastar à mão, com custo crescente

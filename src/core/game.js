@@ -136,6 +136,8 @@ export class Game {
     this.state = { ...this.emptyState(), ...saved };
     this.rng = createRng(saved.seed ?? Date.now());
     fillMissingAttributes(this.state.player);
+    // Save feito no fim de temporada, antes da marcação: o ano já está nos totais.
+    if (this.state.screen === SCREENS.OFFSEASON && this.state.player?.season) this.state.player.season.counted = true;
     // Save de antes das metas: a temporada em andamento ganha as dela.
     if (this.state.season && this.state.player && !this.state.season.objectives) {
       this.state.season.objectives = createObjectives(this.state.player, this.state.season);
@@ -687,6 +689,7 @@ export class Game {
     // Totais de carreira
     const totals = player.career.totals;
     totals.apps += player.season.apps;
+    totals.minutes = (totals.minutes ?? Math.round((totals.apps - player.season.apps) * 65)) + player.season.minutes;
     totals.goals += player.season.goals;
     totals.assists += player.season.assists;
     totals.saves += player.season.saves;
@@ -696,6 +699,9 @@ export class Game {
     totals.motm += player.season.motm;
     totals.ratingSum += player.season.ratingSum;
     totals.ratingCount += player.season.ratingCount;
+    // A temporada encerrada continua na tela até a próxima começar, mas já
+    // está nos totais: não pode ser somada de novo.
+    player.season.counted = true;
 
     const record = {
       year: season.year,
@@ -910,7 +916,7 @@ export class Game {
   retire(forced = false) {
     const player = this.player;
     // Aposentou no meio da temporada: os jogos dela entram no histórico.
-    if (this.state.screen !== SCREENS.OFFSEASON && player.season?.apps) {
+    if (this.state.screen !== SCREENS.OFFSEASON && !player.season?.counted && player.season?.apps) {
       player.career.totals = careerTotals(player);
       player.season = emptySeasonStats();
     }

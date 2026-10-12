@@ -3,7 +3,9 @@
 // O motor sorteia um lance compatível com a sua zona de campo e você decide o
 // que fazer. Cada opção tem:
 //   attrs      -> atributos que pesam na execução
-//   mod        -> chave de modificador de traço (traits.js)
+//   mod        -> chave de modificador de traço (traits.js); 'clutch' também
+//                 conta como lance decisivo para a experiência
+//   pressure   -> lance de pressão: a experiência (rodagem) ajuda, até +3
 //   difficulty -> dificuldade em pontos de atributo (quanto maior, mais difícil)
 //   success / failure -> { kind, rating, text }
 //   risk       -> { card, injury } probabilidades extras
@@ -615,6 +617,7 @@ const BASE_MOMENTS = [
     options: [
       {
         label: 'Escolher um canto e voar',
+        pressure: true,
         hint: 'Elasticidade · 50/50',
         attrs: ['gkDiving', 'gkReflexes'],
         mod: 'save',
@@ -625,6 +628,7 @@ const BASE_MOMENTS = [
       },
       {
         label: 'Esperar o último instante',
+        pressure: true,
         hint: 'Posicionamento · Reflexos',
         attrs: ['gkPositioning', 'gkReflexes', 'reactions'],
         mod: 'save',
@@ -635,6 +639,7 @@ const BASE_MOMENTS = [
       },
       {
         label: 'Provocar o batedor antes da cobrança',
+        pressure: true,
         hint: 'Jogo mental · risco de cartão',
         attrs: ['aggression', 'gkReflexes'],
         mod: 'save',
