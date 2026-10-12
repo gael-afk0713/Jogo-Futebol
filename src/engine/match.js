@@ -94,7 +94,7 @@ export function createMatch({ player, clubId, opponentId, competition, isHome, r
   }
   // Clássico, mata-mata de copa ou adversário muito mais forte: às vezes
   // bate o nervoso.
-  const knockout = competition?.id === 'copa' || competition?.id === 'continental';
+  const knockout = Boolean(competition?.knockout) || competition?.id === 'copa' || competition?.id === 'continental';
   const giant = opponentRating >= teamRating + 6;
   if (role === PLAYER_ROLE.STARTER && derby && rng.chance(0.75)) queue.push('classico');
   else if (role === PLAYER_ROLE.STARTER && (knockout || giant) && rng.chance(knockout ? 0.45 : 0.25)) queue.push('jogo_grande');

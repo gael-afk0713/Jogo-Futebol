@@ -241,10 +241,38 @@ duração e multa. Também existem renovação e empréstimo para quem não est�
 São **318 clubes em 31 ligas**: 13 ligas de base e 18 profissionais, da Série C
 brasileira até Premier League, LaLiga, Bundesliga, Serie A e Saudi Pro League.
 
+### 6b. O calendário
+Cada semana do jogo é uma semana de verdade, e toda temporada tem de **36 a 38
+semanas** (só quem disputa o torneio continental numa liga de 16 times chega a
+40). O mês na tela segue o calendário da região: Brasil, Argentina, EUA e Japão
+jogam no ano-calendário (temporada "2027"); Europa, Turquia, Arábia e México vão
+de agosto (ou julho) a maio (temporada "2027/28").
+
+- **Liga** com 2 turnos nas ligas grandes, 3 na Holanda e nas bases de 9 a 12
+  times, e 4 nas ligas de 8 times.
+- **Copa nacional** com o nome de cada país (Copa do Brasil, FA Cup, Copa del
+  Rey...). Quem joga o torneio continental entra direto nas oitavas.
+- **Copa de base** para os times Sub-20 (Copa do Brasil Sub-20, FA Youth Cup,
+  Coupe Gambardella...).
+- **Copa da liga** nas ligas de 12 times fora do Brasil (Copa de la Liga, Taça
+  da Liga, EFL Cup...).
+- **Estadual ou copa regional** no começo do ano para quem joga a Série B ou a C:
+  Paulista, Carioca, Gaúcho, Paranaense, Catarinense, Copa do Nordeste ou Copa
+  Verde. Valem título (metade da fama de uma liga).
+- O que sobra vira **pré-temporada** (até 3 semanas) e **datas Fifa**: semanas
+  normais de treino e vida, só sem jogo. Rodada de folga (liga com número ímpar
+  de times) e jogos de copa depois da eliminação também viram semana sem jogo; a
+  temporada não encurta.
+
+Como o ano ficou mais longo, o XP de cada treino foi ajustado (60% do anterior)
+e uma temporada "cheia" para a evolução passou a ser 2.800 minutos, para o
+overall seguir a mesma curva de antes (uns 81 aos 24 anos, 88 aos 30). Itens da
+aba Vida que valem "uma vez por temporada" contam temporadas, não semanas.
+
 ### 7. Seleção, títulos e prêmios
 - Convocação baseada em overall, visibilidade da liga, fama e forma
 - Copa do Mundo e torneios continentais nos anos certos
-- Liga em pontos corridos com tabela viva, copa nacional e torneio continental
+- Liga em pontos corridos com tabela viva, copas, estaduais e torneio continental
 - Prêmios individuais: artilharia, melhor da liga, seleção do campeonato,
   revelação, Luva de Ouro, Golden Boy, melhor do mundo na posição e **Bola de Ouro**
 
@@ -395,12 +423,13 @@ src/
     momentVariants.js      outros jeitos de contar os lances antigos
     matchEvents.js         eventos fora da bola (VAR, chuva, técnico...)
     rivals.js              clássicos: 54 rivalidades entre clubes do jogo
+    regional.js            estaduais e copas regionais do Brasil
     names.js               geradores de nome por país
   engine/                  regras puras, sem DOM
     player.js              criação e atributos de vida
     overall.js             overall por posição, teto e custos
     match.js               motor de partida (máquina de estados)
-    season.js              calendário, tabela, copas, resumo
+    season.js              calendário de 36 a 38 semanas, tabela, copas, datas, resumo
     training.js            treino semanal e XP
     coach.js               preparador: recomenda o treino e explica o porquê
     life.js                sorteio e resolução de eventos

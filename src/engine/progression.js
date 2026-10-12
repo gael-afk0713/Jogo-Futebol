@@ -64,6 +64,10 @@ export function declineOverall(player, points, rng) {
   return changed;
 }
 
+// Minutos de uma temporada "cheia" para a evolução (umas 31 partidas inteiras
+// numa temporada de 36 a 38 semanas).
+export const FULL_SEASON_MINUTES = 2800;
+
 /**
  * Evolução de fim de temporada.
  * Depende de: potencial restante, idade, minutos jogados, nota média,
@@ -72,7 +76,7 @@ export function declineOverall(player, points, rng) {
 export function endOfSeasonGrowth(player, { minutes, rating, difficulty }, rng) {
   const gap = Math.max(0, player.potential - player.overall);
   const curve = careerAgeCurve(player);
-  const minutesFactor = clamp(minutes / 1800, 0.15, 1.25);
+  const minutesFactor = clamp(minutes / FULL_SEASON_MINUTES, 0.15, 1.25);
   const ratingFactor = clamp((rating - 6) / 2 + 1, 0.55, 1.7);
   const conditionFactor = clamp(0.7 + player.life.fitness / 250 + player.life.happiness / 400, 0.6, 1.35);
   const difficultyFactor = clamp(0.85 + (difficulty - 60) / 120, 0.8, 1.3);
@@ -133,7 +137,9 @@ export function reviewPotential(player, { rating, minutes }, rng) {
   let fromSeason = 0;
   let fromCeiling = 0;
 
-  if (minutes >= 900) {
+  // "Minutos suficientes": metade de uma temporada cheia.
+  const enough = FULL_SEASON_MINUTES / 2;
+  if (minutes >= enough) {
     if (adjusted >= 7.3) fromSeason = step(1) + (young ? step(0.6) : 0);
     else if (adjusted >= 6.9) fromSeason = young ? step(1) : prime ? step(0.5) : step(0.25);
     else if (adjusted >= 6.6 && young) fromSeason = step(0.35);
@@ -149,7 +155,7 @@ export function reviewPotential(player, { rating, minutes }, rng) {
   }
 
   let change = Math.min(2, fromSeason + fromCeiling);
-  if (change === 0 && player.age <= 21 && adjusted < 6.0 && minutes > 900 && rng.chance(0.3)) {
+  if (change === 0 && player.age <= 21 && adjusted < 6.0 && minutes > enough && rng.chance(0.3)) {
     change = -1;
     reasons.push('temporada muito abaixo');
   }

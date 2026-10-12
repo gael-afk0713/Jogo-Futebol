@@ -1,12 +1,12 @@
 // Hub principal: a semana, os atributos, a vida, o álbum da carreira e a liga.
 
 import { esc, toast } from '../dom.js';
-import { money, monthForWeek, plural, round } from '../../core/utils.js';
+import { money, plural, round } from '../../core/utils.js';
 import { getClub, getLeague } from '../../data/clubs.js';
 import { getNation } from '../../data/nations.js';
 import { getPosition } from '../../data/positions.js';
 import { WEEK_STEPS } from '../../core/game.js';
-import { standings } from '../../engine/season.js';
+import { freeWeekText, seasonLabel, standings, weekDate } from '../../engine/season.js';
 import { previewTraining, trainingOptionsFor } from '../../engine/training.js';
 import { upgradeCost, attributeCeiling, keyAttributesFor } from '../../engine/overall.js';
 import { careerTotals, experience, EXPERIENCE_LEVELS } from '../../engine/player.js';
@@ -17,6 +17,7 @@ import { marketValue, getRole } from '../../engine/transfers.js';
 import { mainSquadRequirement } from '../../engine/national.js';
 import {
   ITEM_CAPS,
+  cooldownText,
   experienceStatus,
   holdingValue,
   holdingsOf,
@@ -339,8 +340,8 @@ function matchStep(state, ctx) {
   if (!fixture) {
     return `
       <section class="sheet section">
-        <h2>Sem jogo nesta semana</h2>
-        <p class="lede">Data livre no calendário. O corpo agradece.</p>
+        <h2>${esc(data.freeWeek?.competitionName ?? 'Sem jogo nesta semana')}</h2>
+        <p class="lede">${esc(freeWeekText(data.freeWeek))}</p>
         <div class="actions"><button class="btn btn--primary" data-action="skip-free-week">Avançar ${icon('arrow-right')}</button></div>
       </section>`;
   }
@@ -483,14 +484,15 @@ function weekTab(state, ctx) {
   const eventResult = state.week.eventResult;
   const upcoming = season.calendar
     .slice(season.weekIndex + (step === WEEK_STEPS.DONE ? 1 : 0))
-    .filter((item) => !item.cancelled)
+    .filter((item) => !item.cancelled && !item.free)
     .slice(0, 5);
+  const date = weekDate(season, Math.min(season.weekIndex, totalWeeks - 1));
 
   return `
     <div class="weekhead">
       <div class="weekhead__title">
         <h2>Semana <span class="num">${weekNumber}</span> de <span class="num">${totalWeeks}</span></h2>
-        <p>${esc(monthForWeek(season.weekIndex, totalWeeks))} de ${season.year}, ${esc(league.name)}</p>
+        <p>${esc(date.month)} de ${date.year}, ${esc(league.name)}</p>
       </div>
       ${stepper(STEP_LABELS, Math.min(stepIndex, 3))}
     </div>
@@ -780,7 +782,10 @@ function lifeAction(player, item) {
   if (item.kind === 'experience') {
     const status = experienceStatus(player, item);
     if (status.done) return `<span class="shop__owned">${icon('check')}Feito</span>`;
-    if (!status.ready) return `<button class="btn btn--sm" disabled aria-label="${label}: de novo em ${plural(status.weeksLeft, 'semana', 'semanas')}">${icon('hourglass')}${plural(status.weeksLeft, 'semana', 'semanas')}</button>`;
+    if (!status.ready) {
+      const wait = status.seasonsLeft ? (status.seasonsLeft === 1 ? 'Próxima temporada' : `${status.seasonsLeft} temporadas`) : plural(status.weeksLeft, 'semana', 'semanas');
+      return `<button class="btn btn--sm" disabled aria-label="${label}: de novo ${esc(cooldownText(status))}">${icon('hourglass')}${esc(wait)}</button>`;
+    }
     return buy('Fazer');
   }
   if (item.kind === 'staff') {
@@ -994,7 +999,7 @@ function careerTab(state) {
         ${seasons.map(seasonSticker).join('')}
         <div class="slot">
           <span class="slot__number num">${nextNumber}</span>
-          <span class="slot__label">Temporada ${state.season?.year ?? ''} em andamento</span>
+          <span class="slot__label">Temporada ${state.season ? seasonLabel(state.season.year, state.season.leagueId) : ''} em andamento</span>
         </div>
         ${[1, 2]
           .map(

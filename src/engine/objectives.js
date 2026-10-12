@@ -23,7 +23,7 @@ const PRODUCTION = {
   VOL: { type: 'rating', target: 6.4 },
   ZAG: { type: 'rating', target: 6.4 },
   LAT: { type: 'rating', target: 6.4 },
-  GOL: { type: 'saves', rate: 0.95 },
+  GOL: { type: 'saves', rate: 1.35 },
 };
 
 const leagueGames = (season) => season.calendar.filter((week) => week.competition === COMPETITIONS.LEAGUE).length;
@@ -41,7 +41,7 @@ export function createObjectives(player, season) {
   const league = getLeague(getClub(season.clubId)?.leagueId);
   const games = leagueGames(season);
   // Tempo de jogo, gols e defesas contam todos os jogos (liga e copas).
-  const allGames = season.calendar.filter((week) => !week.cancelled).length;
+  const allGames = season.calendar.filter((week) => !week.cancelled && !week.free).length;
   const role = getRole(player.contract?.role).id;
   const share = PLAY_SHARE[role] ?? 0.5;
   const expectedGames = games * share;
@@ -83,7 +83,11 @@ export function createObjectives(player, season) {
   const bottom = teams <= 10 ? 2 : 3;
   if (rank === 1) team = { label: 'Seja campeão da liga', target: 1 };
   else if (spots && rank <= spots + 1) team = { label: `Classifique o time para a ${continentalName(league)} (top ${spots})`, target: spots };
-  else if (rank <= Math.ceil(teams / 2)) team = { label: `Termine entre os ${Math.ceil(teams / 2)} primeiros`, target: Math.ceil(teams / 2) };
+  // Metade de cima: no máximo uma posição abaixo do esperado pelo elenco.
+  else if (rank <= Math.ceil(teams / 2)) {
+    const top = Math.min(Math.ceil(teams / 2), rank + 1);
+    team = { label: `Termine entre os ${top} primeiros`, target: top };
+  }
   else team = { label: `Fuja das ${bottom} últimas posições`, target: teams - bottom };
   objectives.push({ id: 'position', type: 'position', ...team });
 

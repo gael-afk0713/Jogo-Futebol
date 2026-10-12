@@ -17,7 +17,6 @@ const PRO_LEAGUES = [
     region: 'CONMEBOL',
     level: 44,
     reputation: 38,
-    rounds: 18,
     teams: [
       { id: 'bra3_abc', name: 'ABC', prestige: 38 },
       { id: 'bra3_sampaio', name: 'Sampaio Corrêa', prestige: 36 },
@@ -39,7 +38,6 @@ const PRO_LEAGUES = [
     region: 'CONMEBOL',
     level: 56,
     reputation: 50,
-    rounds: 22,
     teams: [
       { id: 'bra2_santos', name: 'Santos', prestige: 66 },
       { id: 'bra2_coritiba', name: 'Coritiba', prestige: 52 },
@@ -63,7 +61,6 @@ const PRO_LEAGUES = [
     region: 'CONMEBOL',
     level: 70,
     reputation: 72,
-    rounds: 28,
     continentalSpots: 6,
     teams: [
       { id: 'bra1_flamengo', name: 'Flamengo', prestige: 86 },
@@ -92,8 +89,8 @@ const PRO_LEAGUES = [
     region: 'CONMEBOL',
     level: 66,
     reputation: 66,
-    rounds: 26,
     continentalSpots: 6,
+    leagueCup: 'Copa de la Liga',
     teams: [
       { id: 'arg_river', name: 'River Plate', prestige: 85 },
       { id: 'arg_boca', name: 'Boca Juniors', prestige: 84 },
@@ -117,8 +114,8 @@ const PRO_LEAGUES = [
     region: 'UEFA',
     level: 73,
     reputation: 76,
-    rounds: 26,
     continentalSpots: 5,
+    leagueCup: 'Taça da Liga',
     teams: [
       { id: 'por_benfica', name: 'Benfica', prestige: 87 },
       { id: 'por_porto', name: 'FC Porto', prestige: 87 },
@@ -142,8 +139,8 @@ const PRO_LEAGUES = [
     region: 'UEFA',
     level: 72,
     reputation: 75,
-    rounds: 26,
     continentalSpots: 5,
+    turns: 3,
     teams: [
       { id: 'ned_ajax', name: 'Ajax', prestige: 84 },
       { id: 'ned_psv', name: 'PSV', prestige: 84 },
@@ -165,7 +162,7 @@ const PRO_LEAGUES = [
     region: 'UEFA',
     level: 68,
     reputation: 62,
-    rounds: 26,
+    leagueCup: 'EFL Cup',
     teams: [
       { id: 'eng2_leeds', name: 'Leeds United', prestige: 72 },
       { id: 'eng2_southampton', name: 'Southampton', prestige: 70 },
@@ -189,7 +186,6 @@ const PRO_LEAGUES = [
     region: 'UEFA',
     level: 88,
     reputation: 100,
-    rounds: 30,
     continentalSpots: 5,
     teams: [
       { id: 'eng_mancity', name: 'Manchester City', prestige: 97 },
@@ -218,7 +214,6 @@ const PRO_LEAGUES = [
     region: 'UEFA',
     level: 86,
     reputation: 97,
-    rounds: 30,
     continentalSpots: 5,
     teams: [
       { id: 'esp_real', name: 'Real Madrid', prestige: 99 },
@@ -247,7 +242,6 @@ const PRO_LEAGUES = [
     region: 'UEFA',
     level: 85,
     reputation: 94,
-    rounds: 30,
     continentalSpots: 5,
     teams: [
       { id: 'ita_inter', name: 'Inter de Milão', prestige: 93 },
@@ -274,8 +268,8 @@ const PRO_LEAGUES = [
     region: 'UEFA',
     level: 85,
     reputation: 95,
-    rounds: 28,
     continentalSpots: 5,
+    leagueCup: 'Copa da Liga Alemã',
     teams: [
       { id: 'ger_bayern', name: 'Bayern de Munique', prestige: 96 },
       { id: 'ger_leverkusen', name: 'Bayer Leverkusen', prestige: 90 },
@@ -299,8 +293,8 @@ const PRO_LEAGUES = [
     region: 'UEFA',
     level: 82,
     reputation: 90,
-    rounds: 28,
     continentalSpots: 4,
+    leagueCup: 'Coupe de la Ligue',
     teams: [
       { id: 'fra_psg', name: 'Paris Saint-Germain', prestige: 95 },
       { id: 'fra_marseille', name: 'Olympique de Marselha', prestige: 84 },
@@ -324,8 +318,8 @@ const PRO_LEAGUES = [
     region: 'UEFA',
     level: 72,
     reputation: 70,
-    rounds: 24,
     continentalSpots: 4,
+    turns: 4,
     teams: [
       { id: 'tur_galatasaray', name: 'Galatasaray', prestige: 82 },
       { id: 'tur_fener', name: 'Fenerbahçe', prestige: 82 },
@@ -345,8 +339,8 @@ const PRO_LEAGUES = [
     region: 'CONCACAF',
     level: 64,
     reputation: 60,
-    rounds: 22,
     continentalSpots: 4,
+    turns: 4,
     teams: [
       { id: 'mex_america', name: 'Club América', prestige: 76 },
       { id: 'mex_tigres', name: 'Tigres UANL', prestige: 74 },
@@ -366,8 +360,8 @@ const PRO_LEAGUES = [
     region: 'CONCACAF',
     level: 62,
     reputation: 58,
-    rounds: 22,
     continentalSpots: 4,
+    turns: 4,
     teams: [
       { id: 'usa_inter', name: 'Inter Miami', prestige: 72 },
       { id: 'usa_lafc', name: 'Los Angeles FC', prestige: 70 },
@@ -387,8 +381,8 @@ const PRO_LEAGUES = [
     region: 'AFC',
     level: 63,
     reputation: 56,
-    rounds: 22,
     continentalSpots: 4,
+    turns: 4,
     teams: [
       { id: 'jpn_marinos', name: 'Yokohama F. Marinos', prestige: 68 },
       { id: 'jpn_kawasaki', name: 'Kawasaki Frontale', prestige: 67 },
@@ -408,9 +402,9 @@ const PRO_LEAGUES = [
     region: 'AFC',
     level: 70,
     reputation: 64,
-    rounds: 22,
     continentalSpots: 4,
     richLeague: true,
+    turns: 4,
     teams: [
       { id: 'sau_hilal', name: 'Al-Hilal', prestige: 84 },
       { id: 'sau_nassr', name: 'Al-Nassr', prestige: 83 },
@@ -441,6 +435,8 @@ const YOUTH_DEFS = [
     id: 'BRA_BASE',
     name: 'Copa São Paulo de Juniores',
     proLeague: 'BRA1',
+    turns: 3,
+    cupName: 'Copa do Brasil Sub-20',
     grande: ['bra1_flamengo', 'bra1_palmeiras', 'bra1_saopaulo', 'bra1_corinthians'],
     medio: [
       { id: 'base_ponte', parent: 'bra2_ponte' },
@@ -455,19 +451,19 @@ const YOUTH_DEFS = [
       { id: 'base_juventus', name: 'Juventus-SP Sub-20' },
     ],
   },
-  { id: 'ARG_BASE', name: 'Campeonato Argentino Sub-20', proLeague: 'ARG1', grande: ['arg_river', 'arg_boca', 'arg_racing'], medio: ['arg_independiente', 'arg_velez', 'arg_sanlorenzo'], pequeno: ['arg_lanus', 'arg_argentinos', 'arg_huracan'] },
-  { id: 'POR_BASE', name: 'Campeonato Nacional de Juniores', proLeague: 'POR1', grande: ['por_benfica', 'por_porto', 'por_sporting'], medio: ['por_braga', 'por_vitoria', 'por_famalicao'], pequeno: ['por_estoril', 'por_arouca', 'por_casapia'] },
-  { id: 'NED_BASE', name: 'Campeonato Holandês Sub-20', proLeague: 'NED1', grande: ['ned_ajax', 'ned_psv', 'ned_feyenoord'], medio: ['ned_az', 'ned_twente', 'ned_utrecht'], pequeno: ['ned_nec', 'ned_heerenveen', 'ned_gae'] },
-  { id: 'ENG_BASE', name: 'Premier League 2', proLeague: 'ENG1', grande: ['eng_mancity', 'eng_arsenal', 'eng_manutd'], medio: ['eng_westham', 'eng_brighton', 'eng_palace'], pequeno: ['eng2_southampton', 'eng2_norwich', 'eng2_preston'] },
-  { id: 'ESP_BASE', name: 'División de Honor Juvenil', proLeague: 'ESP1', grande: ['esp_real', 'esp_barcelona', 'esp_atletico'], medio: ['esp_athletic', 'esp_sociedad', 'esp_villarreal'], pequeno: ['esp_rayo', 'esp_getafe', 'esp_alaves'] },
-  { id: 'ITA_BASE', name: 'Campionato Primavera', proLeague: 'ITA1', grande: ['ita_inter', 'ita_juventus', 'ita_milan'], medio: ['ita_roma', 'ita_atalanta', 'ita_lazio'], pequeno: ['ita_genoa', 'ita_cagliari', 'ita_lecce'] },
-  { id: 'GER_BASE', name: 'A-Junioren-Bundesliga', proLeague: 'GER1', grande: ['ger_bayern', 'ger_leverkusen', 'ger_dortmund'], medio: ['ger_stuttgart', 'ger_frankfurt', 'ger_gladbach'], pequeno: ['ger_freiburg', 'ger_bremen', 'ger_mainz'] },
-  { id: 'FRA_BASE', name: 'Campeonato Francês Sub-20', proLeague: 'FRA1', grande: ['fra_psg', 'fra_marseille', 'fra_lyon'], medio: ['fra_lille', 'fra_rennes', 'fra_nice'], pequeno: ['fra_lens', 'fra_nantes', 'fra_toulouse'] },
-  { id: 'TUR_BASE', name: 'Campeonato Turco Sub-20', proLeague: 'TUR1', grande: ['tur_galatasaray', 'tur_fener', 'tur_besiktas'], medio: ['tur_trabzon', 'tur_basaksehir', 'tur_sivasspor'], pequeno: ['tur_konyaspor', 'tur_kasimpasa'] },
-  { id: 'MEX_BASE', name: 'Liga MX Sub-20', proLeague: 'MEX1', grande: ['mex_america', 'mex_chivas', 'mex_tigres'], medio: ['mex_monterrey', 'mex_cruzazul', 'mex_pumas'], pequeno: ['mex_toluca', 'mex_leon'] },
-  { id: 'USA_BASE', name: 'MLS NEXT', proLeague: 'USA1', grande: ['usa_inter', 'usa_lafc', 'usa_galaxy'], medio: ['usa_atlanta', 'usa_seattle', 'usa_nyc'], pequeno: ['usa_columbus', 'usa_austin'] },
-  { id: 'JPN_BASE', name: 'Campeonato Japonês Sub-20', proLeague: 'JPN1', grande: ['jpn_marinos', 'jpn_kawasaki', 'jpn_urawa'], medio: ['jpn_kobe', 'jpn_kashima', 'jpn_sanfrecce'], pequeno: ['jpn_gamba', 'jpn_frontale'] },
-  { id: 'SAU_BASE', name: 'Campeonato Saudita Sub-20', proLeague: 'SAU1', grande: ['sau_hilal', 'sau_nassr', 'sau_ittihad'], medio: ['sau_ahli', 'sau_shabab', 'sau_taawoun'], pequeno: ['sau_fateh', 'sau_khaleej'] },
+  { id: 'ARG_BASE', name: 'Campeonato Argentino Sub-20', proLeague: 'ARG1', turns: 3, cupName: 'Copa Argentina Sub-20', grande: ['arg_river', 'arg_boca', 'arg_racing'], medio: ['arg_independiente', 'arg_velez', 'arg_sanlorenzo'], pequeno: ['arg_lanus', 'arg_argentinos', 'arg_huracan'] },
+  { id: 'POR_BASE', name: 'Campeonato Nacional de Juniores', proLeague: 'POR1', turns: 3, cupName: 'Taça de Portugal Sub-20', grande: ['por_benfica', 'por_porto', 'por_sporting'], medio: ['por_braga', 'por_vitoria', 'por_famalicao'], pequeno: ['por_estoril', 'por_arouca', 'por_casapia'] },
+  { id: 'NED_BASE', name: 'Campeonato Holandês Sub-20', proLeague: 'NED1', turns: 3, cupName: 'Copa da Holanda Sub-20', grande: ['ned_ajax', 'ned_psv', 'ned_feyenoord'], medio: ['ned_az', 'ned_twente', 'ned_utrecht'], pequeno: ['ned_nec', 'ned_heerenveen', 'ned_gae'] },
+  { id: 'ENG_BASE', name: 'Premier League 2', proLeague: 'ENG1', turns: 3, cupName: 'FA Youth Cup', grande: ['eng_mancity', 'eng_arsenal', 'eng_manutd'], medio: ['eng_westham', 'eng_brighton', 'eng_palace'], pequeno: ['eng2_southampton', 'eng2_norwich', 'eng2_preston'] },
+  { id: 'ESP_BASE', name: 'División de Honor Juvenil', proLeague: 'ESP1', turns: 3, cupName: 'Copa del Rey Juvenil', grande: ['esp_real', 'esp_barcelona', 'esp_atletico'], medio: ['esp_athletic', 'esp_sociedad', 'esp_villarreal'], pequeno: ['esp_rayo', 'esp_getafe', 'esp_alaves'] },
+  { id: 'ITA_BASE', name: 'Campionato Primavera', proLeague: 'ITA1', turns: 3, cupName: 'Coppa Italia Primavera', grande: ['ita_inter', 'ita_juventus', 'ita_milan'], medio: ['ita_roma', 'ita_atalanta', 'ita_lazio'], pequeno: ['ita_genoa', 'ita_cagliari', 'ita_lecce'] },
+  { id: 'GER_BASE', name: 'A-Junioren-Bundesliga', proLeague: 'GER1', turns: 3, cupName: 'DFB-Junioren-Pokal', grande: ['ger_bayern', 'ger_leverkusen', 'ger_dortmund'], medio: ['ger_stuttgart', 'ger_frankfurt', 'ger_gladbach'], pequeno: ['ger_freiburg', 'ger_bremen', 'ger_mainz'] },
+  { id: 'FRA_BASE', name: 'Campeonato Francês Sub-20', proLeague: 'FRA1', turns: 3, cupName: 'Coupe Gambardella', grande: ['fra_psg', 'fra_marseille', 'fra_lyon'], medio: ['fra_lille', 'fra_rennes', 'fra_nice'], pequeno: ['fra_lens', 'fra_nantes', 'fra_toulouse'] },
+  { id: 'TUR_BASE', name: 'Campeonato Turco Sub-20', proLeague: 'TUR1', turns: 4, cupName: 'Copa da Turquia Sub-20', grande: ['tur_galatasaray', 'tur_fener', 'tur_besiktas'], medio: ['tur_trabzon', 'tur_basaksehir', 'tur_sivasspor'], pequeno: ['tur_konyaspor', 'tur_kasimpasa'] },
+  { id: 'MEX_BASE', name: 'Liga MX Sub-20', proLeague: 'MEX1', turns: 4, cupName: 'Copa MX Sub-20', grande: ['mex_america', 'mex_chivas', 'mex_tigres'], medio: ['mex_monterrey', 'mex_cruzazul', 'mex_pumas'], pequeno: ['mex_toluca', 'mex_leon'] },
+  { id: 'USA_BASE', name: 'MLS NEXT', proLeague: 'USA1', turns: 4, cupName: 'MLS NEXT Cup', grande: ['usa_inter', 'usa_lafc', 'usa_galaxy'], medio: ['usa_atlanta', 'usa_seattle', 'usa_nyc'], pequeno: ['usa_columbus', 'usa_austin'] },
+  { id: 'JPN_BASE', name: 'Campeonato Japonês Sub-20', proLeague: 'JPN1', turns: 4, cupName: 'Copa do Japão Sub-20', grande: ['jpn_marinos', 'jpn_kawasaki', 'jpn_urawa'], medio: ['jpn_kobe', 'jpn_kashima', 'jpn_sanfrecce'], pequeno: ['jpn_gamba', 'jpn_frontale'] },
+  { id: 'SAU_BASE', name: 'Campeonato Saudita Sub-20', proLeague: 'SAU1', turns: 4, cupName: 'Copa Saudita Sub-20', grande: ['sau_hilal', 'sau_nassr', 'sau_ittihad'], medio: ['sau_ahli', 'sau_shabab', 'sau_taawoun'], pequeno: ['sau_fateh', 'sau_khaleej'] },
 ];
 
 const PRO_TEAM_NAMES = new Map(PRO_LEAGUES.flatMap((league) => league.teams.map((team) => [team.id, team.name])));
@@ -497,12 +493,49 @@ function buildYouthLeague(def) {
     level: 32,
     reputation: 30,
     youth: true,
-    rounds: (teams.length - 1) * 2,
+    turns: def.turns ?? 2,
+    cupName: def.cupName,
     teams,
   };
 }
 
-export const LEAGUES = [...YOUTH_DEFS.map(buildYouthLeague), ...PRO_LEAGUES];
+// A copa nacional de cada país (todas as divisões jogam a mesma).
+const NATIONAL_CUPS = {
+  BRA: 'Copa do Brasil',
+  ARG: 'Copa Argentina',
+  POR: 'Taça de Portugal',
+  NED: 'Copa da Holanda',
+  ENG: 'FA Cup',
+  ESP: 'Copa del Rey',
+  ITA: 'Coppa Italia',
+  GER: 'DFB-Pokal',
+  FRA: 'Coupe de France',
+  TUR: 'Copa da Turquia',
+  MEX: 'Copa MX',
+  USA: 'US Open Cup',
+  JPN: 'Copa do Imperador',
+  KSA: 'Copa do Rei Saudita',
+};
+
+// Quando a temporada começa: ano-calendário (Brasil, Argentina, EUA, Japão)
+// ou de agosto a maio, como na Europa. [mês (0 = janeiro), dia].
+const SEASON_START = { BRA: [0, 18], ARG: [0, 25], USA: [1, 22], JPN: [1, 15], MEX: [6, 13] };
+const EUROPEAN_START = [7, 4];
+
+export const LEAGUES = [...YOUTH_DEFS.map(buildYouthLeague), ...PRO_LEAGUES].map((league) => {
+  const turns = league.turns ?? 2;
+  const rounds = (league.teams.length - (league.teams.length % 2 === 0 ? 1 : 0)) * turns;
+  const start = SEASON_START[league.nation] ?? EUROPEAN_START;
+  return {
+    ...league,
+    turns,
+    rounds,
+    cupName: league.cupName ?? NATIONAL_CUPS[league.nation] ?? `Copa Nacional (${league.country})`,
+    seasonStart: start,
+    // Temporada dentro de um ano só (2027) ou atravessando a virada (2027/28).
+    calendarYear: start[0] <= 1,
+  };
+});
 
 const LEAGUE_BY_ID = new Map(LEAGUES.map((league) => [league.id, league]));
 

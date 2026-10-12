@@ -146,14 +146,32 @@ export function goodsValue(player) {
 /** O que precisa ter em conta para comprar (equipe: quatro semanas adiantadas). */
 export const upfrontCost = (item) => (item.kind === 'staff' ? item.weekly * 4 : item.price);
 
-/** Situação de uma experiência: dá para fazer agora ou falta quanto. */
+// Experiências com intervalo de 40 semanas ou mais contam temporadas:
+// 40 = uma vez por temporada, 80 = a cada duas temporadas.
+const SEASON_COOLDOWN = 40;
+const seasonsPlayed = (player) => player.career?.seasons?.length ?? 0;
+
+/** Situação de uma experiência: dá para fazer agora ou falta quanto (semanas ou temporadas). */
 export function experienceStatus(player, item) {
   const last = player.lastUsed?.[item.id];
-  if (last === undefined) return { ready: true, weeksLeft: 0, done: false };
-  if (item.once) return { ready: false, weeksLeft: 0, done: true };
+  if (last === undefined) return { ready: true, weeksLeft: 0, seasonsLeft: 0, done: false };
+  if (item.once) return { ready: false, weeksLeft: 0, seasonsLeft: 0, done: true };
+  const lastSeason = player.lastUsedSeason?.[item.id];
+  if (item.cooldown >= SEASON_COOLDOWN && lastSeason !== undefined) {
+    const seasonsLeft = Math.max(0, Math.round(item.cooldown / SEASON_COOLDOWN) - (seasonsPlayed(player) - lastSeason));
+    return { ready: seasonsLeft === 0, weeksLeft: 0, seasonsLeft, done: false };
+  }
   const weeksLeft = Math.max(0, item.cooldown - ((player.clock ?? 0) - last));
-  return { ready: weeksLeft === 0, weeksLeft, done: false };
+  return { ready: weeksLeft === 0, weeksLeft, seasonsLeft: 0, done: false };
 }
+
+/** "3 semanas", "na próxima temporada" ou "em 2 temporadas". */
+export const cooldownText = (status) =>
+  status.seasonsLeft
+    ? status.seasonsLeft === 1
+      ? 'na próxima temporada'
+      : `em ${status.seasonsLeft} temporadas`
+    : `em ${status.weeksLeft} ${status.weeksLeft === 1 ? 'semana' : 'semanas'}`;
 
 /** Muda a vida com o arredondamento e o limite de 0 a 100 de sempre. */
 function applyLife(player, changes = {}) {
@@ -183,7 +201,7 @@ export function buyItem(player, id, { rng } = {}) {
   if (experience) {
     const status = experienceStatus(player, item);
     if (status.done) return { ok: false, reason: 'Você já fez isso.' };
-    if (!status.ready) return { ok: false, reason: `Dá para repetir em ${status.weeksLeft} ${status.weeksLeft === 1 ? 'semana' : 'semanas'}.` };
+    if (!status.ready) return { ok: false, reason: `Dá para repetir ${cooldownText(status)}.` };
   } else if (ownsItem(player, id)) {
     return { ok: false, reason: 'Você já tem isso.' };
   }
@@ -199,6 +217,7 @@ export function buyItem(player, id, { rng } = {}) {
 
   if (experience) {
     player.lastUsed = { ...(player.lastUsed ?? {}), [id]: player.clock ?? 0 };
+    player.lastUsedSeason = { ...(player.lastUsedSeason ?? {}), [id]: seasonsPlayed(player) };
     life = applyLife(player, item.onBuy);
     if (item.risk && random(rng).chance(item.risk.chance)) {
       applyLife(player, item.risk.onBuy);

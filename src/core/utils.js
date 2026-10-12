@@ -35,21 +35,3 @@ export const pct = (value) => `${Math.round(value * 100)}%`;
  */
 export const logistic = (value, center, spread) => 1 / (1 + Math.exp(-(value - center) / spread));
 
-const SEASON_MONTHS = [
-  'Agosto',
-  'Setembro',
-  'Outubro',
-  'Novembro',
-  'Dezembro',
-  'Janeiro',
-  'Fevereiro',
-  'Março',
-  'Abril',
-  'Maio',
-];
-
-/** Nome do mês aproximado a partir do número da rodada do calendário. */
-export function monthForWeek(week, totalWeeks) {
-  const index = clamp(Math.floor((week / Math.max(1, totalWeeks)) * SEASON_MONTHS.length), 0, SEASON_MONTHS.length - 1);
-  return SEASON_MONTHS[index];
-}

@@ -326,6 +326,10 @@ export function grantXp(player, attributeIds, amount) {
   return gains;
 }
 
+// A temporada tem 36 a 38 semanas de treino em qualquer liga. Este fator deixa
+// a evolução de um ano no mesmo ritmo de antes (calibrado em simulação).
+export const WEEKLY_XP = 0.6;
+
 /**
  * A conta do treino, sem sortear nada e sem mudar o jogador. O treino de
  * verdade e a prévia da loja usam esta mesma função, então a prévia mostra
@@ -342,7 +346,7 @@ export function planTraining(player, option) {
   const gearXp = gear.xp[option.id] ?? 1;
   // A base de clube grande tem estrutura melhor: treino rende 10% a mais.
   const academy = youthTier(player.club)?.id === 'grande' ? 1.1 : 1;
-  const xp = Math.round((option.xp ?? 0) * trainingBonus * ageFactor * intelligenceFactor * happinessFactor * gearXp * academy);
+  const xp = Math.round((option.xp ?? 0) * trainingBonus * ageFactor * intelligenceFactor * happinessFactor * gearXp * academy * WEEKLY_XP);
 
   const fitnessBonus = 1 + lifeModifier(player.traits, 'fitnessGain');
   let fitness = (option.fitness ?? 0) * (option.fitness > 0 ? fitnessBonus : 1);

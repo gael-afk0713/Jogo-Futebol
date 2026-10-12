@@ -29,10 +29,12 @@ import {
   qualifiesForContinental,
   seasonDifficulty,
   seasonFinished,
+  seasonLabel,
   seasonSummary,
   simulateOtherFixtures,
   tablePosition,
   updateKnockout,
+  weekDate,
 } from '../engine/season.js';
 import {
   PLAYER_ROLE,
@@ -219,7 +221,7 @@ export class Game {
     this.state.week = { step: WEEK_STEPS.TRAINING, trainingReport: null, eventId: null, eventResult: null, matchReport: null };
     this.state.offseason = null;
     const league = getLeague(this.season.leagueId);
-    this.pushNews(`Temporada ${year}/${String(year + 1).slice(2)} começa: ${league.name} com o ${getClub(this.player.club).name}.`, 'info', 'calendar-blank');
+    this.pushNews(`Temporada ${seasonLabel(year, league.id)} começa: ${league.name} com o ${getClub(this.player.club).name}.`, 'info', 'calendar-blank');
   }
 
   // ------------------------------------------------------------- loop semanal
@@ -235,6 +237,12 @@ export class Game {
     return week ?? null;
   }
 
+  /** O jogo desta semana (ou null numa semana sem jogo: pré-temporada, data Fifa, folga). */
+  get currentMatch() {
+    const week = this.currentFixture;
+    return week && !week.free ? week : null;
+  }
+
   /** Define se você é titular, reserva ou fica no banco nesta partida. */
   decideRole(week) {
     const player = this.player;
@@ -244,7 +252,7 @@ export class Game {
     const role = getRole(player.contract?.role);
     const rating = squadRating(player.club);
     const form = (seasonRating(player.season) || 6.4) - 6.4;
-    const rotation = week.competition === COMPETITIONS.CUP ? 3 : 0;
+    const rotation = [COMPETITIONS.CUP, COMPETITIONS.LEAGUE_CUP, COMPETITIONS.STATE].includes(week.competition) ? 3 : 0;
     const score =
       (player.overall - rating) * 1.1 +
       role.minutesBias * 9 +
@@ -323,7 +331,7 @@ export class Game {
 
   // ----------------------------------------------------------------- partida
   startMatch() {
-    const week = this.currentFixture;
+    const week = this.currentMatch;
     if (!week) return null;
     const role = this.decideRole(week);
 
@@ -335,7 +343,7 @@ export class Game {
       player: this.player,
       clubId: this.player.club,
       opponentId: week.opponentId,
-      competition: { id: week.competition, name: week.competitionName, stage: week.stage },
+      competition: { id: week.competition, name: week.competitionName, stage: week.stage, knockout: Boolean(week.knockout) },
       isHome: week.isHome,
       role,
       rng: this.rng,
@@ -382,7 +390,7 @@ export class Game {
 
   /** Simula o jogo atual sem interação. */
   simulateMatch() {
-    const week = this.currentFixture;
+    const week = this.currentMatch;
     if (!week) return null;
     const role = this.decideRole(week);
     if (role === PLAYER_ROLE.OUT || role === PLAYER_ROLE.BENCH) {
@@ -392,7 +400,7 @@ export class Game {
       player: this.player,
       clubId: this.player.club,
       opponentId: week.opponentId,
-      competition: { id: week.competition, name: week.competitionName, stage: week.stage },
+      competition: { id: week.competition, name: week.competitionName, stage: week.stage, knockout: Boolean(week.knockout) },
       isHome: week.isHome,
       role,
       rng: this.rng,
@@ -427,7 +435,7 @@ export class Game {
     if (this.player.life.fame > 20) adjustLife(this.player, 'fame', -1);
 
     const report = {
-      competition: { id: week.competition, name: week.competitionName, stage: week.stage },
+      competition: { id: week.competition, name: week.competitionName, stage: week.stage, knockout: Boolean(week.knockout) },
       opponentName: getClub(week.opponentId)?.name ?? '',
       isHome: week.isHome,
       score: { team: result.team, opponent: result.opponent },
@@ -451,7 +459,7 @@ export class Game {
 
   finishMatch() {
     const match = this.state.match;
-    const week = this.currentFixture;
+    const week = this.currentMatch;
     if (!match?.report || !week) return;
     const report = match.report;
     const player = this.player;
@@ -607,8 +615,14 @@ export class Game {
     this.notify();
   }
 
-  /** Semana sem partida (data Fifa, folga). */
+  /** Semana sem partida (pré-temporada, data Fifa, folga). */
   skipFreeWeek() {
+    const week = this.currentFixture;
+    if (week?.free) {
+      // Na rodada de folga, os outros times da liga jogam.
+      simulateOtherFixtures(this.season, week, this.rng);
+      week.played = true;
+    }
     this.state.week.step = WEEK_STEPS.DONE;
     this.notify();
   }
@@ -617,7 +631,7 @@ export class Game {
   simulateWeek() {
     if (this.state.week.step === WEEK_STEPS.TRAINING) {
       // Simulando, você segue o preparador (o mesmo da tela de treino).
-      const hasMatch = Boolean(this.currentFixture) && !(this.player.suspension > 0);
+      const hasMatch = Boolean(this.currentMatch) && !(this.player.suspension > 0);
       this.chooseTraining(recommendTraining(this.player, { hasMatch }).best.id);
     }
     if (this.state.week.step === WEEK_STEPS.LIFE && this.state.week.eventId) {
@@ -626,7 +640,7 @@ export class Game {
       this.resolveEvent(safest);
     }
     if (this.state.week.step === WEEK_STEPS.MATCH) {
-      if (this.currentFixture) this.simulateMatch();
+      if (this.currentMatch) this.simulateMatch();
       else this.skipFreeWeek();
     }
     if (this.state.week.step === WEEK_STEPS.DONE) this.advanceWeek();
@@ -660,9 +674,10 @@ export class Game {
     // Títulos
     for (const trophy of summary.trophies) {
       player.career.trophies.push(trophy);
-      adjustLife(player, 'happiness', 12);
-      adjustLife(player, 'fame', 8);
-      adjustLife(player, 'reputation', 6);
+      const weight = MINOR_TROPHIES.has(trophy.type) ? 0.5 : 1;
+      adjustLife(player, 'happiness', 12 * weight);
+      adjustLife(player, 'fame', 8 * weight);
+      adjustLife(player, 'reputation', 6 * weight);
     }
 
     const awards = evaluateAwards(player, { season, summary, rng: this.rng });
@@ -941,13 +956,15 @@ export class Game {
   hubData() {
     const player = this.player;
     const season = this.season;
-    const week = this.currentFixture;
+    const week = this.currentMatch;
+    const free = this.currentFixture?.free ? this.currentFixture : null;
     const played = season ? (season.table[season.clubId]?.played ?? 0) : 0;
     const table = season && played > 0 ? tablePosition(season.table, season.clubId) : null;
     return {
       player,
       season,
       week,
+      freeWeek: free,
       position: table,
       fixturePreview: week
         ? {
@@ -962,9 +979,13 @@ export class Game {
       marketValue: marketValue(player),
       seasonRating: seasonRating(player.season),
       weeksLeft: season ? Math.max(0, season.calendar.filter((item) => !item.cancelled).length - season.weekIndex) : 0,
+      date: season ? weekDate(season) : null,
     };
   }
 }
+
+// Títulos que valem metade da fama e da felicidade de uma liga ou copa nacional.
+const MINOR_TROPHIES = new Set([COMPETITIONS.STATE, COMPETITIONS.LEAGUE_CUP, 'copa_base']);
 
 const LIFE_EVENT_INDEX = new Map(LIFE_EVENTS.map((event) => [event.id, event]));
 

@@ -72,7 +72,7 @@ export default {
             <div class="season-sticker__line"><span class="num">${record.apps} J</span><span class="num">${record.goals} G</span><span class="num">${record.assists} A</span></div>
           </article>
           <div class="section">
-            <h1>Temporada ${offseason.year} encerrada</h1>
+            <h1>Temporada ${esc(summary.label ?? String(offseason.year))} encerrada</h1>
             <p class="lede">
               ${esc(summary.leagueName)}: ${summary.position ? `<strong>${summary.position}º lugar</strong>` : 'campanha encerrada'},
               <span class="num">${esc(summary.record)}</span>, <span class="num">${summary.points}</span> pontos.
@@ -120,7 +120,8 @@ export default {
           <section class="section">
             <h3>Copas e seleção</h3>
             <ul class="ledger">
-              <li><span>Copa nacional</span><strong>${esc(summary.cupStage)}</strong></li>
+              <li><span>${esc(summary.cupName ?? 'Copa nacional')}</span><strong>${esc(summary.cupStage)}</strong></li>
+              ${(summary.otherCups ?? []).map((cup) => `<li><span>${esc(cup.name)}</span><strong>${esc(cup.stage)}</strong></li>`).join('')}
               ${summary.continental ? `<li><span>Torneio continental</span><strong>${esc(summary.continental)}</strong></li>` : ''}
               <li><span>Seleção</span><strong>${national.caps ? `<span class="num">${national.caps}</span> ${national.caps === 1 ? 'jogo' : 'jogos'}, <span class="num">${national.goals}</span> ${national.goals === 1 ? 'gol' : 'gols'}` : 'Sem convocação'}</strong></li>
               ${national.tournament ? `<li><span>${esc(national.tournament.name)}</span><strong>${esc(national.tournament.result)}</strong></li>` : ''}
