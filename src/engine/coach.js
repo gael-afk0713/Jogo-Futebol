@@ -13,6 +13,7 @@ import { MOMENTS } from '../data/matchMoments.js';
 import { getPosition } from '../data/positions.js';
 import { attributeCeiling, upgradeCost } from './overall.js';
 import { grantXp, planTraining, trainingOptionsFor, xpThreshold } from './training.js';
+import { itemEffects } from './shop.js';
 
 // Tudo é medido em "semanas de evolução": 1 = o quanto um treino completo,
 // sem nada no teto, te faria evoluir nesta semana. Assim dá para comparar
@@ -34,7 +35,18 @@ export const COACH_TUNING = {
   injuryWeeks: 8,
   // Parte do valor de um ponto de evolução (nem todo mundo gasta na hora).
   pointShare: 0.7,
+  // Sem o tablet, o preparador avalia a evolução "no olho": erra até essa
+  // fração para mais ou para menos, só na escolha entre treinos de evolução
+  // (descanso, corpo e cabeça ele acerta sempre). Com o tablet, acerta sempre.
+  blur: 0.05,
 };
+
+/** Um número fixo de 0 a 1 para a semana e o treino (a dica não muda ao reabrir a tela). */
+function weekNoise(player, optionId) {
+  let hash = 2166136261 ^ (player.clock ?? 0);
+  for (const char of `${player.clock ?? 0}:${optionId}`) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  return ((hash >>> 0) % 10000) / 10000;
+}
 
 const RECOVERY = new Set(['descanso', 'crioterapia', 'livre']);
 const RECOVERY_VERB = { descanso: 'descansar', crioterapia: 'a crioterapia', livre: 'a folga' };
@@ -155,12 +167,16 @@ function assess(player, option, ctx) {
   }
   const life = Object.values(lifeParts).reduce((sum, part) => sum + part.value, 0);
   const injury = plan.injuryRisk * tuning.injuryWeeks;
+  // Sem o tablet, a evolução é estimada com uma margem de erro.
+  const blur = ctx.precise ? 1 : 1 + (weekNoise(player, option.id) - 0.5) * 2 * tuning.blur;
 
   return {
     id: option.id,
     option,
     score: growth + points + life - injury,
+    estimate: growth * blur + points + life - injury,
     growth,
+    xp: plan.xp,
     points,
     life: lifeParts,
     injuryRisk: plan.injuryRisk,
@@ -173,7 +189,7 @@ function assess(player, option, ctx) {
 const list = (labels) => (labels.length > 1 ? `${labels.slice(0, -1).join(', ')} e ${labels.at(-1)}` : labels[0] ?? '');
 
 /** As razões da escolha, em frases curtas e com os números de verdade. */
-function explain(player, best, ranked, { hasMatch }) {
+function explain(player, best, ranked, { hasMatch, precise }) {
   const reasons = [];
   const fitness = player.life.fitness;
   const happiness = player.life.happiness;
@@ -212,16 +228,17 @@ function explain(player, best, ranked, { hasMatch }) {
     .filter((row) => row.gain > 0 && row.weight > 0.01)
     .sort((a, b) => b.gain * b.weight - a.gain * a.weight)
     .slice(0, 3);
-  const ups = best.rows.filter((row) => row.levelUp).map((row) => row.label);
-  if (ups.length > 3) reasons.push(`${ups.length} atributos sobem nesta semana, entre eles ${list(ups.slice(0, 2))}.`);
-  else if (ups.length) reasons.push(`${list(ups)} ${ups.length > 1 ? 'sobem' : 'sobe'} nesta semana.`);
+  // Quais atributos sobem de nível e o XP exato, só com o tablet.
+  const ups = precise ? best.rows.filter((row) => row.levelUp).map((row) => row.label) : [];
+  if (ups.length > 3) reasons.push(`${ups.length} atributos sobem nesta semana (+${best.xp} XP em cada), entre eles ${list(ups.slice(0, 2))}.`);
+  else if (ups.length) reasons.push(`${list(ups)} ${ups.length > 1 ? 'sobem' : 'sobe'} nesta semana (+${best.xp} XP em cada).`);
   if (helpful.length) reasons.push(`Rende onde mais importa para você: ${list(helpful.map((row) => row.label))}.`);
   if (best.capped) reasons.push(`${best.capped} dos ${best.rows.length} atributos desse treino já ${best.capped === 1 ? 'está' : 'estão'} no teto; mesmo assim é o que mais rende.`);
 
   // Mostra quanto o treino técnico (o padrão) desperdiçaria, se for o caso.
   const standard = ranked.find((entry) => entry.id === 'tecnico' || entry.id === 'goleiro');
   if (standard && standard.id !== best.id && standard.capped >= Math.ceil(standard.rows.length / 2)) {
-    reasons.push(`${standard.option.label} gastaria XP em ${standard.capped} atributos que já estão no teto.`);
+    reasons.push(`${standard.option.label} gastaria treino em ${standard.capped} atributos que já estão no teto.`);
   }
   if (hasMatch && best.life.fitness && best.fitnessAfter < 60) reasons.push(`Você chega ao jogo com ${best.fitnessAfter} de forma; descanse na semana que vem.`);
   if (!reasons.length) reasons.push('Corpo e cabeça em dia: hora de evoluir.');
@@ -233,17 +250,22 @@ function explain(player, best, ranked, { hasMatch }) {
  * context.hasMatch: se tem jogo seu nesta semana (o treino vem antes dele).
  * Devolve a melhor opção, as razões e todas as opções em ordem.
  */
-export function recommendTraining(player, { hasMatch = true, tuning = COACH_TUNING } = {}) {
+export function recommendTraining(player, { hasMatch = true, tuning = COACH_TUNING, precise = Boolean(itemEffects(player).insight) } = {}) {
   const options = trainingOptionsFor(player);
   const relevance = attributeRelevance(player.position);
   const ceiling = attributeCeiling(player);
-  const ctx = { hasMatch, relevance, ceiling, tuning, perPoint: pointValue(player, relevance, ceiling), reference: referenceGrowth(player, relevance) };
+  const ctx = { hasMatch, relevance, ceiling, tuning, precise, perPoint: pointValue(player, relevance, ceiling), reference: referenceGrowth(player, relevance) };
 
   if (player.injury?.weeks > 0) {
     const best = assess(player, options.find((option) => option.id === 'descanso'), ctx);
-    return { best, ranked: [best], reasons: explain(player, best, [best], { hasMatch }) };
+    return { best, ranked: [best], reasons: explain(player, best, [best], { hasMatch, precise }) };
   }
   const ranked = options.map((option) => assess(player, option, ctx)).sort((a, b) => b.score - a.score);
-  const best = ranked[0];
-  return { best, ranked, reasons: explain(player, best, ranked, { hasMatch }) };
+  let best = ranked[0];
+  // Sem o tablet, entre os treinos de evolução ele escolhe "no olho". A hora
+  // de descansar ele acerta sempre.
+  if (!precise && !RECOVERY.has(best.id)) {
+    best = ranked.filter((entry) => !RECOVERY.has(entry.id)).sort((a, b) => b.estimate - a.estimate)[0];
+  }
+  return { best, ranked, reasons: explain(player, best, ranked, { hasMatch, precise }) };
 }

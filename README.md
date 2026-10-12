@@ -141,6 +141,13 @@ O cartão no topo do treino faz a mesma conta do treino de verdade
   atributos já estão no teto e o risco de lesão de verdade.
 - **Simular** semanas segue o preparador (antes simulava sempre o treino
   técnico, mesmo cansado).
+- **Sem o tablet de análise** (€30 mil na loja), o preparador trabalha "no
+  olho": explica pelo que dá para ver (corpo, cabeça, técnico, o que importa na
+  sua posição, o que está no teto) e, entre os treinos de evolução, estima com
+  uma margem de 5%. Nas simulações ele escolhe outro treino em 1 semana de cada
+  10, sempre entre dois quase empatados (custa uns 2% da evolução daquela
+  semana), e nunca erra a hora de descansar. **Com o tablet**, acerta sempre e
+  diz quais atributos sobem e o XP de cada um.
 
 Os pesos foram calibrados simulando 200 carreiras de cada jeito:
 

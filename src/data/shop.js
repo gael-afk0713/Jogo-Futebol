@@ -100,8 +100,8 @@ export const SHOP_ITEMS = [
     kind: 'equip',
     label: 'Tablet de análise de treino',
     icon: 'chart-bar',
-    price: 8_000,
-    description: 'Mostra exatamente o que cada treino vai te dar antes de você escolher.',
+    price: 30_000,
+    description: 'Mostra exatamente o que cada treino vai te dar. O preparador passa a usar os números: acerta sempre e explica o que sobe.',
     effects: { insight: true },
   },
   {
