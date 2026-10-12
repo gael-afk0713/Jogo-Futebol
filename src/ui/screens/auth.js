@@ -15,7 +15,12 @@ import {
 } from '../../firebase/firebase.js';
 import { icon, playerSticker } from '../components.js';
 
-const ui = { mode: 'login', busy: false, error: null };
+const ui = { mode: 'login', busy: false, error: null, opening: null };
+
+// Ao tocar Jogar, a figurinha da carreira levanta do álbum e fica no ar até a
+// carreira abrir (pelo menos o tempo do movimento).
+const LIFT_MS = 280;
+const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 /** Roda uma ação de login mostrando "Aguarde" e o erro em português. */
 async function busy(ctx, task) {
@@ -51,11 +56,12 @@ const when = (timestamp) =>
 /** Uma carreira salva é uma figurinha no álbum. */
 function careerCard(career, index) {
   const card = career.card ?? {};
+  const opening = ui.opening === career.id;
   const name = `${card.firstName ?? ''} ${card.lastName ?? ''}`.trim() || 'Carreira';
   const where = career.local && career.remote ? 'Nuvem e navegador' : career.remote ? 'Na nuvem' : 'Neste navegador';
   const whereIcon = career.remote ? 'cloud-check' : 'floppy-disk';
   return `
-    <article class="career is-new" style="--i:${index}" data-new-key="carreira-${esc(career.id)}">
+    <article class="career is-new ${opening ? 'is-opening' : ''}" style="--i:${index}" data-new-key="carreira-${esc(career.id)}">
       ${playerSticker(card, { size: 'sm', meta: career.retired ? 'Aposentado' : (career.clubName ?? 'Sem clube') })}
       <div class="career__body">
         <h3 class="career__name">${esc(name)}</h3>
@@ -65,7 +71,7 @@ function careerCard(career, index) {
         </p>
         <p class="career__where">${icon(whereIcon)}${where} · ${esc(when(career.updatedAt))}</p>
         <div class="career__actions">
-          <button class="btn btn--sm" data-action="open-career" data-id="${esc(career.id)}" aria-label="${esc(`${career.retired ? 'Ver o álbum de' : 'Jogar com'} ${name}`)}">${career.retired ? 'Ver álbum' : 'Jogar'}</button>
+          <button class="btn btn--sm" data-action="open-career" data-id="${esc(career.id)}" aria-label="${esc(`${career.retired ? 'Ver o álbum de' : 'Jogar com'} ${name}`)}" ${opening ? 'disabled aria-busy="true"' : ''}>${opening ? 'Abrindo...' : career.retired ? 'Ver álbum' : 'Jogar'}</button>
           <button class="iconbtn iconbtn--quiet" data-action="delete-career" data-id="${esc(career.id)}" data-name="${esc(name)}" aria-label="${esc(`Apagar a carreira de ${name}`)}" title="Apagar carreira">${icon('x')}</button>
         </div>
       </div>
@@ -95,6 +101,16 @@ function careersSection(ctx) {
       <div class="careers">${list.map(careerCard).join('')}${slots}</div>
       ${free === 0 ? '<p class="muted">O álbum está cheio. Apague uma carreira para começar outra.</p>' : ''}
     </section>`;
+}
+
+/** Botões da capa: continuar a última carreira ou começar uma nova. */
+function coverActions(last, full) {
+  if (!last) return full ? '' : `<button class="btn btn--primary" data-action="new-career">Começar carreira ${icon('arrow-right')}</button>`;
+  const name = last.card?.nickname || last.card?.firstName || 'sua carreira';
+  const opening = ui.opening === last.id;
+  return `
+    <button class="btn btn--primary" data-action="open-career" data-id="${esc(last.id)}" ${opening ? 'disabled aria-busy="true"' : ''}>${opening ? 'Abrindo...' : `Continuar com ${esc(name)} ${icon('arrow-right')}`}</button>
+    ${full ? '' : '<button class="btn btn--quiet cover__secondary" data-action="new-career">Nova carreira</button>'}`;
 }
 
 /** Convidado: guarda as carreiras numa conta de verdade, sem perder nada. */
@@ -166,8 +182,9 @@ export default {
     const cloud = firebaseAvailable();
     const { list, lastId } = ctx.careers;
     const last = list.find((career) => career.id === lastId && !career.retired) ?? list.find((career) => !career.retired);
-    const lastName = last ? (last.card?.nickname || last.card?.firstName || 'sua carreira') : '';
     const full = list.length >= ctx.maxCareers;
+    // Enquanto as carreiras não chegam, nada de "Começar carreira" no lugar de "Continuar".
+    const reading = ctx.careers.loading && !list.length;
 
     return `
       <div class="screen">
@@ -175,16 +192,7 @@ export default {
           <div>
             <h1 class="cover__title" id="capa-titulo">Craque <span>do Zero</span></h1>
             <p class="cover__lede">Monte um jogador de 16 anos sem clube e cole a carreira inteira no álbum: treinos, escolhas fora de campo, lances que você decide e propostas que chegam pelo seu desempenho.</p>
-            <div class="actions cover__actions">
-              ${
-                last
-                  ? `<button class="btn btn--primary" data-action="open-career" data-id="${esc(last.id)}">Continuar com ${esc(lastName)} ${icon('arrow-right')}</button>
-                     ${full ? '' : '<button class="btn btn--quiet cover__secondary" data-action="new-career">Nova carreira</button>'}`
-                  : full
-                    ? ''
-                    : `<button class="btn btn--primary" data-action="new-career">Começar carreira ${icon('arrow-right')}</button>`
-              }
-            </div>
+            <div class="actions cover__actions">${reading ? '' : coverActions(last, full)}</div>
             ${cloud && !ctx.auth.user ? '<p class="cover__saved">Sem conta, as carreiras ficam só neste navegador. Entre para salvar na nuvem.</p>' : ''}
           </div>
           ${coverStickers()}
@@ -267,7 +275,19 @@ export default {
 
     'new-career': (ctx) => ctx.newCareer(),
 
-    'open-career': (ctx, dataset) => ctx.openCareer(dataset.id),
+    'open-career': async (ctx, dataset) => {
+      if (ui.opening) return;
+      ui.opening = dataset.id;
+      ctx.rerender();
+      let opened = false;
+      try {
+        opened = await ctx.openCareer(dataset.id, { minWait: reducedMotion() ? 0 : LIFT_MS });
+      } finally {
+        ui.opening = null;
+        // Não abriu: a figurinha volta para o lugar.
+        if (!opened) ctx.rerender();
+      }
+    },
 
     'delete-career': async (ctx, dataset) => {
       const ok = await ctx.confirm({

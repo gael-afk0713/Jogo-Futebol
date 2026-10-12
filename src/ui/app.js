@@ -3,6 +3,7 @@
 import { confirmDialog, esc, mount, toast } from './dom.js';
 import { icon } from './components.js';
 import { Motion } from './motion.js';
+import { boot } from './boot.js';
 import { Sound } from './sound.js';
 import { actionSound, BULK_ACTIONS, soundCues } from './soundCues.js';
 import { game, SCREENS } from '../core/game.js';
@@ -79,7 +80,8 @@ export class App {
       onSignedIn: (user) => this.handleSignedIn(user),
       onUpgraded: (user) => this.handleUpgraded(user),
       signOut: () => this.handleSignOut(),
-      openCareer: (id) => this.openCareer(id),
+      openCareer: (id, options) => this.openCareer(id, options),
+      openedAt: -Infinity,
       newCareer: () => this.newCareer(),
       deleteCareer: (id) => this.deleteCareer(id),
     };
@@ -131,8 +133,11 @@ export class App {
     this.render();
   }
 
-  async openCareer(id) {
-    const state = await this.save.open(id).catch(() => null);
+  /** minWait: tempo mínimo (ms) para a figurinha da carreira terminar de levantar. */
+  async openCareer(id, { minWait = 0 } = {}) {
+    const [state] = await Promise.all([this.save.open(id).catch(() => null), new Promise((resolve) => setTimeout(resolve, minWait))]);
+    // A figurinha do jogador cola no lugar quando o perfil aparece logo depois.
+    this.ctx.openedAt = performance.now();
     if (state && this.game.load(state) && this.game.state.player) {
       this.restoreScreen();
       return true;
@@ -331,6 +336,10 @@ export class App {
       { screenChanged },
     );
     this.rendering = false;
+    // Tela de carregamento: conta conferida cola a terceira figurinha; com as
+    // carreiras lidas, a capa sai e o álbum aparece já com o botão certo.
+    if (this.auth.ready) boot.step(3);
+    if (this.auth.ready && !this.careers.loading) boot.finish();
   }
 
   renderStatus() {

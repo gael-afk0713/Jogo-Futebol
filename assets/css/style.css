@@ -3732,6 +3732,20 @@ code {
   --sticker-w: 104px;
 }
 
+/* Jogar: a figurinha levanta do álbum (sombra lift) enquanto a carreira abre. */
+@media (prefers-reduced-motion: no-preference) {
+  .career.is-opening .sticker {
+    animation: levanta 280ms var(--ease-out) both;
+  }
+
+  @keyframes levanta {
+    to {
+      transform: scale(1.06) rotate(-2deg) translateY(-6px);
+      box-shadow: var(--shadow-lift);
+    }
+  }
+}
+
 .career__body {
   display: grid;
   gap: 6px;

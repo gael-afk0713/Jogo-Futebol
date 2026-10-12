@@ -16,7 +16,7 @@ onde veio cada um. Foram cortados, normalizados e convertidos para WAV mono.
 | `conquista.wav` | overall subiu, título, prêmio, metas | "Level Up", qubodup (Freesound 442943) |
 | `aviso.wav` | evento da semana | "Notification Sound", yfjesse (Freesound 235911) |
 | `apito.wav` | começo e fim da partida | "Referee whistle blow, gymnasium", SpliceSound (Freesound 218318) |
-| `gol.wav` | gol do seu time | "goalloop", huubjeroen (Freesound 113698) |
-| `ambiente.wav` | clima de estádio durante a partida (em repetição) | "Milan Derby (Milan vs Inter) at San Siro", neilraouf (Freesound 424354) |
+| `gol.wav` | gol do seu time | "goalloop", huubjeroen (Freesound 113698), encurtado |
+| `ambiente.wav` | clima de estádio durante a partida (em repetição) | "Milan Derby (Milan vs Inter) at San Siro", neilraouf (Freesound 424354), com os picos nivelados |
 | `chute.wav` | chute ou passe num lance | "Soccer Kick", musita182 (Freesound 261267) |
 | `figurinha.wav` | figurinha da temporada colada no álbum | Kenney, Casino Audio (`card-place-1`) |

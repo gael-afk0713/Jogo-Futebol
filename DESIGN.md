@@ -356,6 +356,10 @@ O número da camisa é estampado no peito do avatar, em Barlow Condensed 800 cob
 
 **Troca de tela.** Tela, aba e nova semana usam transição de visualização: a página antiga some em 140ms e a nova chega subindo 8px em 280ms (180ms entre abas). A barra superior e a figurinha do jogador ficam no lugar. Sem suporte, a troca é seca.
 
+**Abertura do jogo.** A capa cobalto cobre a tela com o título e quatro espaços numerados, cada um com o nome de uma etapa real do carregamento. Quando a etapa termina, uma figurinha (bola, chuteira, camisa, taça) cola no espaço com o mesmo movimento assinatura, em 480ms e com 130ms entre uma e outra; o espaço da etapa em andamento tem a borda mais forte, sem animação em laço. A capa sai em 240ms por opacidade quando a última assenta (380ms), então numa internet boa a abertura toda leva cerca de 1 segundo. Depois de 2 segundos aparece uma dica, trocada a cada 7. Sem som.
+
+**Jogar.** Ao abrir uma carreira, a figurinha dela levanta do álbum (escala 1,06, giro de -2 graus, 6px acima, sombra `lift`, 280ms) e fica no ar até a carreira chegar; a figurinha do jogador então cola no perfil.
+
 **Movimento reduzido.** Sem deslocamento, giro, escala, contagem ou transição de página. Ficam só as trocas de cor e opacidade que confirmam a ação: o placar e a nota realçam em amarelo por 600ms, e o título do gol aparece por opacidade.
 
 ## Do's and Don'ts

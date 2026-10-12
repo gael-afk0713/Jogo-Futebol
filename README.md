@@ -402,10 +402,19 @@ brilhantes e o que ainda falta aparece como espaço vazio. Os totais da carreira
 computador, e segue o modo claro ou noturno do sistema. As regras estão em
 [`DESIGN.md`](DESIGN.md).
 
+Ao abrir, a capa do álbum aparece na hora com quatro espaços, e cada etapa real
+do carregamento cola uma figurinha: a página abriu, o código chegou, a conta foi
+conferida e as carreiras foram lidas. Numa internet boa tudo isso leva cerca de
+1 segundo; se passar de 2 segundos, aparecem dicas do jogo; se o código não
+chegar, a capa avisa e oferece "Tentar de novo". A tela inicial só aparece com
+as carreiras lidas, então o botão já mostra "Continuar" quando é o caso. Ao
+tocar em Jogar, a figurinha da carreira levanta do álbum enquanto ela abre e
+cola no perfil do jogador.
+
 ## Estrutura do código
 
 ```
-index.html                 página única
+index.html                 página única e a tela de carregamento (fica aqui para aparecer antes do código)
 assets/css/style.css       mundo "álbum de figurinhas", claro e noturno
 assets/fonts/              Barlow e Barlow Condensed hospedadas no projeto (OFL)
 assets/avatar/             retratos em camadas (pele, cabelo, barba)
@@ -454,6 +463,7 @@ src/
     shop.js                compra, venda, dispensa, efeitos e tetos dos itens
   ui/
     app.js                 roteador de telas e delegação de eventos
+    boot.js                avisa a tela de carregamento de cada etapa concluída
     components.js          figurinhas, avatar SVG, medidores, tabelas
     icons.js               ícones Phosphor usados no jogo (MIT)
     dom.js                 helpers, toast, modal

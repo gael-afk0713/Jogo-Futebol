@@ -9,6 +9,7 @@
 const SOUNDS = ['toque', 'confirmar', 'voltar', 'erro', 'compra', 'certo', 'errado', 'conquista', 'aviso', 'apito', 'gol', 'chute', 'figurinha'];
 
 // Volume de cada som (0 a 1): o toque, que se repete o tempo todo, é o mais baixo.
+// A torcida do gol dura mais que os outros sons, então fica abaixo deles para não estourar.
 const VOLUME = {
   toque: 0.45,
   confirmar: 0.7,
@@ -20,7 +21,7 @@ const VOLUME = {
   conquista: 0.8,
   aviso: 0.7,
   apito: 0.6,
-  gol: 0.9,
+  gol: 0.55,
   chute: 0.8,
   figurinha: 0.8,
 };

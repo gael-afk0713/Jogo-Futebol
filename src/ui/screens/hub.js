@@ -78,18 +78,22 @@ const EVENT_ICONS = {
 
 /* ------------------------------------------------------------ coluna lateral */
 
-function profile(state, data) {
+// Logo depois de abrir a carreira no álbum, a figurinha do jogador cola no lugar.
+const JUST_OPENED_MS = 1000;
+
+function profile(state, data, ctx) {
   const player = state.player;
   const club = getClub(player.club);
   const league = getLeague(club?.leagueId);
   const nation = getNation(player.nationality);
   const position = getPosition(player.position);
-  const grew = ui.lastOverall !== null && player.overall > ui.lastOverall;
+  const opened = performance.now() - (ctx.openedAt ?? -Infinity) < JUST_OPENED_MS;
+  const grew = !opened && ui.lastOverall !== null && player.overall > ui.lastOverall;
   ui.lastOverall = player.overall;
 
   return `
     <section class="profile" aria-label="Seu jogador">
-      ${playerSticker(player, { isNew: grew, pulse: 'overall', meta: `${nation.id} · ${club?.name ?? 'Sem clube'}` })}
+      ${playerSticker(player, { isNew: grew || opened, pulse: 'overall', meta: `${nation.id} · ${club?.name ?? 'Sem clube'}` })}
       <div>
         <h1 class="profile__name">${esc(player.firstName)} ${esc(player.lastName)}</h1>
         <div class="profile__facts">
@@ -1127,7 +1131,7 @@ export default {
 
     return `
       <div class="hub">
-        <aside class="hub__aside stack stack--lg">${profile(state, data)}</aside>
+        <aside class="hub__aside stack stack--lg">${profile(state, data, ctx)}</aside>
         <div class="hub__main">
           <nav class="tabs" role="tablist" aria-label="Seções do jogo">
             ${TABS.map(

@@ -18,14 +18,385 @@
     <link rel="preload" href="./assets/fonts/barlow-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="./assets/fonts/barlow-condensed-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="./assets/css/style.css" />
+    <style>
+      /*
+       * Tela de carregamento: a capa do álbum com quatro espaços. Cada etapa
+       * real do carregamento cola uma figurinha (o script logo abaixo do
+       * #boot). Fica aqui, e não no style.css, para aparecer antes de o
+       * código do jogo chegar.
+       */
+      .boot {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom))
+          max(16px, env(safe-area-inset-left));
+        overflow-y: auto;
+        background-color: var(--cover, #1c3d9e);
+        background-image: radial-gradient(rgb(255 255 255 / 0.09) 1.2px, transparent 1.7px);
+        background-size: 8px 8px;
+        color: var(--cover-ink, #ffffff);
+        font-family: var(--font-body, system-ui, sans-serif);
+        transition: opacity 240ms ease;
+      }
+      .boot.is-leaving {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .boot__inner {
+        width: 100%;
+        max-width: 560px;
+        text-align: center;
+      }
+      .boot__title {
+        margin: 0 0 36px;
+        font-family: var(--font-cond, sans-serif);
+        font-size: clamp(3rem, 15vw, 5.6rem);
+        font-weight: 800;
+        line-height: 0.88;
+        letter-spacing: -0.02em;
+        text-transform: uppercase;
+      }
+      .boot__title span {
+        display: block;
+        color: var(--accent, #f6c600);
+      }
+      .boot__slots {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: clamp(8px, 2.4vw, 14px);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .boot__space {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        aspect-ratio: 4 / 5;
+        padding-top: 18%;
+        border: 1.5px solid rgb(255 255 255 / 0.22);
+        border-radius: 6px;
+        background: rgb(255 255 255 / 0.05);
+      }
+      .boot__number {
+        font-family: var(--font-cond, sans-serif);
+        font-size: clamp(1.6rem, 7vw, 2.4rem);
+        font-weight: 800;
+        line-height: 1;
+        color: rgb(255 255 255 / 0.3);
+      }
+      .boot__label {
+        display: block;
+        margin-top: 8px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        line-height: 1.25;
+        color: var(--cover-ink-2, #cdd7f6);
+      }
+      .boot__slot.is-current .boot__space {
+        border-color: rgb(255 255 255 / 0.6);
+      }
+      .boot__slot.is-current .boot__number {
+        color: rgb(255 255 255 / 0.6);
+      }
+      .boot__slot.is-current .boot__label {
+        color: var(--cover-ink, #ffffff);
+      }
+      /* A figurinha é papel branco com a face cobalto, de dia e de noite. */
+      .boot__sticker {
+        position: absolute;
+        inset: -1.5px;
+        display: flex;
+        flex-direction: column;
+        padding: 4px;
+        border-radius: 6px;
+        background: #fdfdfb;
+        box-shadow: 0 1px 1px rgb(18 23 34 / 0.08), 0 5px 12px -6px rgb(18 23 34 / 0.28);
+        opacity: 0;
+      }
+      .boot__face {
+        flex: 1;
+        display: grid;
+        place-items: center;
+        border-radius: 3px;
+        background-color: #1c3d9e;
+        background-image: radial-gradient(rgb(255 255 255 / 0.14) 1px, transparent 1.5px);
+        background-size: 6px 6px;
+        color: #ffffff;
+      }
+      .boot__face svg {
+        width: 52%;
+        height: auto;
+        fill: currentColor;
+      }
+      .boot__band {
+        padding-top: 3px;
+        font-family: var(--font-cond, sans-serif);
+        font-size: clamp(0.62rem, 2.6vw, 0.85rem);
+        font-weight: 800;
+        line-height: 1.1;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: #121722;
+      }
+      .boot__slot.is-done .boot__sticker {
+        opacity: 1;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .boot__slot.is-done .boot__sticker {
+          animation: boot-colar 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        @keyframes boot-colar {
+          0% {
+            transform: scale(1.06) rotate(-2deg) translateY(-6px);
+            box-shadow: 0 2px 3px rgb(18 23 34 / 0.08), 0 18px 32px -14px rgb(18 23 34 / 0.4);
+            opacity: 0;
+          }
+          35% {
+            opacity: 1;
+          }
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot,
+        .boot__tip {
+          transition-duration: 0ms;
+        }
+        .boot__slot.is-done .boot__sticker {
+          animation: boot-aparece 200ms ease-out both;
+        }
+        @keyframes boot-aparece {
+          from {
+            opacity: 0;
+          }
+        }
+      }
+      .boot__tip {
+        max-width: 36ch;
+        min-height: 4.5em;
+        margin: 32px auto 0;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        color: var(--cover-ink-2, #cdd7f6);
+        opacity: 0;
+        transition: opacity 300ms ease;
+      }
+      .boot__tip.is-visible {
+        opacity: 1;
+      }
+      .boot__tip strong {
+        font-weight: 600;
+        color: var(--cover-ink, #ffffff);
+      }
+      .boot__fail {
+        display: none;
+      }
+      .boot__fail p {
+        max-width: 32ch;
+        margin: 0 auto 20px;
+        font-size: 1.05rem;
+        color: var(--cover-ink-2, #cdd7f6);
+      }
+      .boot.is-failed .boot__slots,
+      .boot.is-failed .boot__tip {
+        display: none;
+      }
+      .boot.is-failed .boot__fail {
+        display: block;
+      }
+    </style>
+    <noscript><style>.boot { display: none; }</style></noscript>
   </head>
   <body>
     <div id="app" class="app">
       <main class="app__main">
-        <p>Abrindo o álbum...</p>
         <noscript>Este jogo precisa de JavaScript ativado.</noscript>
       </main>
     </div>
-    <script type="module" src="./src/main.js"></script>
+    <div id="boot" class="boot">
+      <div class="boot__inner">
+        <p class="boot__title" aria-hidden="true">Craque <span>do Zero</span></p>
+        <ol class="boot__slots" aria-hidden="true">
+          <li class="boot__slot">
+            <div class="boot__space">
+              <span class="boot__number">1</span>
+              <span class="boot__sticker"><span class="boot__face"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm76.52,147.42H170.9l-9.26-12.76,12.63-36.78,15-4.89,26.24,20.13A87.38,87.38,0,0,1,204.52,171.42Zm-164-34.3L66.71,117l15,4.89,12.63,36.78L85.1,171.42H51.48A87.38,87.38,0,0,1,40.47,137.12Zm10-50.64,5.51,18.6L40.71,116.77A87.33,87.33,0,0,1,50.43,86.48ZM109,152,97.54,118.65,128,97.71l30.46,20.94L147,152Zm91.07-46.92,5.51-18.6a87.33,87.33,0,0,1,9.72,30.29Zm-6.2-35.38-9.51,32.08-15.07,4.89L136,83.79V68.21l29.09-20A88.58,88.58,0,0,1,193.86,69.7ZM146.07,41.87,128,54.29,109.93,41.87a88.24,88.24,0,0,1,36.14,0ZM90.91,48.21l29.09,20V83.79L86.72,106.67l-15.07-4.89L62.14,69.7A88.58,88.58,0,0,1,90.91,48.21ZM63.15,187.42H83.52l7.17,20.27A88.4,88.4,0,0,1,63.15,187.42ZM110,214.13,98.12,180.71,107.35,168h41.3l9.23,12.71-11.83,33.42a88,88,0,0,1-36.1,0Zm55.36-6.44,7.17-20.27h20.37A88.4,88.4,0,0,1,165.31,207.69Z"/></svg></span><span class="boot__band">Bola</span></span>
+            </div>
+            <span class="boot__label">Abrindo o álbum</span>
+          </li>
+          <li class="boot__slot">
+            <div class="boot__space">
+              <span class="boot__number">2</span>
+              <span class="boot__sticker"><span class="boot__face"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M228.65,129.11l-60.73-20.24a24,24,0,0,1-14.32-13L130.39,41.6s0-.07,0-.1A16,16,0,0,0,110.25,33L34.53,60.49A16.05,16.05,0,0,0,24,75.53V192a16,16,0,0,0,16,16H240a16,16,0,0,0,16-16V167.06A40,40,0,0,0,228.65,129.11ZM115.72,48l7.11,16.63-21.56,7.85A8,8,0,0,0,104,88a7.91,7.91,0,0,0,2.73-.49l22.4-8.14,4.74,11.07-16.6,6A8,8,0,0,0,120,112a7.91,7.91,0,0,0,2.73-.49l17.6-6.4a40.24,40.24,0,0,0,7.68,10l-14.74,5.36A8,8,0,0,0,136,136a8.14,8.14,0,0,0,2.73-.48l28-10.18,56.87,18.95A24,24,0,0,1,238.93,160H40V75.53ZM40,192h0V176H240v16Z"/></svg></span><span class="boot__band">Chuteira</span></span>
+            </div>
+            <span class="boot__label">Imprimindo as figurinhas</span>
+          </li>
+          <li class="boot__slot">
+            <div class="boot__space">
+              <span class="boot__number">3</span>
+              <span class="boot__sticker"><span class="boot__face"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M247.59,61.22,195.83,33A8,8,0,0,0,192,32H160a8,8,0,0,0-8,8,24,24,0,0,1-48,0,8,8,0,0,0-8-8H64a8,8,0,0,0-3.84,1L8.41,61.22A15.76,15.76,0,0,0,1.82,82.48l19.27,36.81A16.37,16.37,0,0,0,35.67,128H56v80a16,16,0,0,0,16,16H184a16,16,0,0,0,16-16V128h20.34a16.37,16.37,0,0,0,14.58-8.71l19.27-36.81A15.76,15.76,0,0,0,247.59,61.22ZM35.67,112a.62.62,0,0,1-.41-.13L16.09,75.26,56,53.48V112ZM184,208H72V48h16.8a40,40,0,0,0,78.38,0H184Zm36.75-96.14a.55.55,0,0,1-.41.14H200V53.48l39.92,21.78Z"/></svg></span><span class="boot__band">Camisa</span></span>
+            </div>
+            <span class="boot__label">Conferindo sua conta</span>
+          </li>
+          <li class="boot__slot">
+            <div class="boot__space">
+              <span class="boot__number">4</span>
+              <span class="boot__sticker"><span class="boot__face"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232,64H208V48a8,8,0,0,0-8-8H56a8,8,0,0,0-8,8V64H24A16,16,0,0,0,8,80V96a40,40,0,0,0,40,40h3.65A80.13,80.13,0,0,0,120,191.61V216H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16H136V191.58c31.94-3.23,58.44-25.64,68.08-55.58H208a40,40,0,0,0,40-40V80A16,16,0,0,0,232,64ZM48,120A24,24,0,0,1,24,96V80H48v32q0,4,.39,8Zm144-8.9c0,35.52-29,64.64-64,64.9a64,64,0,0,1-64-64V56H192ZM232,96a24,24,0,0,1-24,24h-.5a81.81,81.81,0,0,0,.5-8.9V80h24Z"/></svg></span><span class="boot__band">Taça</span></span>
+            </div>
+            <span class="boot__label">Separando suas carreiras</span>
+          </li>
+        </ol>
+        <p class="boot__tip"></p>
+        <div class="boot__fail">
+          <p>Não consegui abrir o jogo. Confira a internet e tente de novo.</p>
+          <button class="btn btn--primary" type="button" onclick="location.reload()">Tentar de novo</button>
+        </div>
+        <p class="boot__live visually-hidden" role="status">Abrindo o jogo...</p>
+      </div>
+    </div>
+    <script>
+      // Tela de carregamento. Cada etapa real cola uma figurinha: 1 a página
+      // abriu, 2 o código do jogo chegou (src/main.js), 3 a conta foi
+      // conferida e 4 as carreiras foram lidas (src/ui/app.js). Numa internet
+      // boa as etapas chegam quase juntas e as figurinhas colam em sequência
+      // rápida, em menos de um segundo; se demorar, aparecem dicas do jogo.
+      (function () {
+        var root = document.getElementById('boot');
+        var app = document.getElementById('app');
+        if (!root) return;
+        var slots = root.querySelectorAll('.boot__slot');
+        var live = root.querySelector('.boot__live');
+        var tip = root.querySelector('.boot__tip');
+        var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var SETTLE_MS = reduce ? 200 : 380; // a figurinha já assentou (a colagem toda leva 480ms)
+        var GAP_MS = 130; // intervalo mínimo entre duas figurinhas
+        var TIP_AFTER_MS = 2000; // a primeira dica só aparece se passar disso
+        var TIP_EVERY_MS = 7000;
+        var GIVE_UP_MS = 12000; // código chegou, mas a nuvem não responde: abre assim mesmo
+        var TIPS = [
+          'Disciplina abaixo de 40 dá multa, banco e propostas piores.',
+          'Com disciplina 75 ou mais, você vira exemplo: técnico e vestiário melhoram aos poucos.',
+          'Cada jogo inteiro custa 5 de forma física. Descansar também é treinar.',
+          'A fama cai 1 ponto a cada jogo em que você não entra em campo.',
+          'Na base, o clube pequeno dá mais jogos; o grande, treino melhor e mais vitrine.',
+          'Time Sub-20 só segura jogador até os 19 anos.',
+          'Minutos em campo dão experiência, que ajuda no pênalti, no último lance e no clássico.',
+          'Até os 22 anos, a experiência deixa os clubes mais interessados em você.',
+          'Cada meta da temporada cumprida paga bônus e melhora a relação com o técnico.',
+          'Ganhar o clássico agrada muito mais a torcida, e cada gol nele vale fama.',
+          'Com o tablet de análise, o preparador acerta sempre e mostra o XP de cada atributo.',
+          'As propostas do fim do ano olham overall, idade, nota da temporada, fama e disciplina.',
+          'O potencial fica escondido até a terceira temporada. Boas temporadas fazem ele subir.',
+          'Na partida, a chance de cada opção é a chance real de dar certo.',
+          'Gol e assistência pesam bastante na nota: um gol leva a nota para perto de 7,2.',
+          'Na chuva forte, a trava alta evita que passe, drible e defesa fiquem mais difíceis.',
+          'O goleiro amadurece mais tarde e chega perto do potencial lá pelos 27 ou 28 anos.',
+          'Investimentos mudam de valor no fim da temporada, e os mais arriscados podem quebrar.',
+          'O declínio começa aos 32, primeiro na velocidade e na resistência.',
+          'Quem joga a Série B ou a C abre o ano no estadual ou numa copa regional.',
+          'O álbum guarda até 6 carreiras ao mesmo tempo.',
+          'Entrando na conta, as carreiras ficam salvas na nuvem.',
+        ];
+        var reached = 0;
+        var glued = 0;
+        var lastGlue = -Infinity;
+        var finishing = false;
+        var gone = false;
+        var pumpTimer = null;
+        var tipTimer = null;
+        var giveUpTimer = null;
+        var tipIndex = Math.floor(Math.random() * TIPS.length);
+
+        // O jogo por baixo não recebe toque nem foco enquanto a capa está na frente.
+        if (app) app.setAttribute('inert', '');
+
+        function mark() {
+          for (var i = 0; i < slots.length; i++) slots[i].classList.toggle('is-current', i === glued);
+          var current = slots[glued];
+          live.textContent = current ? current.querySelector('.boot__label').textContent + '...' : 'Pronto.';
+        }
+
+        // Cola a próxima figurinha que já pode colar; no fim, espera a última assentar e sai.
+        function pump() {
+          pumpTimer = null;
+          if (gone) return;
+          var now = Date.now();
+          var wait;
+          if (glued < reached) {
+            wait = lastGlue + GAP_MS - now;
+            if (wait <= 0) {
+              slots[glued].classList.add('is-done');
+              glued += 1;
+              lastGlue = now;
+              mark();
+              wait = GAP_MS;
+            }
+          } else if (finishing) {
+            wait = lastGlue + SETTLE_MS - now;
+            if (wait <= 0) return leave();
+          } else {
+            return;
+          }
+          pumpTimer = setTimeout(pump, wait);
+        }
+
+        function leave() {
+          gone = true;
+          clearTimeout(tipTimer);
+          clearTimeout(giveUpTimer);
+          if (app) app.removeAttribute('inert');
+          root.classList.add('is-leaving');
+          setTimeout(function () {
+            if (root.parentNode) root.parentNode.removeChild(root);
+          }, reduce ? 0 : 260);
+        }
+
+        function showTip() {
+          if (gone) return;
+          var first = !tip.textContent;
+          tip.classList.remove('is-visible');
+          setTimeout(
+            function () {
+              if (gone) return;
+              tip.innerHTML = '<strong>Dica:</strong> ' + TIPS[tipIndex % TIPS.length];
+              tipIndex += 1;
+              tip.classList.add('is-visible');
+            },
+            first || reduce ? 0 : 300,
+          );
+          tipTimer = setTimeout(showTip, TIP_EVERY_MS);
+        }
+
+        function step(n) {
+          if (gone) return;
+          if (n > reached) reached = Math.min(n, slots.length);
+          if (reached >= 2 && !giveUpTimer) giveUpTimer = setTimeout(finish, GIVE_UP_MS);
+          if (!pumpTimer) pump();
+        }
+
+        function finish() {
+          finishing = true;
+          step(slots.length);
+        }
+
+        function fail() {
+          if (gone) return;
+          clearTimeout(tipTimer);
+          clearTimeout(giveUpTimer);
+          root.classList.add('is-failed');
+          live.textContent = 'Não consegui abrir o jogo.';
+        }
+
+        window.__boot = { step: step, finish: finish, fail: fail };
+        mark();
+        tipTimer = setTimeout(showTip, TIP_AFTER_MS);
+        step(1);
+      })();
+    </script>
+    <script type="module" src="./src/main.js" onerror="window.__boot && window.__boot.fail()"></script>
   </body>
 </html>
