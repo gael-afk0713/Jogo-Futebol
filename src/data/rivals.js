@@ -1,6 +1,9 @@
 // Clássicos: rivalidades entre clubes do jogo. O nome aparece no calendário,
 // no placar e nos eventos do jogo. Só valem quando os dois se enfrentam (na
 // liga ou numa copa). Nomes usados como referência de fãs, sem vínculo oficial.
+// Os times de base herdam o clássico dos times profissionais ("... da base").
+
+import { getClub } from './clubs.js';
 
 export const RIVALRIES = [
   // Brasil
@@ -17,7 +20,6 @@ export const RIVALRIES = [
   { name: 'Ba-Vi', clubs: ['bra1_bahia', 'bra1_vitoria'] },
   { name: 'Atletiba', clubs: ['bra1_athletico', 'bra2_coritiba'] },
   { name: 'Derby Campineiro', clubs: ['bra2_ponte', 'bra2_guarani'] },
-  { name: 'Derby Campineiro da base', clubs: ['base_ponte', 'base_guarani'] },
   { name: 'Re-Pa', clubs: ['bra3_remo', 'bra3_pay'] },
   // Argentina
   { name: 'Superclásico', clubs: ['arg_river', 'arg_boca'] },
@@ -74,4 +76,12 @@ const key = (a, b) => [a, b].sort().join('|');
 const BY_PAIR = new Map(RIVALRIES.map((rivalry) => [key(...rivalry.clubs), rivalry]));
 
 /** O clássico entre dois clubes, se houver. */
-export const rivalryBetween = (a, b) => (a && b ? BY_PAIR.get(key(a, b)) ?? null : null);
+export function rivalryBetween(a, b) {
+  if (!a || !b) return null;
+  const direct = BY_PAIR.get(key(a, b));
+  if (direct) return direct;
+  const parentA = getClub(a)?.parent;
+  const parentB = getClub(b)?.parent;
+  const senior = parentA && parentB ? BY_PAIR.get(key(parentA, parentB)) : null;
+  return senior ? { name: `${senior.name} da base`, clubs: [a, b] } : null;
+}

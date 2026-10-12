@@ -4,6 +4,7 @@ import { clamp } from '../core/utils.js';
 import { attributeLabel } from '../data/attributes.js';
 import { lifeModifier } from '../data/traits.js';
 import { isGoalkeeper } from '../data/positions.js';
+import { youthTier } from '../data/clubs.js';
 import { adjustLife, careerAgeCurve } from './player.js';
 import { attributeCeiling, effectiveAttributes, keyAttributesFor, upgradeCost } from './overall.js';
 import { itemEffects } from './shop.js';
@@ -339,7 +340,9 @@ export function planTraining(player, option) {
   const intelligenceFactor = 0.85 + player.life.intelligence / 300;
   const happinessFactor = 0.8 + player.life.happiness / 250;
   const gearXp = gear.xp[option.id] ?? 1;
-  const xp = Math.round((option.xp ?? 0) * trainingBonus * ageFactor * intelligenceFactor * happinessFactor * gearXp);
+  // A base de clube grande tem estrutura melhor: treino rende 10% a mais.
+  const academy = youthTier(player.club)?.id === 'grande' ? 1.1 : 1;
+  const xp = Math.round((option.xp ?? 0) * trainingBonus * ageFactor * intelligenceFactor * happinessFactor * gearXp * academy);
 
   const fitnessBonus = 1 + lifeModifier(player.traits, 'fitnessGain');
   let fitness = (option.fitness ?? 0) * (option.fitness > 0 ? fitnessBonus : 1);

@@ -5,7 +5,7 @@ import { ICONS } from './icons.js';
 import { clamp, plural, round } from '../core/utils.js';
 import { ATTRIBUTE_GROUPS, attributeTier } from '../data/attributes.js';
 import { getPosition, isGoalkeeper } from '../data/positions.js';
-import { getClub, squadRating } from '../data/clubs.js';
+import { getClub, squadRating, YOUTH_TIERS } from '../data/clubs.js';
 import { money } from '../core/utils.js';
 import { getTrait } from '../data/traits.js';
 import { LIFE_STATS } from '../engine/player.js';
@@ -548,7 +548,9 @@ export function offerSticker(offer, player, { action, label, ariaLabel = null, h
       <div class="card-sticker__body">
         <p class="offer__pitch">${esc(offer.pitch)}</p>
         <ul class="offer__facts">
+          ${offer.tier ? `<li><span>Base</span><strong>${esc(YOUTH_TIERS[offer.tier]?.label ?? '')}</strong></li>` : ''}
           <li><span>Função</span><strong>${esc(offer.roleLabel)}</strong></li>
+          ${offer.perk ? `<li><span>Vantagem</span><strong>${esc(offer.perk)}</strong></li>` : ''}
           <li><span>Salário</span><strong class="num">${esc(money(offer.weeklySalary))} por semana</strong></li>
           <li><span>Contrato</span><strong class="num">${esc(plural(offer.years, 'temporada', 'temporadas'))}</strong></li>
           ${offer.signingBonus ? `<li><span>Luvas</span><strong class="num">${esc(money(offer.signingBonus))}</strong></li>` : ''}

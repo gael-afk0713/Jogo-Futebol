@@ -49,14 +49,27 @@ escolha a branch e a pasta raiz (`/`). O jogo é 100% estático.
 - **26 pontos** para distribuir entre as áreas de atributo
 
 ### 2. Começando do zero
-Você não começa num clube grande: três peneiras aparecem, e a escolha muda quanto
-você vai jogar e aparecer no primeiro ano.
+Todo mundo começa na base do seu país. Cada país tem uma liga de base (Copa São
+Paulo de Juniores, Premier League 2, Campionato Primavera, División de Honor
+Juvenil, MLS NEXT...) com o Sub-20 de clubes de três tamanhos, e a peneira
+oferece um de cada:
 
-Time Sub-20 só segura jogador até os **19 anos**. Os times de base que têm um
-time profissional no jogo (Novorizontino, Ponte Preta, Guarani e Mirassol)
-podem subir você para o profissional antes disso, se você estiver perto do nível
-do elenco. Quem passa da idade sem escolher vai para a melhor proposta
-profissional.
+| | Clube grande | Clube médio | Clube pequeno |
+|---|---|---|---|
+| Elenco | uns 55 | uns 48 | uns 44 |
+| Função | promessa | rotação | titular |
+| Salário | €600 por semana | €400 | €300 |
+| Vantagem | treino 10% melhor e vitrine (propostas melhores) | disputa posição | joga logo |
+
+No Brasil, no primeiro ano, isso dá uns 4 jogos como titular no clube grande, 9
+no médio e 14 no pequeno.
+
+Time Sub-20 só segura jogador até os **19 anos**. O time profissional do mesmo
+clube (quando existe no jogo) pode subir você antes disso, se você estiver perto
+do nível do elenco, e sempre chama quando você passa da idade. Quem passa da
+idade sem escolher vai para a melhor proposta profissional. Os clássicos dos
+profissionais também valem na base (Derby Paulista da base, El Clásico da
+base...).
 
 ### 3. A semana
 Cada semana tem três etapas:
@@ -209,8 +222,8 @@ seu overall, idade, potencial, nota da temporada, fama, reputação e disciplina
 Cada proposta diz a função (estrela, titular, rotação, promessa), salário, luvas,
 duração e multa. Também existem renovação e empréstimo para quem não está jogando.
 
-São **202 clubes em 18 ligas** (da Copa São Paulo de Juniores e Série C
-brasileira até Premier League, LaLiga, Bundesliga, Serie A, Saudi Pro League).
+São **318 clubes em 31 ligas**: 13 ligas de base e 18 profissionais, da Série C
+brasileira até Premier League, LaLiga, Bundesliga, Serie A e Saudi Pro League.
 
 ### 7. Seleção, títulos e prêmios
 - Convocação baseada em overall, visibilidade da liga, fama e forma
@@ -355,7 +368,7 @@ src/
   data/                    conteúdo do jogo, separado das regras
     attributes.js          37 atributos em 7 grupos
     positions.js           9 posições, pesos de overall e perfis
-    clubs.js               18 ligas, 202 clubes, prestígio e salários
+    clubs.js               31 ligas (13 de base), 318 clubes, prestígio e salários
     nations.js             20 seleções
     traits.js              14 traços com efeitos em campo e fora
     lifeEvents.js          33 eventos de vida com condições e desfechos

@@ -2,7 +2,7 @@
 
 import { DISCIPLINE_RISK } from './life.js';
 import { clamp, logistic, money, uid } from '../core/utils.js';
-import { ALL_CLUBS, getClub, getLeague, salaryBand, squadRating } from '../data/clubs.js';
+import { ALL_CLUBS, getClub, getLeague, salaryBand, squadRating, YOUTH_TIERS } from '../data/clubs.js';
 import { lifeModifier } from '../data/traits.js';
 import { seasonRating } from './player.js';
 
@@ -28,6 +28,9 @@ export function marketValue(player) {
   return Math.round((base * ageFactor * potentialFactor * fameFactor * formFactor) / 1000) * 1000;
 }
 
+// Quanto a base de cada tamanho ajuda nas propostas (em pontos de overall).
+const SHOWCASE = { grande: 4, medio: 2, pequeno: 0 };
+
 /** Quanto um clube quer este jogador (0..1). */
 export function clubInterest(player, clubId, { seasonRatingValue = 6.5 } = {}) {
   const club = getClub(clubId);
@@ -45,9 +48,11 @@ export function clubInterest(player, clubId, { seasonRatingValue = 6.5 } = {}) {
   // Clube desconfia de quem é indisciplinado: com disciplina 12, é como ter 7 de overall a menos.
   const disciplineMalus = Math.max(0, DISCIPLINE_RISK - player.life.discipline) * 0.25;
   const scandalMalus = player.flags.includes('doping') || player.flags.includes('investigado') ? 12 : 0;
+  // Vitrine: quem joga na base de um clube grande é mais visto pelos olheiros.
+  const showcase = SHOWCASE[getClub(player.club)?.tier] ?? 0;
 
   const score =
-    gap + potentialBonus + reputationBonus + formBonus - ageMalus - prestigeBarrier - disciplineMalus - scandalMalus;
+    gap + potentialBonus + reputationBonus + formBonus + showcase - ageMalus - prestigeBarrier - disciplineMalus - scandalMalus;
   return clamp(logistic(score, 0, 6), 0, 1);
 }
 
@@ -149,6 +154,8 @@ export function generateLoanOffers(player, { rng, max = 3 }) {
   const currentRating = squadRating(player.club);
   const candidates = ALL_CLUBS.filter((club) => {
     if (club.id === player.club) return false;
+    // Empréstimo para a base só dentro da mesma liga de base.
+    if (getLeague(club.leagueId)?.youth && club.leagueId !== getClub(player.club)?.leagueId) return false;
     const rating = squadRating(club.id);
     return rating < currentRating + 2 && rating > currentRating - 18 && player.overall >= rating - 8;
   });
@@ -226,26 +233,50 @@ export function renewalOffer(player, rng) {
   };
 }
 
-/** Peneiras do começo de carreira, para quem ainda não tem clube. */
-export function generateTrialOffers(player, rng, { nationLeagueId }) {
-  const league = getLeague(nationLeagueId) ?? getLeague('BRA_BASE');
-  const pool = league.teams.filter((team) => Math.abs(squadRating(team.id) - player.overall) < 16);
-  const teams = (pool.length >= 3 ? pool : league.teams).slice();
-  return rng
-    .shuffle(teams)
-    .slice(0, 3)
-    .map((team) => {
+// O que cada tamanho de base oferece na peneira.
+const TRIAL_TERMS = {
+  grande: {
+    role: ROLES.PROSPECT,
+    salary: 600,
+    perk: () => 'Treino 10% melhor e mais vitrine',
+    pitch: (name) => `O ${name} te aprovou na peneira. Treino de ponta e muita gente olhando, mas a briga por vaga é dura.`,
+  },
+  medio: {
+    role: ROLES.ROTATION,
+    salary: 400,
+    perk: () => 'Disputa posição e pode subir para o profissional',
+    pitch: (name) => `No ${name} você disputa posição de igual para igual e pode subir para o time profissional.`,
+  },
+  pequeno: {
+    role: ROLES.STARTER,
+    salary: 300,
+    perk: (club) => (club.parent ? 'Mais jogos e pode subir para o profissional' : 'Mais jogos para evoluir e aparecer'),
+    pitch: (name) => `O ${name} te dá a camisa de titular desde o primeiro jogo.`,
+  },
+};
+
+/** Peneiras do começo de carreira: uma base de clube grande, uma de médio e uma de pequeno. */
+export function generateTrialOffers(player, rng, { leagueId }) {
+  const league = getLeague(leagueId) ?? getLeague('BRA_BASE');
+  return Object.values(YOUTH_TIERS)
+    .map((tier) => league.teams.filter((team) => team.tier === tier.id))
+    .filter((teams) => teams.length)
+    .map((teams) => {
+      const team = rng.pick(teams);
+      const terms = TRIAL_TERMS[team.tier];
       const offer = buildOffer(player, team.id, rng, { interest: 0.6 });
       return {
         ...offer,
         trial: true,
-        weeklySalary: Math.max(300, Math.round(offer.weeklySalary * 0.3)),
+        tier: team.tier,
+        weeklySalary: terms.salary,
         signingBonus: 0,
         releaseClause: 0,
         years: 2,
-        role: ROLES.PROSPECT.id,
-        roleLabel: 'Base / promessa',
-        pitch: `O ${team.name} te chamou para a peneira. É a sua chance de virar profissional.`,
+        role: terms.role.id,
+        roleLabel: terms.role.label,
+        perk: terms.perk(getClub(team.id)),
+        pitch: terms.pitch(team.name),
       };
     });
 }

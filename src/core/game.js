@@ -2,7 +2,7 @@
 
 import { createRng } from './rng.js';
 import { clamp, logistic, money, plural, round } from './utils.js';
-import { getClub, getLeague, squadRating } from '../data/clubs.js';
+import { getClub, getLeague, squadRating, youthLeagueFor } from '../data/clubs.js';
 import { getNation } from '../data/nations.js';
 import { rivalryBetween } from '../data/rivals.js';
 import { createObjectives, settleObjectives } from '../engine/objectives.js';
@@ -187,7 +187,7 @@ export class Game {
     this.state.news = [];
     const nation = getNation(player.nationality);
     this.state.trials = {
-      offers: generateTrialOffers(player, this.rng, { nationLeagueId: nation.league === 'BRA1' ? 'BRA_BASE' : nation.league }),
+      offers: generateTrialOffers(player, this.rng, { leagueId: youthLeagueFor(nation.league).id }),
       intro: `${fullName(player)}, ${player.age} anos, ${getNation(player.nationality).demonym}. Nenhum clube, nenhum contrato. Só vontade.`,
     };
     this.state.screen = SCREENS.TRIALS;

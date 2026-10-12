@@ -20,7 +20,7 @@ export default {
           <div class="section">
             <h1>Começando do zero</h1>
             <p class="lede">${esc(trials.intro)}</p>
-            <p class="lede">Três clubes chamaram você para a peneira. Clube mais forte significa mais vitrine e menos minutos. Escolha um.</p>
+            <p class="lede">Três bases te aprovaram na peneira. No clube grande o treino é melhor e mais gente te vê, mas é difícil jogar; no pequeno você é titular desde o começo. Escolha uma.</p>
           </div>
         </header>
 

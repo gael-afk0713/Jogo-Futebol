@@ -5,30 +5,10 @@
 // level (0-100) na liga define o nível médio de dificuldade das partidas.
 // parent (só nos times de base) é o time profissional do mesmo clube, que
 // pode subir o jogador quando ele sai da idade da base.
+// tier (só nos times de base): grande, medio ou pequeno.
 // Os nomes são usados apenas como referência de fãs, sem vínculo oficial.
 
-export const LEAGUES = [
-  {
-    id: 'BRA_BASE',
-    name: 'Copa São Paulo de Juniores',
-    country: 'Brasil',
-    nation: 'BRA',
-    region: 'CONMEBOL',
-    level: 32,
-    reputation: 30,
-    youth: true,
-    rounds: 14,
-    teams: [
-      { id: 'base_portuguesa', name: 'Portuguesa Sub-20', prestige: 26 },
-      { id: 'base_juventus', name: 'Juventus-SP Sub-20', prestige: 22 },
-      { id: 'base_audax', name: 'Audax Sub-20', prestige: 25 },
-      { id: 'base_ferroviaria', name: 'Ferroviária Sub-20', prestige: 27 },
-      { id: 'base_novorizontino', name: 'Novorizontino Sub-20', prestige: 29, parent: 'bra2_novorizontino' },
-      { id: 'base_ponte', name: 'Ponte Preta Sub-20', prestige: 31, parent: 'bra2_ponte' },
-      { id: 'base_guarani', name: 'Guarani Sub-20', prestige: 30, parent: 'bra2_guarani' },
-      { id: 'base_mirassol', name: 'Mirassol Sub-20', prestige: 28, parent: 'bra2_mirassol' },
-    ],
-  },
+const PRO_LEAGUES = [
   {
     id: 'BRA3',
     name: 'Brasileirão Série C',
@@ -444,6 +424,86 @@ export const LEAGUES = [
   },
 ];
 
+// ------------------------------------------------------------------ bases
+// Cada país tem uma liga de base com o Sub-20 de clubes de três tamanhos:
+// grande (elenco mais forte, treino melhor e vitrine, mas pouco jogo), médio
+// (disputa posição) e pequeno (joga logo). A peneira oferece um de cada.
+export const YOUTH_TIERS = {
+  grande: { id: 'grande', label: 'Clube grande', prestige: 46 },
+  medio: { id: 'medio', label: 'Clube médio', prestige: 31 },
+  pequeno: { id: 'pequeno', label: 'Clube pequeno', prestige: 22 },
+};
+
+// Os clubes de cada faixa, do maior para o menor. Um id é o time
+// profissional do clube; { id, name } é um time de base sem time profissional no jogo.
+const YOUTH_DEFS = [
+  {
+    id: 'BRA_BASE',
+    name: 'Copa São Paulo de Juniores',
+    proLeague: 'BRA1',
+    grande: ['bra1_flamengo', 'bra1_palmeiras', 'bra1_saopaulo', 'bra1_corinthians'],
+    medio: [
+      { id: 'base_ponte', parent: 'bra2_ponte' },
+      { id: 'base_guarani', parent: 'bra2_guarani' },
+      { id: 'base_mirassol', parent: 'bra2_mirassol' },
+      { id: 'base_novorizontino', parent: 'bra2_novorizontino' },
+    ],
+    pequeno: [
+      { id: 'base_ferroviaria', name: 'Ferroviária Sub-20' },
+      { id: 'base_portuguesa', name: 'Portuguesa Sub-20' },
+      { id: 'base_audax', name: 'Audax Sub-20' },
+      { id: 'base_juventus', name: 'Juventus-SP Sub-20' },
+    ],
+  },
+  { id: 'ARG_BASE', name: 'Campeonato Argentino Sub-20', proLeague: 'ARG1', grande: ['arg_river', 'arg_boca', 'arg_racing'], medio: ['arg_independiente', 'arg_velez', 'arg_sanlorenzo'], pequeno: ['arg_lanus', 'arg_argentinos', 'arg_huracan'] },
+  { id: 'POR_BASE', name: 'Campeonato Nacional de Juniores', proLeague: 'POR1', grande: ['por_benfica', 'por_porto', 'por_sporting'], medio: ['por_braga', 'por_vitoria', 'por_famalicao'], pequeno: ['por_estoril', 'por_arouca', 'por_casapia'] },
+  { id: 'NED_BASE', name: 'Campeonato Holandês Sub-20', proLeague: 'NED1', grande: ['ned_ajax', 'ned_psv', 'ned_feyenoord'], medio: ['ned_az', 'ned_twente', 'ned_utrecht'], pequeno: ['ned_nec', 'ned_heerenveen', 'ned_gae'] },
+  { id: 'ENG_BASE', name: 'Premier League 2', proLeague: 'ENG1', grande: ['eng_mancity', 'eng_arsenal', 'eng_manutd'], medio: ['eng_westham', 'eng_brighton', 'eng_palace'], pequeno: ['eng2_southampton', 'eng2_norwich', 'eng2_preston'] },
+  { id: 'ESP_BASE', name: 'División de Honor Juvenil', proLeague: 'ESP1', grande: ['esp_real', 'esp_barcelona', 'esp_atletico'], medio: ['esp_athletic', 'esp_sociedad', 'esp_villarreal'], pequeno: ['esp_rayo', 'esp_getafe', 'esp_alaves'] },
+  { id: 'ITA_BASE', name: 'Campionato Primavera', proLeague: 'ITA1', grande: ['ita_inter', 'ita_juventus', 'ita_milan'], medio: ['ita_roma', 'ita_atalanta', 'ita_lazio'], pequeno: ['ita_genoa', 'ita_cagliari', 'ita_lecce'] },
+  { id: 'GER_BASE', name: 'A-Junioren-Bundesliga', proLeague: 'GER1', grande: ['ger_bayern', 'ger_leverkusen', 'ger_dortmund'], medio: ['ger_stuttgart', 'ger_frankfurt', 'ger_gladbach'], pequeno: ['ger_freiburg', 'ger_bremen', 'ger_mainz'] },
+  { id: 'FRA_BASE', name: 'Campeonato Francês Sub-20', proLeague: 'FRA1', grande: ['fra_psg', 'fra_marseille', 'fra_lyon'], medio: ['fra_lille', 'fra_rennes', 'fra_nice'], pequeno: ['fra_lens', 'fra_nantes', 'fra_toulouse'] },
+  { id: 'TUR_BASE', name: 'Campeonato Turco Sub-20', proLeague: 'TUR1', grande: ['tur_galatasaray', 'tur_fener', 'tur_besiktas'], medio: ['tur_trabzon', 'tur_basaksehir', 'tur_sivasspor'], pequeno: ['tur_konyaspor', 'tur_kasimpasa'] },
+  { id: 'MEX_BASE', name: 'Liga MX Sub-20', proLeague: 'MEX1', grande: ['mex_america', 'mex_chivas', 'mex_tigres'], medio: ['mex_monterrey', 'mex_cruzazul', 'mex_pumas'], pequeno: ['mex_toluca', 'mex_leon'] },
+  { id: 'USA_BASE', name: 'MLS NEXT', proLeague: 'USA1', grande: ['usa_inter', 'usa_lafc', 'usa_galaxy'], medio: ['usa_atlanta', 'usa_seattle', 'usa_nyc'], pequeno: ['usa_columbus', 'usa_austin'] },
+  { id: 'JPN_BASE', name: 'Campeonato Japonês Sub-20', proLeague: 'JPN1', grande: ['jpn_marinos', 'jpn_kawasaki', 'jpn_urawa'], medio: ['jpn_kobe', 'jpn_kashima', 'jpn_sanfrecce'], pequeno: ['jpn_gamba', 'jpn_frontale'] },
+  { id: 'SAU_BASE', name: 'Campeonato Saudita Sub-20', proLeague: 'SAU1', grande: ['sau_hilal', 'sau_nassr', 'sau_ittihad'], medio: ['sau_ahli', 'sau_shabab', 'sau_taawoun'], pequeno: ['sau_fateh', 'sau_khaleej'] },
+];
+
+const PRO_TEAM_NAMES = new Map(PRO_LEAGUES.flatMap((league) => league.teams.map((team) => [team.id, team.name])));
+
+function buildYouthLeague(def) {
+  const pro = PRO_LEAGUES.find((league) => league.id === def.proLeague);
+  const teams = Object.values(YOUTH_TIERS).flatMap((tier) =>
+    def[tier.id].map((entry, index) => {
+      const team = typeof entry === 'string' ? { parent: entry } : entry;
+      if (team.parent && !PRO_TEAM_NAMES.has(team.parent)) throw new Error(`[clubs] time profissional desconhecido na base: ${team.parent}`);
+      return {
+        id: team.id ?? `base_${team.parent}`,
+        name: team.name ?? `${PRO_TEAM_NAMES.get(team.parent)} Sub-20`,
+        // Do maior para o menor dentro da faixa, um ponto por clube.
+        prestige: tier.prestige - index,
+        ...(team.parent ? { parent: team.parent } : {}),
+        tier: tier.id,
+      };
+    }),
+  );
+  return {
+    id: def.id,
+    name: def.name,
+    country: pro.country,
+    nation: pro.nation,
+    region: pro.region,
+    level: 32,
+    reputation: 30,
+    youth: true,
+    rounds: (teams.length - 1) * 2,
+    teams,
+  };
+}
+
+export const LEAGUES = [...YOUTH_DEFS.map(buildYouthLeague), ...PRO_LEAGUES];
+
 const LEAGUE_BY_ID = new Map(LEAGUES.map((league) => [league.id, league]));
 
 export const ALL_CLUBS = LEAGUES.flatMap((league) =>
@@ -476,3 +536,12 @@ export function salaryBand(clubId) {
   const weekly = 180 * Math.pow(1.072, prestige) * richFactor * youthFactor;
   return Math.max(400, Math.round(weekly));
 }
+
+/** A liga de base do país de uma liga profissional (a do Brasil, se não houver). */
+export function youthLeagueFor(leagueId) {
+  const nation = getLeague(leagueId)?.nation;
+  return LEAGUES.find((league) => league.youth && league.nation === nation) ?? getLeague('BRA_BASE');
+}
+
+/** Faixa do time de base (grande, medio, pequeno) ou null se não for base. */
+export const youthTier = (clubId) => YOUTH_TIERS[getClub(clubId)?.tier] ?? null;
