@@ -6,6 +6,11 @@
           {
             "type": "command",
             "command": "command -v playwright-cli >/dev/null 2>&1 || npm install -g @playwright/cli@latest"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/trust-proxy-ca.sh",
+            "timeout": 120
           }
         ]
       }
