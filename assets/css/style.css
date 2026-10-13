@@ -2648,6 +2648,10 @@ code {
   }
 }
 
+.traitpick > li {
+  display: grid;
+}
+
 .traitpick .option {
   min-height: 0;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -3076,7 +3080,9 @@ code {
 }
 
 .goal__text {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
   gap: 3px;
   min-width: 0;
   flex: 1;
@@ -3095,7 +3101,7 @@ code {
 .goal__bar {
   display: block;
   height: 6px;
-  margin-top: 3px;
+  margin-top: auto;
   border-radius: 999px;
   background: var(--rule);
   overflow: hidden;
@@ -3857,7 +3863,20 @@ code {
 .offers {
   display: grid;
   gap: 16px;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+/* Três por linha já no iPad em pé; a que sobra fica no centro. */
+@media (min-width: 760px) {
+  .offers {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .offers > * {
+    flex: 0 1 calc((100% - 32px) / 3);
+    min-width: 230px;
+  }
 }
 
 @media (max-width: 759px) {
@@ -3925,9 +3944,16 @@ code {
 
 @media (min-width: 760px) {
   .cover {
+    padding: 56px;
+    gap: 36px;
+  }
+}
+
+/* Duas colunas só quando cabem as três figurinhas lado a lado sem cortar. */
+@media (min-width: 1100px) {
+  .cover {
     grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
     align-items: center;
-    padding: 56px;
     gap: 48px;
   }
 }
@@ -4002,6 +4028,18 @@ code {
   top: 22%;
   transform: rotate(8deg);
   z-index: 3;
+}
+
+/* iPad em pé: figurinhas embaixo do texto, um pouco menores, sem sobrar para fora. */
+@media (min-width: 760px) and (max-width: 1099px) {
+  .cover__stickers {
+    max-width: 470px;
+    min-height: 270px;
+  }
+
+  .cover__stickers .sticker {
+    --sticker-w: 150px;
+  }
 }
 
 @media (max-width: 759px) {
@@ -4291,8 +4329,9 @@ code {
 }
 
 .position-map {
-  max-width: 440px;
-  margin-bottom: 4px;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto 4px;
 }
 
 /* placar de estádio */

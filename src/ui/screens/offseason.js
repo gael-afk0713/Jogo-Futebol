@@ -1,7 +1,7 @@
 // Fim de temporada: a figurinha do ano é colada no álbum, e o mercado abre.
 
 import { esc, toast } from '../dom.js';
-import { money, plural, round } from '../../core/utils.js';
+import { decimal, money, plural } from '../../core/utils.js';
 import { attributeLabel } from '../../data/attributes.js';
 import { getClub } from '../../data/clubs.js';
 import { icon, initials, offerSticker, ratingBadge, statline } from '../components.js';
@@ -91,7 +91,7 @@ export default {
             { label: 'Gols', value: record.goals },
             { label: 'Assistências', value: record.assists },
             { label: 'Melhor em campo', value: record.motm },
-            { label: 'Nota média', value: record.rating ? round(record.rating, 2).toFixed(2) : '-' },
+            { label: 'Nota média', value: record.rating ? decimal(record.rating, 2) : '-' },
           ])}
         </section>
 

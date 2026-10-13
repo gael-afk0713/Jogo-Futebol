@@ -2,7 +2,7 @@
 
 import { esc } from './dom.js';
 import { ICONS } from './icons.js';
-import { clamp, plural, round } from '../core/utils.js';
+import { clamp, decimal, plural, round } from '../core/utils.js';
 import { ATTRIBUTE_GROUPS, attributeTier } from '../data/attributes.js';
 import { getPosition, isGoalkeeper } from '../data/positions.js';
 import { getClub, squadRating, YOUTH_TIERS } from '../data/clubs.js';
@@ -357,7 +357,7 @@ export function ratingBadge(rating, { pulse = null } = {}) {
   if (!rating) return '<span class="rating rating--empty num">-</span>';
   const value = round(rating, 1).toFixed(1);
   const attrs = pulse ? `data-pulse="${esc(pulse)}" data-value="${value}"` : '';
-  return `<span class="rating tier--${ratingTier(rating)} num" ${attrs}>${value}</span>`;
+  return `<span class="rating tier--${ratingTier(rating)} num" ${attrs}>${decimal(rating, 1)}</span>`;
 }
 
 

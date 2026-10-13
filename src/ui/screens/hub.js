@@ -1,7 +1,7 @@
 // Hub principal: a semana, os atributos, a vida, o álbum da carreira e a liga.
 
 import { esc, toast } from '../dom.js';
-import { money, plural, round } from '../../core/utils.js';
+import { decimal, money, plural } from '../../core/utils.js';
 import { getClub, getLeague } from '../../data/clubs.js';
 import { getNation } from '../../data/nations.js';
 import { getPosition } from '../../data/positions.js';
@@ -529,7 +529,7 @@ function weekTab(state, ctx) {
         { label: 'Jogos', value: state.player.season.apps },
         { label: 'Gols', value: state.player.season.goals },
         { label: 'Assistências', value: state.player.season.assists },
-        { label: 'Nota média', value: data.seasonRating ? round(data.seasonRating, 2).toFixed(2) : '-' },
+        { label: 'Nota média', value: data.seasonRating ? decimal(data.seasonRating, 2) : '-' },
         { label: 'Pontos', value: state.player.skillPoints },
       ])}
     </section>
@@ -986,7 +986,7 @@ function careerTab(state) {
         { label: 'Gols', value: totals.goals },
         { label: 'Assistências', value: totals.assists },
         { label: 'Melhor em campo', value: totals.motm },
-        { label: 'Nota média', value: avg ? round(avg, 2).toFixed(2) : '-' },
+        { label: 'Nota média', value: avg ? decimal(avg, 2) : '-' },
         { label: 'Seleção', value: `${totals.nationalCaps}/${totals.nationalGoals}` },
         ...(player.career.derbies
           ? [{ label: 'Clássicos (V-E-D)', value: `${player.career.derbies.won}-${player.career.derbies.drawn}-${player.career.derbies.lost}` }]

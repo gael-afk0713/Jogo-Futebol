@@ -1,7 +1,7 @@
 // Controlador central do jogo: guarda o estado, executa as ações e avisa a UI.
 
 import { createRng } from './rng.js';
-import { clamp, logistic, money, plural, round } from './utils.js';
+import { clamp, decimal, logistic, money, plural, round } from './utils.js';
 import { getClub, getLeague, squadRating, youthLeagueFor } from '../data/clubs.js';
 import { getNation } from '../data/nations.js';
 import { rivalryBetween } from '../data/rivals.js';
@@ -533,11 +533,11 @@ export class Game {
         ? report.result === 'V'
           ? report.stats.goals
             ? `Você decidiu o ${derby}: ${score}, ${plural(report.stats.goals, 'gol seu', 'gols seus')}. A torcida não esquece.`
-            : `Vitória no ${derby}: ${score}. Nota ${report.rating}.`
+            : `Vitória no ${derby}: ${score}. Nota ${decimal(report.rating, 1)}.`
           : report.result === 'D'
             ? `Derrota no ${derby}: ${score}. A torcida cobra.`
-            : `Empate no ${derby}: ${score}. Nota ${report.rating}.`
-        : `${score} contra o ${report.opponentName}. Nota ${report.rating}${report.stats.goals ? `, ${plural(report.stats.goals, 'gol', 'gols')}` : ''}.`;
+            : `Empate no ${derby}: ${score}. Nota ${decimal(report.rating, 1)}.`
+        : `${score} contra o ${report.opponentName}. Nota ${decimal(report.rating, 1)}${report.stats.goals ? `, ${plural(report.stats.goals, 'gol', 'gols')}` : ''}.`;
     this.pushNews(headline, report.result === 'V' ? 'good' : report.result === 'D' ? 'bad' : 'info', 'soccer-ball');
 
     this.applyWeekResult(week, report);

@@ -3,7 +3,7 @@
 // No fim da temporada, cada meta cumprida paga um bônus e agrada o técnico;
 // meta perdida o deixa desconfiado.
 
-import { clamp, money, plural } from '../core/utils.js';
+import { clamp, decimal, money, plural } from '../core/utils.js';
 import { getClub, getLeague, squadRating } from '../data/clubs.js';
 import { getRole } from './transfers.js';
 import { seasonRating } from './player.js';
@@ -63,7 +63,7 @@ export function createObjectives(player, season) {
   if (production.type === 'rating') {
     const target = Math.round((production.target + (role === 'estrela' ? 0.1 : 0)) * 10) / 10;
     const minApps = Math.max(3, Math.round(expectedGames * 0.5));
-    objectives.push({ id: 'rating', type: 'rating', label: `Termine com nota média de ${target.toFixed(1)} ou mais`, target, minApps });
+    objectives.push({ id: 'rating', type: 'rating', label: `Termine com nota média de ${decimal(target, 1)} ou mais`, target, minApps });
   } else {
     const target = Math.max(2, Math.round(expectedGames * production.rate * level));
     const label = {
@@ -130,7 +130,7 @@ export function objectiveProgress(objective, player, season, { final = false } =
         current,
         target: objective.target,
         ratio: current ? clamp((current - 5.5) / (objective.target - 5.5), 0, 1) : 0,
-        text: current ? `${current.toFixed(2)} em ${plural(stats.apps, 'jogo', 'jogos')}${enough ? '' : ` (mínimo ${objective.minApps})`}` : 'sem jogos ainda',
+        text: current ? `${decimal(current, 2)} em ${plural(stats.apps, 'jogo', 'jogos')}${enough ? '' : ` (mínimo ${objective.minApps})`}` : 'sem jogos ainda',
         done: final ? okNow : null,
       };
     }

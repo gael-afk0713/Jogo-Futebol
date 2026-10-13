@@ -1,7 +1,7 @@
 // O álbum completo: resumo final da carreira.
 
 import { esc } from '../dom.js';
-import { money, round } from '../../core/utils.js';
+import { decimal, money } from '../../core/utils.js';
 import { getClub } from '../../data/clubs.js';
 import { getNation } from '../../data/nations.js';
 import { getPosition } from '../../data/positions.js';
@@ -40,7 +40,7 @@ export default {
             { label: 'Gols', value: totals.goals },
             { label: 'Assistências', value: totals.assists },
             { label: 'Melhor em campo', value: totals.motm },
-            { label: 'Nota média', value: avg ? round(avg, 2).toFixed(2) : '-' },
+            { label: 'Nota média', value: avg ? decimal(avg, 2) : '-' },
             { label: 'Pico de overall', value: peak },
           ])}
           <ul class="ledger">

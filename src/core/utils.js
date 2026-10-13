@@ -14,12 +14,18 @@ export const average = (list, pick = (x) => x) => (list.length ? sum(list, pick)
 export const uid = (prefix = 'id') =>
   `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
+// Número com vírgula decimal, como se escreve em português (1,5 e não 1.5).
+const comma = (value) => String(value).replace('.', ',');
+
+/** Número com casas decimais fixas e vírgula: decimal(6.8, 2) → "6,80". */
+export const decimal = (value, digits = 1) => comma(Number(value).toFixed(digits));
+
 /** Formata dinheiro em euros com sufixos curtos (ex: 1,2 mi). */
 export function money(value) {
   const abs = Math.abs(value);
-  if (abs >= 1_000_000_000) return `€ ${round(value / 1_000_000_000, 2)} bi`;
-  if (abs >= 1_000_000) return `€ ${round(value / 1_000_000, 2)} mi`;
-  if (abs >= 1_000) return `€ ${round(value / 1_000, 1)} mil`;
+  if (abs >= 1_000_000_000) return `€ ${comma(round(value / 1_000_000_000, 2))} bi`;
+  if (abs >= 1_000_000) return `€ ${comma(round(value / 1_000_000, 2))} mi`;
+  if (abs >= 1_000) return `€ ${comma(round(value / 1_000, 1))} mil`;
   return `€ ${Math.round(value)}`;
 }
 
