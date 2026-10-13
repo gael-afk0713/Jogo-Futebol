@@ -16,3 +16,5 @@ dist/
 # Capturas de revisão de design (regeráveis)
 .impeccable/review/
 .impeccable/config.local.json
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
