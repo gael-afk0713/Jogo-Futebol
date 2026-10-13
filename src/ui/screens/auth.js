@@ -260,18 +260,7 @@ export default {
       await busy(ctx, async () => ctx.onUpgraded(await upgradeGuestWithGoogle()));
     },
 
-    'sign-out': async (ctx) => {
-      if (ctx.auth.user?.isAnonymous) {
-        const ok = await ctx.confirm({
-          title: 'Sair da conta de convidado?',
-          text: 'Conta de convidado não tem senha: depois de sair, não dá para voltar a ela nem às carreiras salvas nela.',
-          confirmLabel: 'Sair mesmo assim',
-          danger: true,
-        });
-        if (!ok) return;
-      }
-      await ctx.signOut();
-    },
+    'sign-out': (ctx) => ctx.signOut(),
 
     'new-career': (ctx) => ctx.newCareer(),
 

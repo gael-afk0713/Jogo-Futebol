@@ -22,6 +22,11 @@ export const firebaseConfig = {
   appId: '1:980614360863:web:1dc55d456511571ba00a2a',
 };
 
+// App Check (reCAPTCHA Enterprise): prova para o Firebase que quem chama é o
+// jogo publicado. A chave do site também é pública por design; o que protege é
+// a lista de domínios dela no console do reCAPTCHA.
+export const appCheckSiteKey = '6LfVne0tAAAAAP2NVgKSPNB6EwMswl5qjXcqNHLj';
+
 /** Só tenta conectar quando os campos essenciais estiverem preenchidos. */
 export const isFirebaseConfigured = () =>
   Boolean(firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.authDomain);

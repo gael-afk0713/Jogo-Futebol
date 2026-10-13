@@ -18,3 +18,7 @@ dist/
 .impeccable/config.local.json
 # Playwright CLI output (may contain credentials)
 .playwright-cli/
+# Logs do emulador e da linha de comando do Firebase
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

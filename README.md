@@ -336,9 +336,12 @@ para a lista.
 
 Sem conta, as carreiras ficam no navegador. Com login (e-mail, Google ou
 convidado), ficam também na nuvem e aparecem em qualquer aparelho em que você
-entrar. Ao fazer login, as carreiras que você criou sem conta naquele navegador
-sobem para a sua conta. Quem entra como convidado pode depois transformar a conta
-em e-mail ou Google sem perder nenhuma carreira.
+entrar. Ao entrar, se houver carreiras feitas sem conta naquele navegador, o
+jogo pergunta se você quer guardá-las na conta; quem responde "Agora não" não é
+perguntado de novo sobre as mesmas. Ao sair da conta, o jogo salva, confere na
+nuvem e só então apaga as cópias daquela conta guardadas no aparelho; o que não
+deu para conferir fica guardado. Quem entra como convidado pode depois
+transformar a conta em e-mail ou Google sem perder nenhuma carreira.
 
 ## Firebase (login e save na nuvem)
 
@@ -365,13 +368,32 @@ export const firebaseConfig = {
 ```
 
 6. **Firestore Database → Regras**: cole o conteúdo de
-   [`firestore.rules`](firestore.rules) e clique em *Publicar*. Sem isso o
-   Firestore recusa os saves (o jogo avisa com "O Firestore recusou o acesso").
+   [`firestore.rules`](firestore.rules) e clique em *Publicar*, ou publique pela
+   linha de comando com o [`firebase.json`](firebase.json):
+   `npx firebase-tools deploy --only firestore:rules --project seu-projeto`.
+   Sem isso o Firestore recusa os saves (o jogo avisa com "O Firestore recusou o
+   acesso").
 7. Em **Authentication → Settings → Authorized domains**, adicione o domínio onde
    o jogo vai rodar (ex: `seu-usuario.github.io`). `localhost` já vem autorizado.
 
 > A `apiKey` do Firebase Web é pública por natureza: ela só identifica o projeto.
 > A segurança real vem das regras do Firestore.
+
+**App Check.** O jogo prova para o Firebase que quem chama é ele mesmo, com o
+reCAPTCHA Enterprise (chave do site em `src/firebase/config.js`). Os tokens valem
+12 horas, ficam guardados no aparelho e só são pedidos quando o login ou o save
+precisam, sem renovação em segundo plano, para gastar poucas verificações. Se o
+App Check falhar, o jogo segue normalmente. Em `localhost` ele usa um token de
+depuração, que nunca vai para o repositório: cadastre um em **App Check → Apps →
+Gerenciar tokens de depuração** e guarde o mesmo valor no navegador com
+`localStorage.setItem('craque.appcheck.debug', 'SEU-TOKEN')`. Sem esse token o
+App Check fica desligado em `localhost` (com um token não cadastrado, o SDK 10.12
+deixa o erro subir e o login falha junto).
+
+**Regras, testadas no emulador:** só o dono lê, lista, grava e apaga as próprias
+carreiras; o id precisa ser letras minúsculas e números (8 a 32); o documento tem
+exatamente `meta` (mapa), `state` (texto com menos de 900 mil caracteres),
+`clientUpdatedAt` (número) e `updatedAt` (a hora do servidor).
 
 Cada carreira fica em `users/{uid}/careers/{id}`, e as regras só deixam o dono
 ler e escrever. O jogo salva sozinho a cada ação (no navegador na hora, na nuvem
@@ -414,7 +436,7 @@ cola no perfil do jogador.
 ## Estrutura do código
 
 ```
-index.html                 página única e a tela de carregamento (fica aqui para aparecer antes do código)
+index.html                 página única, política de segurança (CSP) e o HTML/CSS da tela de carregamento
 assets/css/style.css       mundo "álbum de figurinhas", claro e noturno
 assets/fonts/              Barlow e Barlow Condensed hospedadas no projeto (OFL)
 assets/avatar/             retratos em camadas (pele, cabelo, barba)
@@ -463,6 +485,7 @@ src/
     shop.js                compra, venda, dispensa, efeitos e tetos dos itens
   ui/
     app.js                 roteador de telas e delegação de eventos
+    boot-screen.js         tela de carregamento (script comum, roda antes do código do jogo)
     boot.js                avisa a tela de carregamento de cada etapa concluída
     components.js          figurinhas, avatar SVG, medidores, tabelas
     icons.js               ícones Phosphor usados no jogo (MIT)
@@ -472,8 +495,9 @@ src/
     screens/               auth, create, trials, hub, match, offseason, retired
   firebase/
     config.js              suas chaves (opcional)
-    firebase.js            auth + firestore carregados sob demanda
+    firebase.js            auth + firestore + App Check carregados sob demanda
 firestore.rules            regras de segurança do save na nuvem
+firebase.json              publicação das regras e emulador do Firestore
 ```
 
 O `engine/` não conhece o DOM e o `data/` não conhece as regras, então dá para

@@ -21,6 +21,8 @@ const INDEX_KEY = 'craque:carreiras:v4';
 const slotKey = (id) => `craque:carreira:v4:${id}`;
 const LEGACY_KEY = 'carreira-futebol:save:v3';
 const LEGACY_META_KEY = 'carreira-futebol:meta:v3';
+// Carreiras sem conta que cada conta já disse para não guardar ({ uid: [ids] }).
+const DECLINED_KEY = 'craque:adocao-recusada:v1';
 
 function safeParse(text) {
   try {
@@ -144,6 +146,19 @@ export function listLocalCareers(owner = null) {
 
 export function lastCareerId(owner = null) {
   return readIndex().last[ownerKey(owner)] ?? null;
+}
+
+/** Carreiras feitas sem conta neste navegador que esta conta ainda não recusou guardar. */
+export function offlineCareersToOffer(uid) {
+  const declined = new Set(read(DECLINED_KEY)?.[uid] ?? []);
+  return listLocalCareers(null).filter((meta) => !declined.has(meta.id));
+}
+
+/** Lembra que esta conta não quis guardar essas carreiras, para não perguntar de novo. */
+export function declineOfflineCareers(uid, ids) {
+  const all = read(DECLINED_KEY) ?? {};
+  all[uid] = [...new Set([...(all[uid] ?? []), ...ids])];
+  write(DECLINED_KEY, all);
 }
 
 function setOwner(id, owner) {
@@ -284,27 +299,58 @@ export class SaveManager {
   }
 
   /**
-   * Depois do login: as carreiras feitas sem conta neste navegador passam
-   * para a conta (e sobem para a nuvem), e o save do formato antigo na nuvem
-   * vira uma carreira da lista.
+   * Guarda na conta (e na nuvem) carreiras feitas sem conta neste navegador.
+   * Só acontece quando o jogador aceita, ao entrar.
    */
-  async adoptAfterSignIn() {
+  async adoptOfflineCareers(ids) {
     if (!this.cloud) return 0;
     let moved = 0;
-
-    for (const meta of listLocalCareers(null)) {
-      const state = loadLocalCareer(meta.id);
+    for (const id of ids) {
+      const state = loadLocalCareer(id);
       if (!state) continue;
       try {
-        await saveCareerToCloud(this.uid, meta.id, state, careerMeta(state));
-        setOwner(meta.id, this.uid);
+        await saveCareerToCloud(this.uid, id, state, careerMeta(state));
+        setOwner(id, this.uid);
         moved += 1;
       } catch (error) {
         console.warn('[save] não consegui enviar uma carreira para a nuvem:', error);
         break;
       }
     }
+    return moved;
+  }
 
+  /**
+   * Antes de sair da conta: confere na nuvem cada carreira desta conta guardada
+   * neste navegador e apaga só as cópias locais cuja versão mais recente já está
+   * lá. As que não deu para confirmar ficam (e sobem quando a conta voltar).
+   */
+  async clearLocalCopiesSavedInCloud() {
+    if (!this.cloud) return { cleared: 0, kept: 0 };
+    const local = listLocalCareers(this.uid);
+    if (!local.length) return { cleared: 0, kept: 0 };
+    let remote;
+    try {
+      remote = new Map((await listCloudCareers(this.uid)).map((meta) => [meta.id, meta]));
+    } catch (error) {
+      console.warn('[save] não consegui conferir a nuvem antes de sair:', error);
+      return { cleared: 0, kept: local.length };
+    }
+    let cleared = 0;
+    for (const meta of local) {
+      const cloud = remote.get(meta.id);
+      if (cloud && (cloud.updatedAt ?? 0) >= (meta.updatedAt ?? 0)) {
+        deleteLocalCareer(meta.id);
+        cleared += 1;
+      }
+    }
+    return { cleared, kept: local.length - cleared };
+  }
+
+  /** O save do formato antigo na nuvem (já é desta conta) vira uma carreira da lista. */
+  async migrateLegacyCloudSave() {
+    if (!this.cloud) return 0;
+    let moved = 0;
     try {
       const legacy = await takeLegacyCloudSave(this.uid);
       if (legacy?.state && careerMeta(legacy.state)) {

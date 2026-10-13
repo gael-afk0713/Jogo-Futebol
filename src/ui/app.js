@@ -7,7 +7,7 @@ import { boot } from './boot.js';
 import { Sound } from './sound.js';
 import { actionSound, BULK_ACTIONS, soundCues } from './soundCues.js';
 import { game, SCREENS } from '../core/game.js';
-import { MAX_CAREERS, SaveManager } from '../core/storage.js';
+import { declineOfflineCareers, MAX_CAREERS, offlineCareersToOffer, SaveManager } from '../core/storage.js';
 import { authErrorMessage, firebaseAvailable, onAuthChange, signOutUser } from '../firebase/firebase.js';
 
 import authScreen from './screens/auth.js';
@@ -116,11 +116,37 @@ export class App {
       this.save.setUser(user?.uid ?? null);
       if (this.game.state.player) this.game.reset();
     }
-    if (user && this.adoptedFor !== user.uid) {
-      this.adoptedFor = user.uid;
-      const moved = await this.save.adoptAfterSignIn();
-      if (moved) toast(`${moved === 1 ? 'Uma carreira foi enviada' : `${moved} carreiras foram enviadas`} para a sua conta.`, 'good');
+    const firstLook = user && this.adoptedFor !== user.uid;
+    this.adoptedFor = user?.uid ?? null;
+    if (firstLook) await this.save.migrateLegacyCloudSave();
+    await this.refreshCareers();
+    // Depois que o álbum aparece (a tela de carregamento já saiu), para a pergunta ficar visível.
+    if (firstLook) await this.offerOfflineCareers(user);
+  }
+
+  /**
+   * Carreiras feitas sem conta neste navegador só vão para a conta se o
+   * jogador aceitar. Quem recusa não é perguntado de novo sobre as mesmas.
+   */
+  async offerOfflineCareers(user) {
+    const offline = offlineCareersToOffer(user.uid);
+    if (!offline.length) return;
+    const names = offline.map((meta) => meta.card?.nickname || meta.card?.firstName || 'Carreira').join(', ');
+    const one = offline.length === 1;
+    const ok = await this.ctx.confirm({
+      title: one ? 'Guardar esta carreira na sua conta?' : 'Guardar estas carreiras na sua conta?',
+      text: `${one ? 'Há uma carreira feita' : `Há ${offline.length} carreiras feitas`} sem conta neste aparelho (${names}). Guardando na conta, ${one ? 'ela fica' : 'elas ficam'} salva${one ? '' : 's'} na nuvem; senão, ${one ? 'continua' : 'continuam'} só aqui, sem conta.`,
+      confirmLabel: 'Guardar na conta',
+      cancelLabel: 'Agora não',
+    });
+    if (this.save.uid !== user.uid) return;
+    if (!ok) {
+      declineOfflineCareers(user.uid, offline.map((meta) => meta.id));
+      return;
     }
+    const moved = await this.save.adoptOfflineCareers(offline.map((meta) => meta.id));
+    if (moved) toast(`${moved === 1 ? 'Uma carreira foi guardada' : `${moved} carreiras foram guardadas`} na sua conta.`, 'good');
+    else toast('Não consegui guardar agora. Tente de novo mais tarde.', 'warn');
     await this.refreshCareers();
   }
 
@@ -257,11 +283,37 @@ export class App {
     this.render();
   }
 
+  /**
+   * Sair da conta: salva, confere na nuvem e só então apaga as cópias desta
+   * conta guardadas no aparelho. O que não deu para confirmar fica guardado.
+   */
   async handleSignOut() {
+    // Vale para os dois botões de sair (a capa e a barra de cima).
+    if (this.auth.user?.isAnonymous) {
+      const ok = await this.ctx.confirm({
+        title: 'Sair da conta de convidado?',
+        text: 'Conta de convidado não tem senha: depois de sair, não dá para voltar a ela nem às carreiras salvas nela.',
+        confirmLabel: 'Sair mesmo assim',
+        danger: true,
+      });
+      if (!ok) return;
+    }
     await this.save.saveNow();
+    const { kept } = await this.save.clearLocalCopiesSavedInCloud();
+    // A carreira aberta já foi salva; fechar antes de sair evita salvá-la de novo sem conta.
+    this.save.activeId = null;
+    if (this.game.state.player) this.game.reset();
     await signOutUser();
     if (!firebaseAvailable()) await this.handleAuthState(null);
-    toast('Você saiu da conta.', 'info');
+    if (kept) {
+      toast(
+        `Você saiu da conta. ${kept === 1 ? 'Uma carreira não pôde ser conferida' : `${kept} carreiras não puderam ser conferidas`} na nuvem e ${kept === 1 ? 'ficou guardada' : 'ficaram guardadas'} neste aparelho.`,
+        'warn',
+        5200,
+      );
+    } else {
+      toast('Você saiu da conta.', 'info');
+    }
   }
 
   /** Garante que a tela restaurada faz sentido com o estado carregado. */

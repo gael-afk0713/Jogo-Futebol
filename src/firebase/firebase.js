@@ -1,15 +1,24 @@
-// Integração opcional com Firebase Authentication + Cloud Firestore.
+// Integração opcional com Firebase Authentication + Cloud Firestore, protegidos
+// pelo App Check.
 //
 // Tudo aqui é carregado sob demanda (import dinâmico via CDN) para que o jogo
 // abra instantaneamente e continue funcionando offline se o Firebase não
 // estiver configurado.
 
-import { firebaseConfig, isFirebaseConfigured } from './config.js';
+import { appCheckSiteKey, firebaseConfig, isFirebaseConfigured } from './config.js';
 
 const SDK_VERSION = '10.12.2';
 const APP_URL = `https://www.gstatic.com/firebasejs/${SDK_VERSION}/firebase-app.js`;
 const AUTH_URL = `https://www.gstatic.com/firebasejs/${SDK_VERSION}/firebase-auth.js`;
 const STORE_URL = `https://www.gstatic.com/firebasejs/${SDK_VERSION}/firebase-firestore.js`;
+const APP_CHECK_URL = `https://www.gstatic.com/firebasejs/${SDK_VERSION}/firebase-app-check.js`;
+
+// Em localhost (desenvolvimento e testes) o App Check usa o token de depuração
+// cadastrado no Firebase (App Check > Gerenciar tokens de depuração). O token
+// nunca vai para o repositório: fica só neste navegador, nesta chave do
+// localStorage. Sem ele, o App Check fica desligado em localhost.
+const DEBUG_TOKEN_KEY = 'craque.appcheck.debug';
+const isLocalhost = () => ['localhost', '127.0.0.1', '[::1]'].includes(globalThis.location?.hostname);
 
 let modules = null;
 let app = null;
@@ -26,14 +35,20 @@ export async function initFirebase() {
   if (initError) throw initError;
 
   try {
-    const [appModule, authModule, storeModule] = await Promise.all([
+    const [appModule, authModule, storeModule, appCheckModule] = await Promise.all([
       import(/* @vite-ignore */ APP_URL),
       import(/* @vite-ignore */ AUTH_URL),
       import(/* @vite-ignore */ STORE_URL),
+      import(/* @vite-ignore */ APP_CHECK_URL).catch((error) => {
+        console.warn('[firebase] App Check indisponível, seguindo sem ele:', error);
+        return null;
+      }),
     ]);
 
     modules = { authModule, storeModule };
     app = appModule.getApps?.().length ? appModule.getApp() : appModule.initializeApp(firebaseConfig);
+    // Antes de qualquer uso do login ou do Firestore, para que já saiam com o token.
+    startAppCheck(appCheckModule, app);
     auth = authModule.getAuth(app);
     db = storeModule.getFirestore(app);
     return { auth, db, ...modules };
@@ -41,6 +56,47 @@ export async function initFirebase() {
     initError = error;
     console.warn('[firebase] não foi possível inicializar:', error);
     throw error;
+  }
+}
+
+/**
+ * App Check com reCAPTCHA Enterprise. Ainda não é exigido no console, então se
+ * algo falhar o jogo segue normalmente (só fica o aviso no console).
+ * Sem renovação em segundo plano: o token (vale 12 horas) só é pedido quando o
+ * login ou o save precisam dele e fica guardado no aparelho, para não gastar
+ * verificações do reCAPTCHA à toa.
+ */
+function startAppCheck(appCheckModule, firebaseApp) {
+  if (!appCheckModule || !appCheckSiteKey) return;
+  try {
+    let provider;
+    if (isLocalhost()) {
+      let debugToken = null;
+      try {
+        debugToken = localStorage.getItem(DEBUG_TOKEN_KEY);
+      } catch {
+        // Sem armazenamento, sem token.
+      }
+      // No SDK 10.12, se a troca do token de depuração falha (token não
+      // cadastrado), o erro sobe e o login e o Firestore falham junto (fora do
+      // modo de depuração o SDK segura o erro). Sem token, então, o App Check
+      // fica desligado em localhost.
+      if (!debugToken) {
+        console.info(`[firebase] App Check desligado em localhost: guarde um token de depuração cadastrado em localStorage "${DEBUG_TOKEN_KEY}".`);
+        return;
+      }
+      globalThis.FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken;
+      // Em modo de depuração o provedor nunca é consultado; este vazio evita
+      // baixar e montar o reCAPTCHA à toa em localhost.
+      provider = new appCheckModule.CustomProvider({
+        getToken: () => Promise.reject(new Error('Em localhost o App Check usa só o token de depuração.')),
+      });
+    } else {
+      provider = new appCheckModule.ReCaptchaEnterpriseProvider(appCheckSiteKey);
+    }
+    appCheckModule.initializeAppCheck(firebaseApp, { provider, isTokenAutoRefreshEnabled: false });
+  } catch (error) {
+    console.warn('[firebase] App Check não iniciou, seguindo sem ele:', error);
   }
 }
 

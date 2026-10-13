@@ -30,6 +30,7 @@ Use playwright-cli to give your agent eyes into the browser. This bridges the ga
 - The `playwright-cli` command is installed at the start of every cloud session by the SessionStart hook in `.claude/settings.json`.
 - It launches the Chromium that ships with the environment (`.playwright/cli.config.json`), so nothing is downloaded.
 - `.claude/hooks/trust-proxy-ca.sh` makes that Chromium trust the session's network certificate, so Firebase loads in tests. Never turn off HTTPS checks instead.
+- App Check on localhost only runs with a registered debug token stored in `localStorage` (`craque.appcheck.debug`); the `/test` command takes it from the `APPCHECK_DEBUG_TOKEN` environment variable. Never print or commit it.
 - The full command list lives in the `playwright-cli` skill.
 
 Serve the game and open it:
