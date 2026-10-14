@@ -9,7 +9,7 @@ import { WEEK_STEPS } from '../../core/game.js';
 import { freeWeekText, seasonLabel, standings, weekDate } from '../../engine/season.js';
 import { previewTraining, trainingOptionsFor } from '../../engine/training.js';
 import { upgradeCost, attributeCeiling, keyAttributesFor } from '../../engine/overall.js';
-import { careerTotals, experience, EXPERIENCE_LEVELS } from '../../engine/player.js';
+import { careerTotals, experience, EXPERIENCE_LEVELS, LIFE_STATS } from '../../engine/player.js';
 import { objectiveProgress } from '../../engine/objectives.js';
 import { attributeLabel } from '../../data/attributes.js';
 import { expenseBreakdown, netWorth, weeklySponsors } from '../../engine/finance.js';
@@ -48,7 +48,7 @@ import {
   traitChips,
 } from '../components.js';
 
-const ui = { tab: 'semana', lastOverall: null, peek: null, lifeCat: 'lazer', affordOnly: false };
+const ui = { tab: 'semana', lastOverall: null, peek: null, lifeCat: 'lazer', affordOnly: false, allTraining: false };
 
 const TABS = [
   { id: 'semana', label: 'Semana', icon: 'calendar-blank' },
@@ -91,23 +91,34 @@ function profile(state, data, ctx) {
   const grew = !opened && ui.lastOverall !== null && player.overall > ui.lastOverall;
   ui.lastOverall = player.overall;
 
+  // Fora da aba Semana, no retrato, a ficha encolhe para o conteúdo da aba aparecer logo.
+  const compact = ui.tab !== 'semana';
   return `
-    <section class="profile" aria-label="Seu jogador">
-      ${playerSticker(player, { isNew: grew || opened, pulse: 'overall', meta: `${nation.id} · ${club?.name ?? 'Sem clube'}` })}
-      <div>
+    <section class="profile ${compact ? 'profile--compact' : ''}" aria-label="Seu jogador">
+      ${playerSticker(player, { isNew: grew || opened, pulse: 'overall', meta: `${nation.id} · ${club ? initials(club.name) : 'Sem clube'}` })}
+      <div class="profile__body">
         <h1 class="profile__name">${esc(player.firstName)} ${esc(player.lastName)}</h1>
-        <div class="profile__facts">
-          <span><strong>${esc(position.name)}</strong>, ${player.age} anos, ${esc(nation.name)}</span>
-          <span><strong>${esc(club?.name ?? 'Sem clube')}</strong>${league ? `, ${esc(league.name)}` : ''}</span>
-          ${data.position ? `<span>${data.position}º lugar na tabela</span>` : ''}
-          <span>Experiência: <strong>${esc(experience(player).level.label)}</strong></span>
-          <span><strong class="num">${esc(money(player.money))}</strong> em conta</span>
+        <p class="profile__line"><strong>${esc(position.name)}</strong> · ${player.age} anos · ${esc(nation.name)}</p>
+        <p class="profile__line"><strong>${esc(club?.name ?? 'Sem clube')}</strong>${data.position && league ? ` · ${data.position}º na ${esc(league.name)}` : ''}</p>
+        <p class="profile__line">${esc(experience(player).level.label)} · <strong class="num">${esc(money(player.money))}</strong> em conta</p>
+        <div class="profile__vitals" aria-label="Indicadores">
+          ${VITALS.map((id) => vital(id, player.life[id])).join('')}
         </div>
       </div>
-    </section>
-    <div class="vitals" aria-label="Indicadores">
-      ${lifeMeters(player, ['fitness', 'happiness', 'managerRelation', 'fanRelation'])}
-    </div>`;
+    </section>`;
+}
+
+const VITALS = ['happiness', 'fitness', 'managerRelation', 'fanRelation'];
+
+/** Um indicador da ficha: número grande e um filete do nível, que só fica vermelho quando pede atenção. */
+function vital(id, raw) {
+  const stat = LIFE_STATS.find((item) => item.id === id);
+  const value = Math.max(0, Math.min(100, Math.round(raw ?? 0)));
+  return `<div class="vital ${value < 40 ? 'is-low' : ''}" data-pulse="vital-${id}" data-value="${value}">
+    <span class="vital__label">${icon(stat.icon)}${esc(stat.label)}</span>
+    <strong class="vital__value num">${value}</strong>
+    <span class="vital__bar" role="meter" aria-label="${esc(stat.label)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${value}"><span style="--v:${value / 100}"></span></span>
+  </div>`;
 }
 
 /* ---------------------------------------------------------------- semana */
@@ -136,7 +147,7 @@ function signed(value) {
  * Os efeitos do treino na linha. A evolução vem da conta do preparador: um
  * treino com tudo no teto não aparece como "evolução alta".
  */
-function trainingEffects(option, assessed) {
+function effectList(option, assessed) {
   const effects = [];
   if (option.xp > 0) {
     const growth = assessed?.growth ?? (option.xp >= 25 ? 1 : 0.5);
@@ -151,6 +162,11 @@ function trainingEffects(option, assessed) {
   if (option.health) effects.push({ text: `Saúde ${signed(option.health)}`, tone: 'up' });
   const risk = assessed?.injuryRisk ?? option.injuryRisk;
   if (risk >= 0.04) effects.push({ text: `Risco de lesão ${Math.round(risk * 100)}%`, tone: 'down' });
+  return effects;
+}
+
+function trainingEffects(option, assessed) {
+  const effects = effectList(option, assessed);
   return `<span class="option__effects">${effects.map((effect) => `<span class="effect--${effect.tone}">${esc(effect.text)}</span>`).join('')}</span>`;
 }
 
@@ -233,24 +249,31 @@ function trainingRow(player, option, { blocked, suggested, insight, assessed }) 
   </li>`;
 }
 
-/** O cartão do preparador: o treino recomendado, por quê, e um toque para treinar. */
-function coachCard(advice, injured) {
-  const { best, ranked, reasons } = advice;
-  const second = ranked.find((entry) => entry.id !== best.id);
-  const close = second && best.score - second.score < 0.08;
-  return `
-    <div class="coach" aria-labelledby="coach-titulo">
-      <div class="coach__head">
-        <span class="coach__icon">${icon('clipboard-text')}</span>
-        <div class="coach__title">
-          <p class="coach__kicker">O preparador recomenda</p>
-          <h3 class="coach__pick" id="coach-titulo">${esc(best.option.label)}</h3>
-        </div>
-        <button class="btn btn--primary coach__go" data-action="choose-training" data-training="${best.id}">${injured ? 'Descansar' : 'Treinar'}</button>
-      </div>
-      <ul class="coach__why">${reasons.map((reason) => `<li>${esc(reason)}</li>`).join('')}</ul>
-      ${second && !injured ? `<p class="coach__alt">${close ? 'Quase empatado com' : 'Segunda opção:'} <strong>${esc(second.option.label)}</strong></p>` : ''}
-    </div>`;
+const SEAL_ICONS = { up: 'arrow-up', down: 'arrow-down', mid: 'equals' };
+
+/**
+ * Figurinha de treino: frente cobalto com o nome, verso com o porquê e os
+ * efeitos em selos. A recomendada pelo preparador leva o carimbo e o botão amarelo.
+ */
+function trainingCard(player, option, { assessed, reasons = null, injured = false }) {
+  const targets = trainingTargets(player, option);
+  const recommended = Boolean(reasons);
+  const rests = injured || RECOVERY.has(option.id);
+  return `<article class="tcard ${recommended ? 'tcard--pick' : ''}" aria-labelledby="treino-${option.id}">
+    <div class="tcard__face">
+      <span class="tcard__icon">${icon(option.icon)}</span>
+      <h3 class="tcard__name" id="treino-${option.id}">${esc(option.label)}</h3>
+      ${recommended ? '<span class="tcard__stamp">Recomendado</span>' : ''}
+    </div>
+    <div class="tcard__back">
+      ${recommended ? `<ul class="tcard__why">${reasons.map((reason) => `<li>${esc(reason)}</li>`).join('')}</ul>` : ''}
+      ${targets ? `<p class="tcard__desc">Treina ${esc(targets)}</p>` : recommended ? '' : `<p class="tcard__desc">${esc(option.description)}</p>`}
+      <ul class="seals">${effectList(option, assessed)
+        .map((effect) => `<li class="seal seal--${effect.tone}">${icon(SEAL_ICONS[effect.tone])}${esc(effect.text)}</li>`)
+        .join('')}</ul>
+      <button class="btn ${recommended ? 'btn--primary' : ''} tcard__go" data-action="choose-training" data-training="${option.id}">${rests ? 'Descansar' : 'Treinar'}</button>
+    </div>
+  </article>`;
 }
 
 function trainingStep(state, data) {
@@ -269,13 +292,29 @@ function trainingStep(state, data) {
     });
   const grow = options.filter((option) => !RECOVERY.has(option.id));
   const rest = options.filter((option) => RECOVERY.has(option.id));
+  const others = injured ? [] : advice.ranked.filter((entry) => entry.id !== advice.best.id).slice(0, 2);
   return `
     <section class="sheet section train-sheet" aria-labelledby="passo-titulo">
       <div class="section__head">
         <h2 id="passo-titulo">Treino da semana</h2>
       </div>
-      ${coachCard(advice, injured)}
-      <div class="train__groups">
+      <div class="tcards ${others.length ? '' : 'tcards--solo'}">
+        ${trainingCard(player, advice.best.option, { assessed: advice.best, reasons: advice.reasons, injured })}
+        ${others.map((entry) => trainingCard(player, entry.option, { assessed: entry })).join('')}
+      </div>
+      <div class="actions train__more">
+        ${
+          injured
+            ? ''
+            : `<button class="btn btn--quiet" data-action="toggle-all-training" aria-expanded="${ui.allTraining}" aria-controls="todos-treinos">${icon(ui.allTraining ? 'minus' : 'plus')}${
+                ui.allTraining ? 'Esconder os outros treinos' : `Ver todos os ${options.length} treinos`
+              }</button>`
+        }
+        <button class="btn btn--quiet" data-action="skip-training">Pular o treino</button>
+      </div>
+      ${
+        ui.allTraining && !injured
+          ? `<div class="train__groups" id="todos-treinos">
         <div>
           <h3 class="train__group">Evoluir</h3>
           <ul class="trainlist">${grow.map(row).join('')}</ul>
@@ -284,10 +323,9 @@ function trainingStep(state, data) {
           <h3 class="train__group">Recuperar</h3>
           <ul class="trainlist">${rest.map(row).join('')}</ul>
         </div>
-      </div>
-      <div class="actions">
-        <button class="btn btn--quiet" data-action="skip-training">Pular o treino</button>
-      </div>
+      </div>`
+          : ''
+      }
     </section>`;
 }
 
@@ -1158,8 +1196,14 @@ export default {
       ui.peek = closing ? null : dataset.training;
       ctx.rerender();
     },
+    'toggle-all-training': (ctx) => {
+      ui.allTraining = !ui.allTraining;
+      ctx.sound.play(ui.allTraining ? 'toque' : 'voltar');
+      ctx.rerender();
+    },
     'choose-training': (ctx, dataset) => {
       ui.peek = null;
+      ui.allTraining = false;
       ctx.game.chooseTraining(dataset.training);
       ctx.save.schedule();
     },

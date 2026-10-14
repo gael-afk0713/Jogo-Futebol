@@ -242,7 +242,8 @@ Barlow e Barlow Condensed, hospedadas em `assets/fonts/` (licença OFL). A conde
 ## Layout
 
 - Container de até 1200px, com 16px de margem no celular e 28px a partir de 760px.
-- Hub no computador: coluna fixa de 300px com a figurinha do jogador e os indicadores, e coluna de trabalho com abas. No celular a figurinha vira uma ficha horizontal no topo.
+- Hub a partir de 980px: coluna fixa de 300px com a ficha do jogador (figurinha, três linhas e os indicadores) e coluna de trabalho com abas. A coluna precisa caber inteira na altura da tela; em paisagem baixa a figurinha vai até 240px.
+- Hub no retrato (iPad e celular): a ficha fica no topo, com a figurinha de 168px ao lado do nome, das três linhas e dos quatro indicadores. Fora da aba Semana ela encolhe (figurinha de 96px, nome e indicadores) para o conteúdo da aba aparecer logo.
 - Partida no computador: lance no centro e coluna de 340px com seu jogo e a narração.
 - Grupos apertados (8 a 12px), separação generosa entre seções (24 a 28px).
 - Listas separadas por filetes de 1px, não por cartões.
@@ -272,7 +273,7 @@ Uma fonte de luz, de cima. Cada elemento declara elevação uma vez: sombra ou b
 - Figurinha: 6px, com a foto interna em 3px.
 - Controles (botões, campos, opções): 8px.
 - Superfícies (folhas, capa, placar no computador): 12px.
-- Pílula (999px) só em controles pequenos: passos da semana e etiquetas de traço.
+- Pílula (999px) só em etiquetas de traço.
 - Etiqueta (`tag`, 4px): selos e marcas pequenas de dado: nota, minuto do placar e do lance, etiquetas, posição na tabela e monograma da tabela.
 - Ingresso: o picote é uma linha tracejada de 1,5px com dois recortes semicirculares de 18px na cor do papel, um em cada borda.
 - Campo: traço de 1,5px que não escala com o desenho (`vector-effect: non-scaling-stroke`), cantos arredondados nas junções.
@@ -310,9 +311,29 @@ Abas padrão com sublinhado de 3px que cresce a partir do centro. No celular as 
 
 Linhas com filete, algarismos tabulares, sua linha em `info-soft` e negrito. A posição fica numa etiqueta de 4px; os clubes que vão ao torneio continental ganham a etiqueta verde da zona de classificação, explicada por uma legenda abaixo da tabela. O motor do jogo não tem rebaixamento, então a tabela marca só a zona de classificação continental; não há zona vermelha.
 
+### Ficha do jogador
+
+A figurinha do jogador, o nome em display e três linhas curtas separadas por ponto médio (posição, idade e país; clube e posição na tabela; experiência e dinheiro). Abaixo, os quatro indicadores do dia a dia (Felicidade, Forma física, Técnico, Torcida).
+
+- **Indicador** (`.vital`): rótulo com ícone, o número em Barlow Condensed 800 de 1,9rem como título e um filete de 3px com o nível. O filete é cobalto; abaixo de 40 o filete e o número ficam vermelhos. Nada de escala de cinco cores aqui: o número carrega a informação.
+
+### Etapas da semana
+
+Treino, Vida e Partida são três espaços do álbum (`.stepper`): borda tracejada de 1,5px e o número impresso em `rule-strong`. A etapa atual ganha borda cheia cobalto (amarelo à noite) e o número numa etiqueta cobalto. A etapa feita vira figurinha colada: papel de figurinha, sombra `sticker`, giro de -1,5 grau e o visto em verde.
+
+### Figurinha de treino
+
+O treino da semana é escolhido entre figurinhas (`.tcard`), não numa lista:
+
+- **A recomendada pelo preparador** ocupa a linha toda: a frente cobalto com retícula (ícone de 56px e o nome em caixa alta, 2,1rem) à esquerda e o verso à direita, com o porquê do preparador, os atributos que o treino trabalha, os efeitos e o único botão amarelo da tela. Leva o carimbo "Recomendado": borda branca de 2px, caixa alta, girado -7 graus. É carimbo, não rótulo acima de título.
+- **As duas próximas opções** ficam lado a lado, com a frente em faixa (ícone e nome) e o botão secundário.
+- **Selos de efeito** (`.seal`): fundo neutro, texto em tinta da figurinha e uma seta (sobe em verde, desce em vermelho, igual em cinza). A cor fica só na seta.
+- "Ver todos os N treinos" abre a lista completa em linhas, com a prévia do tablet; "Pular o treino" fica ao lado.
+- Machucado, só aparece a figurinha do descanso.
+
 ### Opções de escolha
 
-Treinos, eventos, lances e traços usam a mesma linha de escolha (`.option`): ícone em círculo, título, descrição e a consequência. No treino a consequência são os efeitos (Forma +7, Felicidade -2); no lance é a chance real em número grande colorido pela escala.
+Eventos, lances e traços usam a mesma linha de escolha (`.option`): ícone em círculo, título, descrição e a consequência. A lista completa de treinos também usa essa linha, com os efeitos (Forma +7, Felicidade -2). No lance a consequência é a chance real em número grande colorido pela escala.
 
 ### Propostas
 

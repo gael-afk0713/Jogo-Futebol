@@ -1078,43 +1078,144 @@ code {
   min-width: 0;
 }
 
-/* ficha do jogador: figurinha + dados */
+/* ficha do jogador: figurinha, nome, três linhas e os quatro indicadores */
 .profile {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
+  gap: 22px;
+  align-items: stretch;
+}
+
+.profile__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .profile__name {
-  font-size: 1.6rem;
+  margin-bottom: 8px;
+  font-size: 2.1rem;
   line-height: 1;
 }
 
-.profile__facts {
-  display: grid;
-  gap: 2px;
-  margin-top: 6px;
-  font-size: 0.95rem;
+.profile__line {
+  margin: 0;
   color: var(--ink-2);
+  font-size: 0.95rem;
+  line-height: 1.45;
 }
 
-.profile__facts strong {
+.profile__line strong {
   color: var(--ink);
   font-weight: 600;
 }
 
 .profile .sticker {
-  --sticker-w: 116px;
+  --sticker-w: 168px;
 }
 
 .profile .sticker__number strong {
+  font-size: 2.5rem;
+}
+
+.profile__vitals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+/* Indicador: o número é o título; o filete mostra o nível e só fica vermelho quando pede atenção. */
+.vital {
+  --vital-fill: var(--cover);
+  display: grid;
+  gap: 3px;
+  padding: 0 14px;
+  border-left: 1px solid var(--rule);
+}
+
+.vital:first-child {
+  border-left: 0;
+  padding-left: 0;
+}
+
+.vital__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.85rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.vital__label .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.vital__value {
+  font-family: var(--font-cond);
+  font-weight: 800;
   font-size: 1.9rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.vital__bar {
+  display: block;
+  height: 3px;
+  margin-top: 3px;
+  border-radius: 3px;
+  background: var(--rule);
+  overflow: hidden;
+}
+
+.vital__bar span {
+  display: block;
+  height: 100%;
+  background: var(--vital-fill);
+  transform-origin: left center;
+  transform: scaleX(var(--v, 0));
+}
+
+.vital.is-low {
+  --vital-fill: var(--bad);
+}
+
+.vital.is-low .vital__value {
+  color: var(--bad);
+}
+
+/* Fora da aba Semana, no retrato, a ficha encolhe: figurinha pequena, nome e indicadores. */
+@media (max-width: 979px) {
+  .profile--compact {
+    gap: 16px;
+  }
+
+  .profile--compact .sticker {
+    --sticker-w: 96px;
+  }
+
+  .profile--compact .sticker__number strong {
+    font-size: 1.7rem;
+  }
+
+  .profile--compact .sticker__band,
+  .profile--compact .sticker__meta,
+  .profile--compact .profile__line {
+    display: none;
+  }
+
+  .profile--compact .profile__name {
+    font-size: 1.6rem;
+  }
 }
 
 @media (min-width: 980px) {
   .profile {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .profile .sticker {
@@ -1137,12 +1238,59 @@ code {
   .profile__name {
     display: none;
   }
+
+  .profile__vitals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 16px;
+  }
+
+  .vital:nth-child(odd) {
+    border-left: 0;
+    padding-left: 0;
+  }
 }
 
-@media (max-width: 979px) {
-  .profile .sticker__band,
-  .profile .sticker__meta {
-    display: none;
+@media (max-width: 600px) {
+  .profile {
+    gap: 16px;
+    align-items: start;
+  }
+
+  .profile .sticker {
+    --sticker-w: 120px;
+  }
+
+  .profile .sticker__number strong {
+    font-size: 1.9rem;
+  }
+
+  .profile__name {
+    font-size: 1.6rem;
+  }
+
+  .profile__vitals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 12px;
+  }
+
+  .vital:nth-child(odd) {
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .profile--compact .sticker {
+    --sticker-w: 88px;
+  }
+
+  .profile--compact .sticker__number strong {
+    font-size: 1.5rem;
+  }
+}
+
+/* iPad em paisagem tem pouca altura: a coluna fixa precisa caber inteira na tela. */
+@media (min-width: 980px) and (max-height: 860px) {
+  .profile .sticker {
+    max-width: 240px;
   }
 }
 
@@ -1156,10 +1304,6 @@ code {
   .vitals {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px 16px;
-  }
-
-  .vitals--aside-only {
-    display: none;
   }
 }
 
@@ -1329,38 +1473,38 @@ code {
 }
 
 /* passos da semana */
+/* Etapas da semana como espaços do álbum: a atual tem borda cobalto, a feita vira figurinha colada. */
 .stepper {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
-  counter-reset: step;
 }
 
 .stepper__item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px 6px 6px;
-  border-radius: 999px;
-  font-size: 0.88rem;
-  font-weight: 600;
+  gap: 8px;
+  padding: 7px 14px 7px 8px;
+  border: 1.5px dashed var(--rule-strong);
+  border-radius: var(--r-sticker);
   color: var(--ink-3);
-  background: var(--sheet-2);
+  font-family: var(--font-cond);
+  font-weight: 700;
+  font-size: 1.02rem;
 }
 
 .stepper__dot {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  background: var(--sheet);
-  border: 1.5px solid var(--rule-strong);
+  border-radius: 4px;
+  color: var(--rule-strong);
   font-family: var(--font-cond);
   font-weight: 800;
-  font-size: 0.85rem;
+  font-size: 1.25rem;
 }
 
 .stepper__dot .icon {
@@ -1369,25 +1513,44 @@ code {
 }
 
 .stepper__item.is-current {
-  background: var(--cover);
-  color: var(--cover-ink);
+  border-style: solid;
+  border-color: var(--cover);
+  background: var(--sheet);
+  color: var(--ink);
 }
 
 .stepper__item.is-current .stepper__dot {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-ink);
+  background: var(--cover);
+  color: var(--cover-ink);
+  font-size: 1rem;
 }
 
 .stepper__item.is-done {
-  color: var(--good);
-  background: var(--good-soft);
+  border: 1.5px solid transparent;
+  background: var(--sticker-paper);
+  color: var(--sticker-ink);
+  box-shadow: var(--shadow-sticker);
+  transform: rotate(-1.5deg);
 }
 
 .stepper__item.is-done .stepper__dot {
   background: var(--good);
-  border-color: var(--good);
   color: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .stepper__item.is-current {
+    border-color: var(--accent);
+  }
+
+  .stepper__item.is-current .stepper__dot {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .stepper__item.is-done .stepper__dot {
+    background: #17804a;
+  }
 }
 
 /* --------------------------------------------------- listas de escolha */
@@ -3331,93 +3494,210 @@ code {
 }
 
 /* ------------------------------------------------------------- treino */
-/* cartão do preparador */
-.coach {
+/* Figurinhas de treino: o recomendado na linha toda (frente à esquerda, verso à
+   direita) e as duas alternativas lado a lado. */
+.tcards {
   display: grid;
-  gap: 10px;
-  padding: 14px 16px;
-  border-radius: var(--r-control);
-  background: var(--info-soft);
-  color: var(--ink);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
-.coach__head {
+.tcards--solo {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.tcard {
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  border-radius: var(--r-sticker);
+  background: var(--sticker-paper);
+  color: var(--sticker-ink);
+  box-shadow: var(--shadow-sticker);
+}
+
+.tcard--pick {
+  grid-column: 1 / -1;
+  flex-direction: row;
+}
+
+.tcard__face {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 3px;
+  background-color: var(--sticker-bg, #1c3d9e);
+  background-image: radial-gradient(rgb(255 255 255 / 0.14) 1px, transparent 1.5px);
+  background-size: 7px 7px;
+  color: #ffffff;
 }
 
-.coach__icon {
+.tcard--pick .tcard__face {
+  flex: 0 0 42%;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 16px;
+  min-height: 170px;
+  padding: 18px 16px 16px;
+}
+
+.tcard__icon {
   display: grid;
   place-items: center;
   flex: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--cover);
-  color: var(--cover-ink);
 }
 
-.coach__icon .icon {
-  width: 22px;
-  height: 22px;
+.tcard__icon .icon {
+  width: 30px;
+  height: 30px;
 }
 
-.coach__title {
-  flex: 1;
-  min-width: 0;
+.tcard--pick .tcard__icon .icon {
+  width: 56px;
+  height: 56px;
 }
 
-.coach__kicker {
-  margin: 0;
-  color: var(--ink-3);
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.coach__pick {
-  margin: 0;
+.tcard__name {
   font-family: var(--font-cond);
-  font-size: 1.35rem;
-  line-height: 1.1;
+  font-weight: 800;
+  font-size: 1.3rem;
+  line-height: 1.02;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: #ffffff;
 }
 
-.coach__go {
-  flex: none;
+.tcard--pick .tcard__name {
+  font-size: 2.1rem;
 }
 
-.coach__why {
+/* carimbo de papel, não etiqueta: borda branca, levemente torto */
+.tcard__stamp {
+  position: absolute;
+  top: 16px;
+  right: 14px;
+  padding: 4px 9px 3px;
+  border: 2px solid #ffffff;
+  border-radius: 4px;
+  font-family: var(--font-cond);
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: rotate(-7deg);
+}
+
+.tcard__back {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 8px 6px;
+}
+
+.tcard--pick .tcard__back {
+  padding: 10px 10px 6px 16px;
+}
+
+.tcard__why {
   display: grid;
-  gap: 4px;
+  gap: 6px;
   margin: 0;
-  padding-left: 20px;
-  color: var(--ink-2);
-  font-size: 0.93rem;
+  padding-left: 18px;
+  color: var(--sticker-ink-2);
+  font-size: 0.95rem;
   line-height: 1.4;
 }
 
-.coach__alt {
+.tcard__desc {
   margin: 0;
-  color: var(--ink-3);
-  font-size: 0.88rem;
+  color: var(--sticker-ink-2);
+  font-size: 0.92rem;
+  line-height: 1.4;
 }
 
-@media (prefers-color-scheme: dark) {
-  .coach__icon {
-    background: var(--accent);
-    color: var(--accent-ink);
-  }
+/* efeitos em selos neutros: a seta diz se sobe ou desce */
+.seals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-/* No celular o botão vai para a linha de baixo, largo para o dedo. */
-@media (max-width: 520px) {
-  .coach__head {
-    flex-wrap: wrap;
+.seal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px 3px 6px;
+  border-radius: 4px;
+  background: #eef1f5;
+  color: var(--sticker-ink);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.seal .icon {
+  width: 13px;
+  height: 13px;
+}
+
+.seal--up .icon {
+  color: #17804a;
+}
+
+.seal--down .icon {
+  color: #c2352b;
+}
+
+.seal--mid .icon {
+  color: #5e6677;
+}
+
+.tcard__go {
+  width: 100%;
+  margin-top: auto;
+}
+
+/* A figurinha é papel branco também à noite: o botão secundário usa a tinta da figurinha. */
+.tcard .btn:not(.btn--primary) {
+  border-color: var(--sticker-ink);
+  color: var(--sticker-ink);
+}
+
+.tcard .btn:not(.btn--primary):hover:not(:disabled) {
+  background: #eef1f5;
+}
+
+.train__more {
+  justify-content: space-between;
+}
+
+.train__more .icon {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 600px) {
+  .tcards {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .coach__go {
-    order: 3;
-    width: 100%;
+  .tcard--pick {
+    flex-direction: column;
+  }
+
+  .tcard--pick .tcard__face {
+    flex-basis: auto;
+    min-height: 140px;
+  }
+
+  .tcard--pick .tcard__back {
+    padding: 14px 8px 6px;
   }
 }
 
@@ -4830,7 +5110,8 @@ code {
     }
   }
 
-  .meter.is-changed .meter__fill {
+  .meter.is-changed .meter__fill,
+  .vital.is-changed .vital__bar span {
     animation: enche 520ms var(--ease-out) both;
   }
 
