@@ -287,6 +287,7 @@ export class Game {
   }
 
   skipTraining() {
+    if (this.state.week.step !== WEEK_STEPS.TRAINING) return;
     this.state.week.trainingReport = null;
     this.advanceToLifeStep();
   }
@@ -303,7 +304,7 @@ export class Game {
 
   resolveEvent(optionIndex) {
     const eventId = this.state.week.eventId;
-    if (!eventId) return null;
+    if (!eventId || this.state.week.step !== WEEK_STEPS.LIFE) return null;
     const event = drawLifeEventById(eventId);
     if (!event) {
       this.state.week.step = WEEK_STEPS.MATCH;
@@ -330,9 +331,14 @@ export class Game {
   }
 
   // ----------------------------------------------------------------- partida
+  /** Só na etapa da partida e sem jogo em andamento: um toque repetido não joga a mesma partida duas vezes. */
+  canPlayMatch() {
+    return this.state.week.step === WEEK_STEPS.MATCH && !this.state.match;
+  }
+
   startMatch() {
     const week = this.currentMatch;
-    if (!week) return null;
+    if (!week || !this.canPlayMatch()) return null;
     const role = this.decideRole(week);
 
     if (role === PLAYER_ROLE.OUT || role === PLAYER_ROLE.BENCH) {
@@ -391,7 +397,7 @@ export class Game {
   /** Simula o jogo atual sem interação. */
   simulateMatch() {
     const week = this.currentMatch;
-    if (!week) return null;
+    if (!week || !this.canPlayMatch()) return null;
     const role = this.decideRole(week);
     if (role === PLAYER_ROLE.OUT || role === PLAYER_ROLE.BENCH) {
       return this.resolveMatchWithoutPlaying(week, role);
@@ -587,6 +593,7 @@ export class Game {
 
   /** Encerra a semana e vai para a próxima (ou para o fim da temporada). */
   advanceWeek() {
+    if (this.state.week.step !== WEEK_STEPS.DONE) return;
     const season = this.season;
     const player = this.player;
 
@@ -617,6 +624,7 @@ export class Game {
 
   /** Semana sem partida (pré-temporada, data Fifa, folga). */
   skipFreeWeek() {
+    if (this.state.week.step !== WEEK_STEPS.MATCH) return;
     const week = this.currentFixture;
     if (week?.free) {
       // Na rodada de folga, os outros times da liga jogam.

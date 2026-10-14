@@ -212,13 +212,17 @@ export class SaveManager {
     if (!this.activeId) this.activeId = newCareerId();
     clearTimeout(this.localTimer);
     this.localTimer = setTimeout(() => {
+      this.localTimer = null;
       saveLocalCareer(this.activeId, this.game.serialize(), this.uid);
       if (this.status !== 'saving') this.setStatus('local');
     }, 400);
 
     if (!this.cloud) return;
     clearTimeout(this.timer);
-    this.timer = setTimeout(() => this.flush(), delay);
+    this.timer = setTimeout(() => {
+      this.timer = null;
+      this.flush();
+    }, delay);
   }
 
   /** Salva imediatamente nos dois destinos. */
@@ -227,10 +231,18 @@ export class SaveManager {
     if (!this.activeId) this.activeId = newCareerId();
     clearTimeout(this.localTimer);
     clearTimeout(this.timer);
+    this.localTimer = null;
+    this.timer = null;
     saveLocalCareer(this.activeId, this.game.serialize(), this.uid);
     this.setStatus('local');
     if (this.cloud) return this.flush();
     return true;
+  }
+
+  /** Ao sair da tela: salva na hora só o que ainda esperava o temporizador. */
+  saveIfPending() {
+    if (!this.localTimer && !this.timer) return false;
+    return this.saveNow();
   }
 
   async flush() {

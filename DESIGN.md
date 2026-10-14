@@ -41,6 +41,8 @@ colors:
   night-paper: "#0e1733"
   night-sheet: "#152148"
   night-ink: "#eef2fb"
+  night-cover: "#16327f"
+  night-line: "#7f9cf0"
 typography:
   display:
     fontFamily: "Barlow Condensed, Barlow, system-ui, sans-serif"
@@ -184,6 +186,7 @@ Estratégia: papel neutro tingido de frio, uma capa cobalto que comanda o topo e
 ### Primary
 
 - **Capa cobalto** (`cover`, `#1c3d9e`): barra superior, placar, face das figurinhas, capa da tela de entrada, abas ativas, foco no modo claro. Sempre chapado, com retícula impressa de pontos brancos a 7 a 14% de opacidade.
+- **Cobalto como linha** (`cover-line`) e **como seleção** (`select`): bordas, contornos, ícones e cursor usam `cover-line`; o que está escolhido (posição, traço marcado, sua sigla na tabela, minuto do lance) usa `select`. De dia os dois são o próprio cobalto; à noite a linha vira um cobalto claro e a seleção vira o amarelo. A capa (`cover`) só é cor de fundo.
 
 ### Secondary
 
@@ -214,8 +217,9 @@ Cinco degraus para atributos, notas e chances: `elite`, `otimo`, `bom`, `medio`,
 
 ### Named Rules
 
-- **Figurinha é papel branco.** Dentro de `.sticker` e `.card-sticker` a escala de texto é sempre a do dia, inclusive no modo noturno.
-- **À noite o fundo vira a capa.** O modo noturno troca papel e folha por azul-marinho (`#0e1733`, `#152148`), tinta por `#eef2fb`, e o amarelo passa a marcar foco e abas ativas. As figurinhas não mudam.
+- **Figurinha é papel branco.** Dentro de `.sticker`, `.card-sticker` e das figurinhas de treino, a tinta, os filetes e a escala de texto são sempre os do dia, inclusive no modo noturno: um botão secundário numa proposta continua em tinta escura sobre o papel. O número da camisa no avatar é cobalto fixo.
+- **À noite a capa desce um degrau.** O modo noturno troca papel e folha por azul-marinho (`#0e1733`, `#152148`) e tinta por `#eef2fb`. A capa (barra, capa da entrada, placar, placar final, tela de carregamento) vira um cobalto mais fechado (`#16327f`), que ainda se destaca do fundo sem acender a tela no escuro. O amarelo passa a marcar foco, abas ativas, a etapa atual e o que está escolhido; linhas e contornos usam o cobalto claro (`#7f9cf0`). As figurinhas não mudam: a face continua `#1c3d9e`, um degrau mais clara que a capa, como se estivesse colada por cima dela.
+- **A sigla do adversário no placar é uma placa de papel**, de dia e de noite; a sua é amarela.
 - **Nada de cinza em superfície colorida.** Texto secundário sobre a capa usa `cover-ink-2`, tingido do próprio azul.
 
 ## Typography
@@ -373,7 +377,7 @@ O número da camisa é estampado no peito do avatar, em Barlow Condensed 800 cob
 
 **Retornos curtos** (até 320ms, só quando o dado muda): a bola rola até o ponto do lance (460ms), as opções entram em sequência de 50ms, o desfecho se revela de cima para baixo (320ms), a nota carimba, o número da figurinha pisca em amarelo ao subir, os medidores e o relógio do jogo andam do valor antigo ao novo (520ms), lances novos da súmula entram pela esquerda, o placar final carimba ao aparecer.
 
-**O gol.** É o único momento autoral, e cada passo espera o anterior: a bola corre pelo rastro até a rede (120ms de atraso, 560ms), a rede estufa (aos 640ms), o título "Gol!" carimba (aos 620ms, 300ms), então o número do placar vira como placa de estádio (aos 720ms, só quando o desfecho na tela é o seu gol) e a linha do artilheiro e o gol na súmula aparecem (aos 760ms). Fora do seu gol, o placar vira na hora (440ms).
+**O gol.** É o único momento autoral, e cada passo espera o anterior: a bola corre pelo rastro até a rede (120ms de atraso, 560ms), a rede estufa (aos 640ms), o título "Gol!" carimba (aos 620ms, 300ms), então o número do placar vira como placa de estádio (aos 720ms, só quando o desfecho na tela é o seu gol; até lá a placa mostra o número antigo, e a virada troca um pelo outro no meio do giro) e a linha do artilheiro e o gol na súmula aparecem (aos 760ms). Fora do seu gol, o placar vira na hora (440ms).
 
 **Troca de tela.** Tela, aba e nova semana usam transição de visualização: a página antiga some em 140ms e a nova chega subindo 8px em 280ms (180ms entre abas). A barra superior e a figurinha do jogador ficam no lugar. Sem suporte, a troca é seca.
 

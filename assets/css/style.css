@@ -70,10 +70,13 @@
 
   /* capa */
   --cover: #1c3d9e;
-  --cover-2: #16327f;
   --cover-ink: #ffffff;
   --cover-ink-2: #cdd7f6;
   --cover-dot: rgb(255 255 255 / 0.07);
+  /* cobalto como linha (bordas, contornos, cursor) e como seleção (o que está escolhido) */
+  --cover-line: #1c3d9e;
+  --select: #1c3d9e;
+  --select-ink: #ffffff;
 
   /* figurinha: continua branca de dia e de noite */
   --sticker-paper: #fdfdfb;
@@ -134,7 +137,10 @@
   --z-modal: 70;
 }
 
-/* À noite o fundo vira a capa do álbum. */
+/* À noite o fundo vira azul-marinho e a capa desce um degrau de cobalto, para
+   continuar se destacando do fundo sem acender a tela. As figurinhas não mudam.
+   O cobalto não serve de linha nem de seleção sobre o marinho: a linha vira um
+   cobalto claro e a seleção vira o amarelo. */
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
@@ -146,10 +152,12 @@
     --ink-3: #9aa6c4;
     --rule: #273667;
     --rule-strong: #3a4c86;
-    --cover: #0a1229;
-    --cover-2: #060c1d;
-    --cover-ink-2: #aab6d8;
-    --cover-dot: rgb(255 255 255 / 0.05);
+    --cover: #16327f;
+    --cover-ink-2: #c3cff2;
+    --cover-dot: rgb(255 255 255 / 0.07);
+    --cover-line: #7f9cf0;
+    --select: var(--accent);
+    --select-ink: var(--accent-ink);
     --good: #4cc282;
     --good-soft: #143a2c;
     --bad: #f07b70;
@@ -197,7 +205,7 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  caret-color: var(--cover);
+  caret-color: var(--cover-line);
 }
 
 ::selection {
@@ -211,7 +219,7 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--cover);
+  outline: 2px solid var(--cover-line);
   outline-offset: 2px;
 }
 
@@ -256,7 +264,7 @@ p {
 }
 
 a {
-  color: var(--cover);
+  color: var(--cover-line);
   text-underline-offset: 3px;
 }
 
@@ -821,7 +829,8 @@ code {
   padding: 9px;
 }
 
-.sticker--foil {
+.sticker--foil,
+.card-sticker.sticker--foil {
   background: linear-gradient(135deg, var(--foil-3), var(--foil-1) 35%, var(--foil-2) 55%, var(--foil-3) 80%, var(--foil-1));
 }
 
@@ -854,9 +863,24 @@ code {
   }
 }
 
-/* A figurinha é sempre papel branco, então usa a escala de texto do dia. */
+/* A figurinha é sempre papel branco, então usa a tinta e a escala de texto do
+   dia, inclusive à noite (botões, filetes e textos dentro dela). */
 .sticker,
-.card-sticker {
+.card-sticker,
+.tcard {
+  --cover-line: #1c3d9e;
+  --select: #1c3d9e;
+  --select-ink: #ffffff;
+  --ink: #121722;
+  --ink-2: #444c5c;
+  --ink-3: #5e6677;
+  --rule: #d3d9e2;
+  --rule-strong: #b6bfcc;
+  --sheet: #fbfcfd;
+  --sheet-2: #f2f4f7;
+  --good: #17804a;
+  --bad: #c2352b;
+  --info-soft: #e5ebfa;
   --tt-elite: #146c3e;
   --tt-otimo: #3a7520;
   --tt-bom: #776300;
@@ -1128,7 +1152,7 @@ code {
 
 /* Indicador: o número é o título; o filete mostra o nível e só fica vermelho quando pede atenção. */
 .vital {
-  --vital-fill: var(--cover);
+  --vital-fill: var(--cover-line);
   display: grid;
   gap: 3px;
   padding: 0 14px;
@@ -1514,7 +1538,7 @@ code {
 
 .stepper__item.is-current {
   border-style: solid;
-  border-color: var(--cover);
+  border-color: var(--cover-line);
   background: var(--sheet);
   color: var(--ink);
 }
@@ -1592,7 +1616,7 @@ code {
 }
 
 .option:hover:not(:disabled) {
-  border-color: var(--cover);
+  border-color: var(--cover-line);
   box-shadow: 0 6px 16px -10px rgb(28 61 158 / 0.55);
 }
 
@@ -1627,7 +1651,7 @@ code {
   place-items: center;
   border-radius: 50%;
   background: var(--info-soft);
-  color: var(--cover);
+  color: var(--cover-line);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -1717,7 +1741,7 @@ code {
 
 .notice .icon {
   margin-top: 2px;
-  color: var(--cover);
+  color: var(--cover-line);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -1848,9 +1872,9 @@ code {
 }
 
 .monogram--you {
-  background: var(--cover);
-  border-color: var(--cover);
-  color: var(--cover-ink);
+  background: var(--select);
+  border-color: var(--select);
+  color: var(--select-ink);
 }
 
 .fixture__meta {
@@ -1880,7 +1904,7 @@ code {
 
 .tag--away {
   background: var(--info-soft);
-  color: var(--cover);
+  color: var(--cover-line);
 }
 
 /* Clássico: a rivalidade aparece no calendário, no ingresso e no placar. */
@@ -1972,8 +1996,11 @@ code {
   text-align: right;
 }
 
-.scoreboard .monogram {
+.scoreboard .monogram,
+.final-card .monogram {
   border-color: rgb(255 255 255 / 0.25);
+  background: var(--sticker-paper);
+  color: var(--sticker-ink);
 }
 
 .scoreboard .monogram--you {
@@ -2070,8 +2097,8 @@ code {
   margin-right: 8px;
   padding: 1px 7px;
   border-radius: 4px;
-  background: var(--cover);
-  color: var(--cover-ink);
+  background: var(--select);
+  color: var(--select-ink);
   font-family: var(--font-cond);
   font-weight: 800;
   font-size: 0.95rem;
@@ -2342,7 +2369,7 @@ code {
 }
 
 .attrs__group h3 .icon {
-  color: var(--cover);
+  color: var(--cover-line);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -2402,10 +2429,10 @@ code {
   align-items: center;
   justify-content: center;
   line-height: 1;
-  border: 1.5px solid var(--cover);
+  border: 1.5px solid var(--cover-line);
   border-radius: var(--r-control);
   background: transparent;
-  color: var(--cover);
+  color: var(--cover-line);
   font: 700 0.85rem/1 var(--font-body);
   cursor: pointer;
   font-variant-numeric: tabular-nums;
@@ -2478,7 +2505,7 @@ code {
 }
 
 .trait-chip .icon {
-  color: var(--cover);
+  color: var(--cover-line);
 }
 
 .trait-chip.is-current {
@@ -2679,7 +2706,7 @@ code {
 .input:focus,
 .select:focus {
   outline: none;
-  border-color: var(--cover);
+  border-color: var(--cover-line);
   box-shadow: 0 0 0 3px rgb(28 61 158 / 0.18);
 }
 
@@ -2693,7 +2720,7 @@ code {
 
 .range {
   width: 100%;
-  accent-color: var(--cover);
+  accent-color: var(--cover-line);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -2746,7 +2773,7 @@ code {
 }
 
 .segmented__item:hover {
-  border-color: var(--cover);
+  border-color: var(--cover-line);
 }
 
 .segmented__item:active {
@@ -2754,13 +2781,14 @@ code {
 }
 
 .segmented__item[aria-pressed='true'] {
-  background: var(--cover);
-  border-color: var(--cover);
-  color: var(--cover-ink);
+  background: var(--select);
+  border-color: var(--select);
+  color: var(--select-ink);
 }
 
 .segmented__item[aria-pressed='true'] span {
-  color: var(--cover-ink-2);
+  color: inherit;
+  opacity: 0.8;
 }
 
 /* amostras de cor */
@@ -2787,7 +2815,7 @@ code {
 }
 
 .swatch[aria-pressed='true'] {
-  box-shadow: 0 0 0 3px var(--cover);
+  box-shadow: 0 0 0 3px var(--cover-line);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -2821,13 +2849,13 @@ code {
 }
 
 .option[aria-pressed='true'] {
-  border-color: var(--cover);
+  border-color: var(--cover-line);
   background: var(--info-soft);
 }
 
 .option[aria-pressed='true'] .option__icon {
-  background: var(--cover);
-  color: var(--cover-ink);
+  background: var(--select);
+  color: var(--select-ink);
 }
 
 .option__check {
@@ -2841,9 +2869,9 @@ code {
 }
 
 .option[aria-pressed='true'] .option__check {
-  background: var(--cover);
-  border-color: var(--cover);
-  color: var(--cover-ink);
+  background: var(--select);
+  border-color: var(--select);
+  color: var(--select-ink);
 }
 
 .option__check .icon {
@@ -2881,7 +2909,7 @@ code {
 }
 
 .alloc__label .icon {
-  color: var(--cover);
+  color: var(--cover-line);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -2910,7 +2938,7 @@ code {
 }
 
 .stepbtn:hover:not(:disabled) {
-  border-color: var(--cover);
+  border-color: var(--cover-line);
 }
 
 .stepbtn:active:not(:disabled) {
@@ -3234,7 +3262,7 @@ code {
   height: 32px;
   border-radius: 50%;
   background: var(--info-soft);
-  color: var(--cover);
+  color: var(--cover-line);
 }
 
 .goal__icon .icon {
@@ -3366,7 +3394,7 @@ code {
 }
 
 .store__cat[aria-pressed='true'] {
-  border-color: var(--cover);
+  border-color: var(--cover-line);
   background: var(--cover);
   color: var(--cover-ink);
 }
@@ -3663,16 +3691,6 @@ code {
   margin-top: auto;
 }
 
-/* A figurinha é papel branco também à noite: o botão secundário usa a tinta da figurinha. */
-.tcard .btn:not(.btn--primary) {
-  border-color: var(--sticker-ink);
-  color: var(--sticker-ink);
-}
-
-.tcard .btn:not(.btn--primary):hover:not(:disabled) {
-  background: #eef1f5;
-}
-
 .train__more {
   justify-content: space-between;
 }
@@ -3880,7 +3898,7 @@ code {
 .train__eye:hover,
 .train-row.is-open .train__eye {
   background: var(--info-soft);
-  color: var(--cover);
+  color: var(--cover-line);
 }
 
 .peek {
@@ -4094,14 +4112,14 @@ code {
   font: inherit;
   cursor: pointer;
   border-style: dashed;
-  border-color: var(--cover);
-  color: var(--cover);
+  border-color: var(--cover-line);
+  color: var(--cover-line);
   transition: background-color 160ms var(--ease-out), transform 160ms var(--ease-press);
 }
 
 .slot--action .slot__number,
 .slot--action .icon {
-  color: var(--cover);
+  color: var(--cover-line);
 }
 
 .slot--action:hover {
@@ -4468,7 +4486,7 @@ code {
   font-family: var(--font-cond);
   font-weight: 800;
   font-size: 46px;
-  fill: var(--cover);
+  fill: #1c3d9e;
   letter-spacing: -0.02em;
 }
 
@@ -4505,7 +4523,7 @@ code {
 }
 
 .pitch__zone {
-  fill: var(--cover);
+  fill: var(--cover-line);
   opacity: 0.1;
 }
 
@@ -4599,12 +4617,12 @@ code {
 }
 
 .pitch__pos.is-active circle {
-  fill: var(--cover);
-  stroke: var(--cover);
+  fill: var(--select);
+  stroke: var(--select);
 }
 
 .pitch__pos.is-active text {
-  fill: var(--cover-ink);
+  fill: var(--select-ink);
   font-size: 3.3px;
 }
 
@@ -4843,10 +4861,6 @@ code {
   justify-content: flex-end;
 }
 
-.final-card .monogram {
-  border-color: rgb(255 255 255 / 0.25);
-}
-
 .final-card .monogram--you {
   background: var(--accent);
   border-color: var(--accent);
@@ -5069,9 +5083,55 @@ code {
     animation: vira 440ms var(--ease-out) both;
   }
 
-  /* Em gol seu, o placar só vira depois da rede: chute, rede, carimbo, placar. */
+  /* Em gol seu, o placar só vira depois da rede: chute, rede, carimbo, placar.
+     Até virar, a placa mostra o número antigo (o --from da memória de movimento). */
   .screen:has(.resolution--goal[data-moment]:not(.is-settled)) .scoreboard__goals.is-changed {
-    animation-delay: 720ms;
+    position: relative;
+    animation: vira-placa 560ms 720ms var(--ease-out) both;
+  }
+
+  .screen:has(.resolution--goal[data-moment]:not(.is-settled)) .scoreboard__goals.is-changed::after {
+    content: counter(placa-antiga);
+    counter-reset: placa-antiga var(--from);
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: inherit;
+    border-radius: inherit;
+    background: var(--sticker-paper);
+    animation: placa-antiga 560ms 720ms step-end both;
+  }
+
+  @keyframes vira-placa {
+    0% {
+      transform: none;
+    }
+    40% {
+      transform: perspective(200px) rotateX(90deg);
+    }
+    40.01% {
+      transform: perspective(200px) rotateX(-90deg);
+    }
+    75% {
+      transform: perspective(200px) rotateX(12deg);
+      background: var(--accent);
+    }
+    100% {
+      transform: none;
+    }
+  }
+
+  @keyframes placa-antiga {
+    0% {
+      visibility: visible;
+    }
+    40% {
+      visibility: hidden;
+    }
+    100% {
+      visibility: hidden;
+    }
   }
 
   .screen:has(.resolution--goal[data-moment]:not(.is-settled)) .placard__scorers .is-you:last-child,
@@ -5144,7 +5204,17 @@ code {
   }
 
   .feed__item--goal.is-new {
-    animation: colar 620ms var(--ease-out) both;
+    animation: cola-linha 620ms var(--ease-out) both;
+  }
+
+  @keyframes cola-linha {
+    0% {
+      transform: scale(1.04) rotate(-1deg) translateY(-4px);
+      opacity: 0;
+    }
+    35% {
+      opacity: 1;
+    }
   }
 
   @keyframes lance {

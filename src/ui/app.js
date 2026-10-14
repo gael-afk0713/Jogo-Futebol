@@ -28,6 +28,13 @@ const SCREEN_MAP = {
   [SCREENS.RETIRED]: retiredScreen,
 };
 
+// Toque duplo: o segundo toque, no mesmo ponto e até este tempo depois do
+// primeiro, não vale para o botão novo que apareceu ali.
+const ECHO_TAP_MS = 400;
+const ECHO_TAP_RADIUS = 48;
+// Ações sem risco num toque rápido em sequência (trocar de aba, abrir detalhes).
+const REPEATABLE = new Set(['hub-tab', 'peek-training', 'toggle-all-training', 'life-cat', 'toggle-sound']);
+
 const SAVE_LABELS = {
   idle: { text: '', icon: null },
   local: { text: 'Salvo no navegador', icon: 'floppy-disk' },
@@ -215,6 +222,7 @@ export class App {
       if (!target || target.disabled) return;
       const action = target.dataset.action;
       event.preventDefault();
+      if (this.isEchoTap(action, event)) return;
       this.dispatch(action, { ...target.dataset }, event);
     });
 
@@ -227,9 +235,33 @@ export class App {
     this.root.addEventListener('input', handleField);
     this.root.addEventListener('change', handleField);
 
-    window.addEventListener('beforeunload', () => {
-      if (this.game.state.player) this.save.saveNow();
+    // O Safari do iPad nem sempre avisa que a página vai fechar: salva também
+    // quando o jogo sai da tela (troca de app, tela de início, aba em segundo plano).
+    const saveOnLeave = () => {
+      if (this.game.state.player) this.save.saveIfPending();
+    };
+    window.addEventListener('pagehide', saveOnLeave);
+    window.addEventListener('beforeunload', saveOnLeave);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') saveOnLeave();
     });
+  }
+
+  /**
+   * O segundo toque de um toque duplo cai no botão novo que apareceu no mesmo
+   * lugar (a próxima opção do lance, o treino da semana seguinte). Se a tela
+   * mudou desde o primeiro toque, outra ação tocada logo depois no mesmo ponto
+   * é ignorada. Repetir a mesma ação (+1 num atributo), tocar em outro ponto da
+   * tela ou usar o teclado continua valendo.
+   */
+  isEchoTap(action, event) {
+    const last = this.lastAction;
+    const now = performance.now();
+    const pointer = event.detail > 0;
+    const near = Boolean(last) && Math.hypot(event.clientX - last.x, event.clientY - last.y) < ECHO_TAP_RADIUS;
+    const echo = pointer && near && action !== last.action && !REPEATABLE.has(action) && this.renderedAt > last.at && now - last.at < ECHO_TAP_MS;
+    if (!echo) this.lastAction = { action, at: now, x: event.clientX, y: event.clientY };
+    return echo;
   }
 
   dispatch(action, dataset, event) {
@@ -381,6 +413,7 @@ export class App {
         // para onde estavam, senão a categoria tocada some da tela.
         const sideways = new Map([...this.root.querySelectorAll('[data-keep-scroll]')].map((node) => [node.dataset.keepScroll, node.scrollLeft]));
         mount(this.root, markup);
+        this.renderedAt = performance.now();
         for (const node of this.root.querySelectorAll('[data-keep-scroll]')) node.scrollLeft = sideways.get(node.dataset.keepScroll) ?? 0;
         this.motion.settle(this.root, screenId);
         window.scrollTo({ top: scroll, behavior: 'instant' });
