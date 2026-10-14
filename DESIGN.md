@@ -335,6 +335,16 @@ O treino da semana é escolhido entre figurinhas (`.tcard`), não numa lista:
 - "Ver todos os N treinos" abre a lista completa em linhas, com a prévia do tablet; "Pular o treino" fica ao lado.
 - Machucado, só aparece a figurinha do descanso.
 
+### Evento de vida
+
+O evento é uma carta (`.ecard`), com a mesma mobília da figurinha: frente cobalto com retícula (ícone de 52px e o título em caixa alta) à esquerda e o texto da cena no papel à direita; no celular, uma em cima da outra.
+
+As escolhas são botões grandes (`.choice`), um por linha, sem seta: o rótulo e, embaixo, selos com o que está em jogo, sem números. Resultado garantido mostra para que lado cada coisa vai (seta para cima ou para baixo); sorte ou teste começa com o selo "Depende da sorte" ou "Teste de carisma" e marca com setas cruzadas o que pode subir ou descer. No máximo quatro selos, os de maior peso primeiro.
+
+### Recados
+
+Avisos e resultados (`.notice`) são recados de papel: folha com filete de 1px e um carimbo quadrado de ícone, que é a única parte colorida (verde, vermelho ou laranja conforme o tom). Nada de caixa inteira pintada. O que aconteceu na semana (o treino feito e o resultado do evento) entra num recado só (`.weeklog`), uma linha por fato; o tom da linha do evento vem dos números do resultado.
+
 ### Opções de escolha
 
 Eventos, lances e traços usam a mesma linha de escolha (`.option`): ícone em círculo, título, descrição e a consequência. A lista completa de treinos também usa essa linha, com os efeitos (Forma +7, Felicidade -2). No lance a consequência é a chance real em número grande. A cor é relativa ao lance, não à escala de qualidade: 20% num chute já é uma grande chance. A melhor opção do lance fica verde, com "melhor chance" no lugar de "de chance"; as outras ficam em tinta. Empate no topo não destaca nenhuma.

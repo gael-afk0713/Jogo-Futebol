@@ -329,11 +329,71 @@ function trainingStep(state, data) {
     </section>`;
 }
 
-function optionHint(option) {
-  if (option.check) return `Teste de ${option.check.stat === 'charisma' ? 'carisma' : 'inteligência'}`;
-  if (option.outcomes) return 'Resultado incerto';
-  if (option.when?.minMoney) return 'Custa dinheiro';
-  return '';
+const STAKE_LABELS = {
+  money: 'Dinheiro',
+  happiness: 'Felicidade',
+  fitness: 'Forma',
+  health: 'Saúde',
+  discipline: 'Disciplina',
+  intelligence: 'Inteligência',
+  charisma: 'Carisma',
+  fame: 'Fama',
+  reputation: 'Reputação',
+  morale: 'Vestiário',
+  managerRelation: 'Técnico',
+  fanRelation: 'Torcida',
+  skillPoints: 'Pontos de evolução',
+  attr: 'Atributos',
+  potential: 'Potencial',
+  injuryWeeks: 'Lesão',
+};
+
+/** Quanto um efeito pesa e para que lado (lesão é sempre para baixo). */
+function stakeOf(key, value) {
+  if (key === 'attr') value = Object.values(value ?? {}).reduce((sum, delta) => sum + delta, 0);
+  if (key === 'injuryWeeks') value = -Math.abs(value) * 10;
+  if (key === 'money') value = Math.sign(value) * Math.min(20, Math.abs(value) / 500);
+  if (key === 'skillPoints' || key === 'potential') value *= 5;
+  return typeof value === 'number' ? value : 0;
+}
+
+/**
+ * O que está em jogo numa escolha: com resultado garantido, para que lado cada
+ * coisa vai; com sorte ou teste, o que pode subir ou descer. Sem números: a
+ * direção basta para decidir, e o resultado continua sendo uma surpresa.
+ */
+function eventStakes(option) {
+  const branches = option.outcomes?.length
+    ? option.outcomes.map((outcome) => outcome.effects ?? {})
+    : option.check
+      ? [option.success ?? {}, option.failure ?? {}]
+      : [option.effects ?? {}];
+  const stakes = new Map();
+  for (const effects of branches) {
+    for (const [key, value] of Object.entries(effects)) {
+      if (!STAKE_LABELS[key]) continue;
+      const weight = stakeOf(key, value);
+      if (!weight) continue;
+      const entry = stakes.get(key) ?? { key, up: false, down: false, weight: 0 };
+      if (weight > 0) entry.up = true;
+      else entry.down = true;
+      entry.weight = Math.max(entry.weight, Math.abs(weight));
+      stakes.set(key, entry);
+    }
+  }
+  const lead = option.check
+    ? { text: `Teste de ${option.check.stat === 'charisma' ? 'carisma' : 'inteligência'}`, tone: 'mid', iconName: option.check.stat === 'charisma' ? 'sparkle' : 'brain' }
+    : option.outcomes?.length
+      ? { text: 'Depende da sorte', tone: 'mid', iconName: 'dice-five' }
+      : null;
+  const seals = [...stakes.values()]
+    .sort((a, b) => b.weight - a.weight)
+    .slice(0, lead ? 3 : 4)
+    .map((entry) => {
+      const tone = entry.up && entry.down ? 'mid' : entry.up ? 'up' : 'down';
+      return { text: STAKE_LABELS[entry.key], tone, iconName: tone === 'mid' ? 'shuffle' : SEAL_ICONS[tone] };
+    });
+  return lead ? [lead, ...seals] : seals;
 }
 
 function lifeStep(state, ctx) {
@@ -348,27 +408,25 @@ function lifeStep(state, ctx) {
   }
   return `
     <section class="sheet event" aria-labelledby="evento-titulo">
-      <div class="event__head">
-        <span class="event__badge">${icon(EVENT_ICONS[event.category] ?? 'coffee')}</span>
-        <div>
-          <h2 id="evento-titulo">${esc(event.title)}</h2>
-          <p class="event__text">${esc(event.text)}</p>
+      <article class="ecard">
+        <div class="ecard__face">
+          <span class="ecard__icon">${icon(EVENT_ICONS[event.category] ?? 'coffee')}</span>
+          <h2 class="ecard__title" id="evento-titulo">${esc(event.title)}</h2>
         </div>
-      </div>
-      <ul class="optionlist">
+        <p class="ecard__text">${esc(event.text)}</p>
+      </article>
+      <ul class="choices">
         ${event.options
-          .map((option) => {
-            const hint = optionHint(option);
-            return `<li>
-              <button class="option option--compact" data-action="resolve-event" data-index="${option.index}">
-                <span class="option__text">
-                  <span class="option__title">${esc(option.label)}</span>
-                  ${hint ? `<span class="option__desc">${esc(hint)}</span>` : ''}
-                </span>
-                ${icon('caret-right')}
+          .map(
+            (option) => `<li>
+              <button class="choice" data-action="resolve-event" data-index="${option.index}">
+                <span class="choice__label">${esc(option.label)}</span>
+                <span class="seals">${eventStakes(option)
+                  .map((seal) => `<span class="seal seal--${seal.tone}">${icon(seal.iconName)}${esc(seal.text)}</span>`)
+                  .join('')}</span>
               </button>
-            </li>`;
-          })
+            </li>`,
+          )
           .join('')}
       </ul>
     </section>`;
@@ -507,6 +565,43 @@ function objectivesSection(state) {
     </section>`;
 }
 
+/** Sobe, desce ou os dois: o tom da linha vem dos números do resultado. */
+function toneOfNotes(notes = []) {
+  const up = notes.some((note) => /\+\d/.test(note) || note.includes('em alta'));
+  const down = notes.some((note) => /-\d/.test(note) || note.startsWith('Lesionado'));
+  return up && !down ? 'good' : down && !up ? 'bad' : '';
+}
+
+/** O que já aconteceu nesta semana (treino e evento), num recado só. */
+function weekLog(trainingReport, eventResult) {
+  const rows = [];
+  if (trainingReport) {
+    const gains = trainingReport.gains.length ? `subiu ${trainingReport.gains.join(', ')}.` : 'sem evolução visível nesta semana.';
+    rows.push({
+      tone: trainingReport.gains.length ? 'good' : '',
+      iconName: trainingReport.option.icon,
+      body: `<strong>${esc(trainingReport.option.label)}:</strong> ${esc(gains)}`,
+      small: trainingReport.skillPoints ? `+${plural(trainingReport.skillPoints, 'ponto', 'pontos')} de evolução para gastar em Atributos.` : '',
+    });
+  }
+  if (eventResult) {
+    const notes = eventResult.notes ?? [];
+    const text = eventResult.text || (notes.length ? '' : `${eventResult.label ?? 'Você decidiu'}. Nada mudou por enquanto.`);
+    rows.push({
+      tone: toneOfNotes(notes),
+      iconName: eventResult.icon ?? 'coffee',
+      body: text ? esc(text) : `<strong>${esc(eventResult.title ?? 'Evento')}</strong>`,
+      small: notes.join(', '),
+    });
+  }
+  if (!rows.length) return '';
+  return `<ul class="weeklog" aria-label="O que aconteceu nesta semana">${rows
+    .map(
+      (row) => `<li class="notice ${row.tone ? `notice--${row.tone}` : ''}">${icon(row.iconName)}<div>${row.body}${row.small ? `<small>${esc(row.small)}</small>` : ''}</div></li>`,
+    )
+    .join('')}</ul>`;
+}
+
 function weekTab(state, ctx) {
   const data = ctx.game.hubData();
   const season = state.season;
@@ -541,23 +636,7 @@ function weekTab(state, ctx) {
 
     ${statusNotice(state.player)}
 
-    ${
-      trainingReport
-        ? `<div class="notice notice--good">${icon(trainingReport.option.icon)}<div>
-            <strong>${esc(trainingReport.option.label)} concluído.</strong>
-            ${trainingReport.gains.length ? `Subiu: ${esc(trainingReport.gains.join(', '))}.` : 'Sem evolução visível nesta semana.'}
-            ${trainingReport.skillPoints ? `<small>+${plural(trainingReport.skillPoints, 'ponto', 'pontos')} de evolução para gastar em Atributos.</small>` : ''}
-          </div></div>`
-        : ''
-    }
-    ${
-      eventResult
-        ? `<div class="notice">${icon(eventResult.icon ?? 'coffee')}<div>
-            ${esc(eventResult.text)}
-            ${eventResult.notes?.length ? `<small>${esc(eventResult.notes.join(', '))}</small>` : ''}
-          </div></div>`
-        : ''
-    }
+    ${weekLog(trainingReport, eventResult)}
 
     ${stepMarkup}
 

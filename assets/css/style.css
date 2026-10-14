@@ -1734,50 +1734,46 @@ code {
 }
 
 /* --------------------------------------------------------- avisos */
+/* Recado: papel com um carimbo de ícone. A cor fica só no carimbo, não na caixa toda. */
 .notice {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 12px;
   padding: 12px 14px;
+  border: 1px solid var(--rule);
   border-radius: var(--r-control);
-  background: var(--info-soft);
+  background: var(--sheet);
   color: var(--ink);
   font-size: 0.95rem;
 }
 
-.notice .icon {
-  margin-top: 2px;
+.notice > .icon {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  padding: 6px;
+  border-radius: 4px;
+  background: var(--sheet-2);
   color: var(--cover-line);
 }
 
-@media (prefers-color-scheme: dark) {
-  .notice .icon {
-    color: var(--ink);
-  }
-}
-
-.notice--good {
+.notice--good > .icon {
   background: var(--good-soft);
-}
-
-.notice--good .icon {
   color: var(--good);
 }
 
-.notice--bad {
+.notice--bad > .icon {
   background: var(--bad-soft);
-}
-
-.notice--bad .icon {
   color: var(--bad);
 }
 
-.notice--warn {
+.notice--warn > .icon {
   background: var(--warn-soft);
+  color: var(--warn);
 }
 
-.notice--warn .icon {
-  color: var(--warn);
+.notice > div {
+  padding-top: 4px;
 }
 
 .notice small {
@@ -1786,39 +1782,155 @@ code {
   color: var(--ink-2);
 }
 
+/* O que aconteceu na semana: um recado só, uma linha por fato. */
+.weeklog {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-control);
+  background: var(--sheet);
+}
+
+.weeklog .notice {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.weeklog .notice + .notice {
+  border-top: 1px solid var(--rule);
+}
+
 /* ------------------------------------------------------ evento de vida */
+/* O evento é uma carta: frente cobalto com o ícone e o título, o texto ao lado. */
 .event {
   display: grid;
-  gap: 16px;
+  gap: 18px;
 }
 
-.event__head {
+.ecard {
   display: flex;
-  gap: 14px;
-  align-items: flex-start;
-}
-
-.event__badge {
-  width: 52px;
-  height: 52px;
-  flex: none;
-  display: grid;
-  place-items: center;
+  padding: 6px;
   border-radius: var(--r-sticker);
-  background: var(--cover);
-  color: var(--cover-ink);
+  background: var(--sticker-paper);
+  color: var(--sticker-ink);
   box-shadow: var(--shadow-sticker);
 }
 
-.event__badge .icon {
-  width: 28px;
-  height: 28px;
+.ecard__face {
+  flex: 0 0 42%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 14px;
+  min-height: 160px;
+  padding: 18px 16px 16px;
+  border-radius: 3px;
+  background-color: var(--sticker-bg, #1c3d9e);
+  background-image: radial-gradient(rgb(255 255 255 / 0.14) 1px, transparent 1.5px);
+  background-size: 7px 7px;
+  color: #ffffff;
 }
 
-.event__text {
-  color: var(--ink-2);
-  margin-top: 4px;
-  max-width: 62ch;
+.ecard__icon .icon {
+  width: 52px;
+  height: 52px;
+}
+
+.ecard__title {
+  font-family: var(--font-cond);
+  font-weight: 800;
+  font-size: clamp(1.6rem, 4vw, 2rem);
+  line-height: 1.02;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: #ffffff;
+}
+
+.ecard__text {
+  align-self: center;
+  margin: 0;
+  padding: 12px 14px 12px 18px;
+  color: var(--sticker-ink-2);
+  font-size: 1.02rem;
+  line-height: 1.5;
+}
+
+/* Escolhas: botões grandes, com o que está em jogo em selos. */
+.choices {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.choice {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  min-height: 64px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--rule-strong);
+  border-radius: var(--r-control);
+  background: var(--sheet);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms var(--ease-out), transform 160ms var(--ease-press);
+}
+
+.choice:hover {
+  border-color: var(--cover-line);
+}
+
+.choice:active {
+  transform: scale(0.99);
+}
+
+.choice__label {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.choice .seals:empty {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .choice .seal {
+    background: var(--sheet-2);
+    color: var(--ink);
+  }
+
+  .choice .seal--up .icon {
+    color: var(--good);
+  }
+
+  .choice .seal--down .icon {
+    color: var(--bad);
+  }
+
+  .choice .seal--mid .icon {
+    color: var(--ink-3);
+  }
+}
+
+@media (max-width: 600px) {
+  .ecard {
+    flex-direction: column;
+  }
+
+  .ecard__face {
+    flex-basis: auto;
+    min-height: 120px;
+  }
+
+  .ecard__text {
+    padding: 14px 8px 8px;
+  }
 }
 
 /* ---------------------------------------------------------- partida */
