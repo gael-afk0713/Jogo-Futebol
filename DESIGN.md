@@ -252,7 +252,7 @@ Barlow e Barlow Condensed, hospedadas em `assets/fonts/` (licença OFL). A conde
 - Grupos apertados (8 a 12px), separação generosa entre seções (24 a 28px).
 - Listas separadas por filetes de 1px, não por cartões.
 - No celular, propostas viram carrossel horizontal com encaixe.
-- Partida a partir de 980px: o lance e o desfecho viram duas colunas (campo à esquerda, 1,15fr; texto e opções à direita, 1fr; 28px entre elas). Abaixo disso o campo fica acima do texto, com até 340px de largura.
+- Partida a partir de 980px: o lance e o desfecho viram duas colunas (campo à esquerda, 1,15fr; texto e opções à direita, 1fr; 28px entre elas). Abaixo disso o campo fica acima do texto, centrado na folha, com até 560px de largura: no iPad em retrato o gol tem espaço.
 - Placar de estádio: no celular gruda abaixo da barra (topo de 56px) e sangra até a borda; a partir de 760px é uma superfície com raio de 12px que rola com a página. Até 520px os artilheiros somem do placar.
 - Tabela: colunas secundárias somem até 520px.
 
@@ -337,7 +337,7 @@ O treino da semana é escolhido entre figurinhas (`.tcard`), não numa lista:
 
 ### Opções de escolha
 
-Eventos, lances e traços usam a mesma linha de escolha (`.option`): ícone em círculo, título, descrição e a consequência. A lista completa de treinos também usa essa linha, com os efeitos (Forma +7, Felicidade -2). No lance a consequência é a chance real em número grande colorido pela escala.
+Eventos, lances e traços usam a mesma linha de escolha (`.option`): ícone em círculo, título, descrição e a consequência. A lista completa de treinos também usa essa linha, com os efeitos (Forma +7, Felicidade -2). No lance a consequência é a chance real em número grande. A cor é relativa ao lance, não à escala de qualidade: 20% num chute já é uma grande chance. A melhor opção do lance fica verde, com "melhor chance" no lugar de "de chance"; as outras ficam em tinta. Empate no topo não destaca nenhuma.
 
 ### Propostas
 
@@ -348,7 +348,7 @@ Cada proposta é uma figurinha de clube com o botão no verso. Só a renovação
 Um só desenho de campo serve a três usos. É o campo de 105 por 68 em linhas de giz (`rule-strong`, 1,5px) sobre `sheet-2`, com as marcas reais (meio, círculo central, áreas, meia-lua, pênaltis, escanteios) e os dois gols fora da linha de fundo; o gol adversário tem rede.
 
 - **Lance:** uma faixa cobalto a 10% marca a zona do lance (sua área, defesa, meio, área adversária) e a bola, em tinta com contorno de folha, fica no ponto do lance.
-- **Gol:** a bola viaja por um rastro amarelo-fundo até a rede; a rede e a trave adversária escurecem para tinta.
+- **Gol:** a bola viaja por um rastro amarelo-fundo até a rede; a rede e a trave adversária escurecem para tinta. O título "GOL!" vira um telão: faixa cobalto com retícula na largura da folha, Barlow Condensed 800 em caixa alta (até 4,8rem) e a bola amarela ao lado.
 - **Posições** (criação do jogador): círculos de folha com a sigla da posição; a escolhida vira cobalto com texto branco e cresce.
 
 ### Placar de estádio
@@ -377,7 +377,7 @@ O número da camisa é estampado no peito do avatar, em Barlow Condensed 800 cob
 
 **Retornos curtos** (até 320ms, só quando o dado muda): a bola rola até o ponto do lance (460ms), as opções entram em sequência de 50ms, o desfecho se revela de cima para baixo (320ms), a nota carimba, o número da figurinha pisca em amarelo ao subir, os medidores e o relógio do jogo andam do valor antigo ao novo (520ms), lances novos da súmula entram pela esquerda, o placar final carimba ao aparecer.
 
-**O gol.** É o único momento autoral, e cada passo espera o anterior: a bola corre pelo rastro até a rede (120ms de atraso, 560ms), a rede estufa (aos 640ms), o título "Gol!" carimba (aos 620ms, 300ms), então o número do placar vira como placa de estádio (aos 720ms, só quando o desfecho na tela é o seu gol; até lá a placa mostra o número antigo, e a virada troca um pelo outro no meio do giro) e a linha do artilheiro e o gol na súmula aparecem (aos 760ms). Fora do seu gol, o placar vira na hora (440ms).
+**O gol.** É o único momento autoral, e cada passo espera o anterior: a bola corre pelo rastro até a rede (120ms de atraso, 560ms), a rede estufa (aos 640ms), o título "Gol!" carimba (aos 620ms, 300ms), então o número do placar vira como placa de estádio (aos 720ms, só quando o desfecho na tela é o seu gol; até lá a placa mostra o número antigo, e a virada troca um pelo outro no meio do giro) e a linha do artilheiro, o gol na súmula, o texto do desfecho, o "Continuar o jogo" e os números de "Seu jogo" aparecem (aos 760ms). Nada conta o gol antes de a bola entrar. Fora do seu gol, o placar vira na hora (440ms).
 
 **Troca de tela.** Tela, aba e nova semana usam transição de visualização: a página antiga some em 140ms e a nova chega subindo 8px em 280ms (180ms entre abas). A barra superior e a figurinha do jogador ficam no lugar. Sem suporte, a troca é seca.
 

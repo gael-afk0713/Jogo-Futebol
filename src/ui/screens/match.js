@@ -3,14 +3,26 @@
 import { esc } from '../dom.js';
 import { isKick } from '../soundCues.js';
 import { round } from '../../core/utils.js';
-import { feed, icon, meter, momentSpot, monogram, pitch, ratingBadge, statline, tierClass } from '../components.js';
+import { feed, icon, meter, momentSpot, monogram, pitch, ratingBadge, statline } from '../components.js';
 
 const ui = { resolution: null, lastMoment: null };
 
-function chanceMarkup(chance, sure = false) {
+/**
+ * A chance é lida em relação ao lance, não numa escala fixa: 20% num chute já é
+ * uma grande chance. A melhor opção do lance fica em destaque; as outras, em tinta.
+ */
+function chanceMarkup(chance, { sure = false, best = false } = {}) {
   if (sure) return '';
   const value = Math.round(chance * 100);
-  return `<span class="option__aside ${tierClass(value)}"><span class="option__chance">${value}%<small>de chance</small></span></span>`;
+  return `<span class="option__aside ${best ? 'is-best' : ''}"><span class="option__chance">${value}%<small>${best ? 'melhor chance' : 'de chance'}</small></span></span>`;
+}
+
+/** Índice da opção com a maior chance, quando ela é a única maior (opções certas não contam). */
+function bestOptionIndex(options) {
+  const open = options.filter((option) => !option.sure);
+  if (open.length < 2) return null;
+  const sorted = [...open].sort((a, b) => b.chance - a.chance);
+  return Math.round(sorted[0].chance * 100) > Math.round(sorted[1].chance * 100) ? sorted[0].index : null;
 }
 
 const zoneLabel = (zone) => ({ gol: 'sua área', defesa: 'defesa', meio: 'meio-campo', ataque: 'área adversária' })[zone] ?? 'campo';
@@ -94,6 +106,7 @@ function centerPanel(match) {
 
   if (match.pending) {
     const offBall = match.pending.offBall;
+    const best = bestOptionIndex(match.pending.options);
     return `
       <section class="sheet section moment ${offBall ? 'moment--off' : ''}" aria-labelledby="lance-titulo">
         ${
@@ -113,7 +126,7 @@ function centerPanel(match) {
                   <span class="option__title">${esc(option.label)}</span>
                   ${option.hint ? `<span class="option__desc">${esc(option.hint)}</span>` : ''}
                 </span>
-                ${chanceMarkup(option.chance, option.sure)}
+                ${chanceMarkup(option.chance, { sure: option.sure, best: option.index === best })}
               </button>
             </li>`,
             )

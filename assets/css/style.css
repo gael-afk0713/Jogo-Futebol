@@ -1713,6 +1713,12 @@ code {
   color: var(--tier-text, var(--ink));
 }
 
+/* No lance, a melhor chance fica verde e as outras em tinta: a cor é relativa ao lance. */
+.option__aside.is-best .option__chance,
+.option__aside.is-best .option__chance small {
+  color: var(--good);
+}
+
 .option__chance small {
   display: block;
   margin-top: 2px;
@@ -4564,9 +4570,11 @@ code {
   color: var(--cover-ink);
 }
 
+/* No retrato o campo ocupa a folha (até 560px), centrado: o gol tem espaço. */
 .moment__pitch {
-  max-width: 340px;
-  margin-bottom: 4px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto 4px;
 }
 
 /* No computador o campo fica ao lado do lance, grande o bastante para o gol. */
@@ -4731,19 +4739,30 @@ code {
   }
 }
 
-/* desfecho do lance */
+/* desfecho do lance: o seu gol é um telão de estádio, cobalto, em caixa alta */
 .resolution--goal .resolution__title {
-  color: var(--ink);
-  font-size: clamp(2rem, 6vw, 2.8rem);
+  justify-content: center;
+  gap: 14px;
+  padding: 14px 16px 10px;
+  border-radius: var(--r-sticker);
+  background-color: var(--cover);
+  background-image: radial-gradient(var(--cover-dot) 1px, transparent 1.4px);
+  background-size: 6px 6px;
+  color: var(--cover-ink);
+  font-size: clamp(3.2rem, 11vw, 4.8rem);
+  font-weight: 800;
+  line-height: 0.95;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .resolution--goal .resolution__title .icon {
-  padding: 4px;
+  padding: 6px;
   border-radius: 50%;
   background: var(--accent);
   color: var(--accent-ink);
-  width: 36px;
-  height: 36px;
+  width: 52px;
+  height: 52px;
 }
 
 /* súmula */
@@ -5135,7 +5154,10 @@ code {
   }
 
   .screen:has(.resolution--goal[data-moment]:not(.is-settled)) .placard__scorers .is-you:last-child,
-  .screen:has(.resolution--goal[data-moment]:not(.is-settled)) .feed__item--goal.is-new {
+  .screen:has(.resolution--goal[data-moment]:not(.is-settled)) .feed__item--goal.is-new,
+  .resolution--goal[data-moment]:not(.is-settled) > :not(.moment__pitch, .resolution__title),
+  .screen:has(.resolution--goal[data-moment]:not(.is-settled)) .match__side .statline,
+  .screen:has(.resolution--goal[data-moment]:not(.is-settled)) .match__side .rating {
     animation: aparece-tarde 300ms 760ms var(--ease-out) both;
   }
 
