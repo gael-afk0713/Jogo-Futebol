@@ -286,19 +286,53 @@ export function initials(name = '') {
  * Figurinha do jogador. O número da figurinha é o overall.
  * size: 'sm' | 'md' | 'lg'
  */
-export function playerSticker(player, { size = 'md', isNew = false, overall = null, meta = null, foil = false, pulse = null } = {}) {
+/**
+ * Raridade da figurinha pelo overall, como no álbum: papel até 59, prata, ouro
+ * e, a partir de 80, a brilhante. As estrelas na foto dizem a raridade sem
+ * depender só da cor.
+ */
+export const RARITIES = [
+  { id: 'papel', min: 0, rank: 0, label: 'papel' },
+  { id: 'prata', min: 60, rank: 1, label: 'prata' },
+  { id: 'ouro', min: 70, rank: 2, label: 'ouro' },
+  { id: 'brilhante', min: 80, rank: 3, label: 'brilhante' },
+];
+
+export const rarityOf = (overall) => [...RARITIES].reverse().find((rarity) => (overall ?? 0) >= rarity.min) ?? RARITIES[0];
+
+/** Classe da moldura de uma figurinha: a brilhante usa o mesmo brilho dos troféus. */
+export const rarityClass = (overall) => {
+  const rarity = rarityOf(overall);
+  return rarity.id === 'brilhante' ? 'sticker--foil sticker--brilhante' : `sticker--${rarity.id}`;
+};
+
+function rarityStars(rarity) {
+  if (!rarity.rank) return '';
+  return `<span class="sticker__rank" role="img" aria-label="Figurinha ${rarity.label}">${icon('star').repeat(rarity.rank)}</span>`;
+}
+
+// Cor de edição de cada temporada, como as capas do álbum que mudam a cada
+// Copa. Vem do ano, nunca do clube: o jogo não inventa cor de clube.
+const EDITION_COLORS = ['#1c3d9e', '#0e6b4f', '#7a1f3d', '#33405a', '#8a3b12', '#0d5c75', '#4b2a7a', '#5f5414'];
+
+export const editionColor = (year) => EDITION_COLORS[(((Number(year) || 2026) - 2026) % EDITION_COLORS.length + EDITION_COLORS.length) % EDITION_COLORS.length];
+
+export function playerSticker(player, { size = 'md', isNew = false, overall = null, meta = null, foil = false, pulse = null, extraClass = '' } = {}) {
   const position = getPosition(player.position);
   const club = getClub(player.club);
   const value = overall ?? player.overall;
   const caption = meta ?? `${player.nationality} · ${club?.name ?? 'Sem clube'}`;
+  const rarity = rarityOf(value);
+  const frame = foil ? 'sticker--foil' : rarityClass(value);
   return `
-    <figure class="sticker sticker--${size} ${foil ? 'sticker--foil' : ''} ${isNew ? 'is-new' : ''}">
+    <figure class="sticker sticker--${size} ${frame} ${isNew ? 'is-new' : ''} ${extraClass}">
       <div class="sticker__photo">
         ${avatarSvg(player.appearance, { label: `Retrato de ${player.firstName} ${player.lastName}` })}
         <div class="sticker__number" aria-label="Overall ${value}, ${position.name}">
           <strong ${pulse ? `data-pulse="${esc(pulse)}" data-value="${esc(value)}" data-count` : ''}>${esc(value)}</strong>
           <small>${esc(position.short)}</small>
         </div>
+        ${foil ? '' : rarityStars(rarity)}
       </div>
       <figcaption>
         <div class="sticker__band">${esc(player.nickname || player.firstName)}</div>

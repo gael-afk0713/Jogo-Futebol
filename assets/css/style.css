@@ -854,6 +854,48 @@ code {
   color: #2a2000;
 }
 
+/* Raridade pelo overall: prata e ouro são tintas chapadas, com um filete
+   interno mais claro; o degradê fica só na brilhante (a partir de 80). */
+.sticker--prata,
+.card-sticker.sticker--prata {
+  background: #cdd3dc;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.75), var(--shadow-sticker);
+}
+
+.sticker--ouro,
+.card-sticker.sticker--ouro {
+  background: #c9a24a;
+  box-shadow: inset 0 0 0 1px rgb(255 238 190 / 0.7), var(--shadow-sticker);
+}
+
+.sticker--ouro .sticker__band,
+.sticker--ouro .sticker__meta,
+.card-sticker.sticker--ouro .card-sticker__band,
+.card-sticker.sticker--ouro .card-sticker__sub,
+.card-sticker.sticker--ouro .season-sticker__line {
+  color: #2a2000;
+}
+
+.sticker__rank {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: flex;
+  gap: 1px;
+  color: #ffffff;
+  filter: drop-shadow(0 1px 0 rgb(0 0 0 / 0.3));
+}
+
+.sticker__rank .icon {
+  width: 13px;
+  height: 13px;
+}
+
+.sticker--sm .sticker__rank .icon {
+  width: 10px;
+  height: 10px;
+}
+
 /* colar figurinha: o movimento assinatura */
 @media (prefers-reduced-motion: no-preference) {
   .is-new {
@@ -5272,6 +5314,112 @@ code {
   }
 }
 
+/* --------------------------------------------------------- pacote */
+/* O pacote da temporada: um envelope cobalto com retícula, o ano em grande. */
+.pack {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 0 8px;
+  text-align: center;
+}
+
+.pack .lede {
+  margin: 0;
+}
+
+.pack__envelope {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  gap: 4px;
+  width: min(260px, 70vw);
+  aspect-ratio: 3 / 4;
+  padding: 0 16px 26px;
+  border-radius: var(--r-sticker);
+  background-color: #1c3d9e;
+  background-image: radial-gradient(rgb(255 255 255 / 0.12) 1px, transparent 1.5px);
+  background-size: 7px 7px;
+  color: #ffffff;
+  box-shadow: var(--shadow-lift);
+  overflow: hidden;
+}
+
+/* a aba do envelope e o picote de abrir */
+.pack__envelope::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 38%;
+  background: rgb(255 255 255 / 0.08);
+  clip-path: polygon(0 0, 100% 0, 100% 40%, 50% 100%, 0 40%);
+}
+
+.pack__envelope::after {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  border-top: 1.5px dashed rgb(255 255 255 / 0.5);
+}
+
+.pack__brand {
+  font-family: var(--font-cond);
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.pack__year {
+  font-family: var(--font-cond);
+  font-weight: 800;
+  font-size: 4.6rem;
+  line-height: 0.9;
+}
+
+.pack__count {
+  font-family: var(--font-cond);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #cdd7f6;
+}
+
+.pack__actions {
+  justify-content: center;
+}
+
+.pack__actions .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.pack__stickers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 18px;
+  margin: 8px 0;
+}
+
+.pack__stickers .sticker {
+  --sticker-w: 168px;
+}
+
+.pack__stickers .card-sticker {
+  width: 168px;
+}
+
+.pack__line strong {
+  color: var(--ink);
+}
+
 /* --------------------------------------------------------- movimento */
 /*
  * Gramática: colar figurinha é a assinatura; o gol é o único momento
@@ -5279,6 +5427,38 @@ code {
  * muda (src/ui/motion.js). Nada em laço, nada bloqueia o clique.
  */
 @media (prefers-reduced-motion: no-preference) {
+  /* pacote: cada figurinha sai do envelope com 350ms de distância */
+  .pack__stickers .is-new {
+    animation-delay: calc(var(--i, 0) * 350ms);
+  }
+
+  .pack__stickers .card-sticker.sticker--foil.is-new {
+    animation-delay: calc(var(--i, 0) * 350ms), calc(var(--i, 0) * 350ms + 380ms);
+  }
+
+  .pack__envelope {
+    animation: colar 620ms var(--ease-out) both;
+  }
+
+  /* subiu de raridade: a figurinha vira como carta e assenta */
+  .sticker.is-upgrade {
+    animation: vira-figurinha 900ms var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * 350ms);
+  }
+
+  @keyframes vira-figurinha {
+    0% {
+      transform: perspective(600px) rotateY(-90deg) scale(1.06);
+      box-shadow: var(--shadow-lift);
+    }
+    60% {
+      transform: perspective(600px) rotateY(12deg) scale(1.04);
+    }
+    100% {
+      transform: none;
+    }
+  }
+
   /* figurinha brilhante: um reflexo atravessa uma vez ao colar */
   .sticker--foil.is-new,
   .card-sticker.sticker--foil.is-new {

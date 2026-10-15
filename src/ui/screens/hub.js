@@ -42,6 +42,9 @@ import {
   leagueTable,
   monogram,
   playerSticker,
+  rarityClass,
+  rarityOf,
+  editionColor,
   ratingBadge,
   statline,
   stepper,
@@ -90,12 +93,22 @@ function profile(state, data, ctx) {
   const opened = performance.now() - (ctx.openedAt ?? -Infinity) < JUST_OPENED_MS;
   const grew = !opened && ui.lastOverall !== null && player.overall > ui.lastOverall;
   ui.lastOverall = player.overall;
+  // Subiu de raridade (prata, ouro, brilhante): a figurinha vira e o jogo
+  // comemora uma vez. O pacote do fim de temporada também marca isso.
+  const rarity = rarityOf(player.overall);
+  if (player.rarityShown === undefined) player.rarityShown = rarity.rank;
+  const upgraded = rarity.rank > player.rarityShown;
+  if (upgraded) {
+    player.rarityShown = rarity.rank;
+    ctx.sound?.play('conquista');
+    setTimeout(() => toast(`Sua figurinha agora é ${rarity.label}!`, 'good'), 0);
+  }
 
   // Fora da aba Semana, no retrato, a ficha encolhe para o conteúdo da aba aparecer logo.
   const compact = ui.tab !== 'semana';
   return `
     <section class="profile ${compact ? 'profile--compact' : ''}" aria-label="Seu jogador">
-      ${playerSticker(player, { isNew: grew || opened, pulse: 'overall', meta: `${nation.id} · ${club ? initials(club.name) : 'Sem clube'}` })}
+      ${playerSticker(player, { isNew: grew || opened || upgraded, pulse: 'overall', meta: `${nation.id} · ${club ? initials(club.name) : 'Sem clube'}`, extraClass: upgraded ? 'is-upgrade' : '' })}
       <div class="profile__body">
         <h1 class="profile__name">${esc(player.firstName)} ${esc(player.lastName)}</h1>
         <p class="profile__line"><strong>${esc(position.name)}</strong> · ${player.age} anos · ${esc(nation.name)}</p>
@@ -1092,7 +1105,7 @@ function milestones(player) {
 
 function seasonSticker(season, index) {
   return `
-    <article class="card-sticker season-sticker">
+    <article class="card-sticker season-sticker ${rarityClass(season.overallAfter)}" style="--face:${editionColor(season.year)}">
       <div class="card-sticker__face">
         <span class="card-sticker__monogram">${esc(initials(season.clubName))}</span>
         <span class="card-sticker__big"><strong>${season.overallAfter}</strong><small>Overall</small></span>

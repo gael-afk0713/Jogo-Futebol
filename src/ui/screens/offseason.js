@@ -4,7 +4,84 @@ import { esc, toast } from '../dom.js';
 import { decimal, money, plural } from '../../core/utils.js';
 import { attributeLabel } from '../../data/attributes.js';
 import { getClub } from '../../data/clubs.js';
-import { icon, initials, offerSticker, ratingBadge, statline } from '../components.js';
+import { editionColor, icon, initials, offerSticker, playerSticker, rarityClass, rarityOf, ratingBadge, statline } from '../components.js';
+
+// O pacote da temporada: aberto (ou pulado) uma vez por temporada.
+const ui = { packSeen: null, packOpen: false };
+const packKey = (state) => `${state.offseason?.year}-${state.player?.firstName}-${state.player?.lastName}`;
+
+/** A figurinha da temporada: cor de edição do ano e moldura pela raridade do overall. */
+function seasonCard(offseason, summary, record, growth, { isNew = false, index = 0 } = {}) {
+  return `
+    <article class="card-sticker season-sticker ${rarityClass(growth.after)} ${isNew ? 'is-new' : ''}" style="--face:${editionColor(offseason.year)}; --i:${index}" aria-label="Figurinha da temporada ${offseason.year}">
+      <div class="card-sticker__face">
+        <span class="card-sticker__monogram">${esc(initials(summary.clubName))}</span>
+        <span class="card-sticker__big"><strong>${growth.after}</strong><small>Overall</small></span>
+      </div>
+      <div class="card-sticker__band">${esc(summary.clubName)}</div>
+      <div class="card-sticker__sub">${offseason.year}, ${record.age} anos</div>
+      <div class="season-sticker__line"><span class="num">${record.apps} J</span><span class="num">${record.goals} G</span><span class="num">${record.assists} A</span></div>
+    </article>`;
+}
+
+function trophyCard(item, year, index) {
+  return `
+    <article class="card-sticker sticker--foil trophy-sticker is-new" style="--i:${index}">
+      ${icon(item.icon)}
+      <span class="trophy-sticker__name">${esc(item.name)}</span>
+      <span class="trophy-sticker__year num">${year}</span>
+    </article>`;
+}
+
+/**
+ * O pacote: antes do balanço, as figurinhas do ano chegam num envelope. Um
+ * toque abre, elas saem uma a uma, e dá sempre para pular.
+ */
+function packView(state, specials) {
+  const { offseason, player } = state;
+  const { summary, record, growth } = offseason;
+  const count = 2 + specials.length;
+  if (!ui.packOpen) {
+    return `
+      <div class="screen">
+        <section class="pack" aria-labelledby="pacote-titulo">
+          <div class="pack__envelope" aria-hidden="true">
+            <span class="pack__brand">Craque do Zero</span>
+            <span class="pack__year num">${offseason.year}</span>
+            <span class="pack__count">${count} figurinhas</span>
+          </div>
+          <h1 id="pacote-titulo">Temporada ${esc(summary.label ?? String(offseason.year))} encerrada</h1>
+          <p class="lede">Chegou o pacote do ano: ${count} figurinhas para o seu álbum.</p>
+          <div class="actions pack__actions">
+            <button class="btn btn--primary" data-action="open-pack">${icon('package')}Abrir o pacote</button>
+            <button class="btn btn--quiet" data-action="skip-pack">Pular</button>
+          </div>
+        </section>
+      </div>`;
+  }
+  const rarity = rarityOf(growth.after);
+  const upgraded = rarityOf(growth.before).rank < rarity.rank;
+  const delta = growth.after - growth.before;
+  return `
+    <div class="screen">
+      <section class="pack is-open" aria-labelledby="pacote-titulo">
+        <h1 id="pacote-titulo">Pacote da temporada ${offseason.year}</h1>
+        <div class="pack__stickers">
+          ${playerSticker({ ...player, overall: growth.after }, { size: 'md', isNew: true, meta: rarity.rank ? `${offseason.year} · ${rarity.label}` : String(offseason.year), extraClass: upgraded ? 'is-upgrade' : '' })}
+          ${seasonCard(offseason, summary, record, growth, { isNew: true, index: 1 })}
+          ${specials.map((item, index) => trophyCard(item, offseason.year, index + 2)).join('')}
+        </div>
+        <p class="lede pack__line">${
+          upgraded
+            ? `<strong>Sua figurinha agora é ${esc(rarity.label)}.</strong> `
+            : ''
+        }${delta > 0 ? `Overall ${growth.before} → ${growth.after}.` : delta < 0 ? `Overall ${growth.before} → ${growth.after}.` : `Overall estável em ${growth.after}.`}</p>
+        <div class="actions pack__actions">
+          <button class="btn btn--primary" data-action="pack-done">Ver o balanço da temporada ${icon('arrow-right')}</button>
+        </div>
+      </section>
+    </div>`;
+}
 
 function growthSection(growth, potential, player) {
   const gains = Object.entries(growth.gains ?? {});
@@ -54,6 +131,7 @@ export default {
       ...awards.map((award) => ({ name: award.name, icon: award.icon })),
       ...(national.trophy ? [{ name: national.trophy.name, icon: 'flag' }] : []),
     ];
+    if (ui.packSeen !== packKey(state)) return packView(state, specials);
     const offers = [...(offseason.renewal ? [offseason.renewal] : []), ...offseason.offers, ...offseason.loans];
     // Destaque só para a renovação ou a subida da base, e só se ninguém pagar mais.
     const homeOffer = offseason.renewal ?? offseason.offers.find((offer) => offer.promotion) ?? null;
@@ -62,15 +140,7 @@ export default {
     return `
       <div class="screen">
         <header class="legacy">
-          <article class="card-sticker season-sticker is-new" aria-label="Figurinha da temporada ${offseason.year}">
-            <div class="card-sticker__face">
-              <span class="card-sticker__monogram">${esc(initials(summary.clubName))}</span>
-              <span class="card-sticker__big"><strong>${growth.after}</strong><small>Overall</small></span>
-            </div>
-            <div class="card-sticker__band">${esc(summary.clubName)}</div>
-            <div class="card-sticker__sub">${offseason.year}, ${record.age} anos</div>
-            <div class="season-sticker__line"><span class="num">${record.apps} J</span><span class="num">${record.goals} G</span><span class="num">${record.assists} A</span></div>
-          </article>
+          ${seasonCard(offseason, summary, record, growth, { isNew: true })}
           <div class="section">
             <h1>Temporada ${esc(summary.label ?? String(offseason.year))} encerrada</h1>
             <p class="lede">
@@ -100,16 +170,7 @@ export default {
             ? `<section class="section">
                 <h2>Figurinhas brilhantes</h2>
                 <div class="album album--trophies">
-                  ${specials
-                    .map(
-                      (item, index) => `
-                    <article class="card-sticker sticker--foil trophy-sticker is-new" style="--i:${index + 1}">
-                      ${icon(item.icon)}
-                      <span class="trophy-sticker__name">${esc(item.name)}</span>
-                      <span class="trophy-sticker__year num">${offseason.year}</span>
-                    </article>`,
-                    )
-                    .join('')}
+                  ${specials.map((item, index) => trophyCard(item, offseason.year, index + 1)).join('')}
                 </div>
               </section>`
             : ''
@@ -214,6 +275,30 @@ export default {
   },
 
   actions: {
+    'open-pack': (ctx) => {
+      ui.packOpen = true;
+      const { player, offseason } = ctx.game.state;
+      // A raridade nova já foi comemorada aqui: a ficha não repete.
+      const rank = rarityOf(offseason?.growth?.after ?? player.overall).rank;
+      if ((player.rarityShown ?? 0) < rank) player.rarityShown = rank;
+      ctx.sound.play('figurinha');
+      ctx.rerender();
+    },
+    'skip-pack': (ctx) => {
+      ui.packSeen = packKey(ctx.game.state);
+      ui.packOpen = false;
+      const { player, offseason } = ctx.game.state;
+      const rank = rarityOf(offseason?.growth?.after ?? player.overall).rank;
+      if ((player.rarityShown ?? 0) < rank) player.rarityShown = rank;
+      ctx.rerender();
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    },
+    'pack-done': (ctx) => {
+      ui.packSeen = packKey(ctx.game.state);
+      ui.packOpen = false;
+      ctx.rerender();
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    },
     'accept-offer': (ctx, dataset) => {
       ctx.game.acceptOffer(dataset.offer);
       ctx.save.schedule(300);

@@ -194,7 +194,12 @@ Estratégia: papel neutro tingido de frio, uma capa cobalto que comanda o topo e
 
 ### Tertiary
 
-- **Brilho dourado** (`foil-*`): gradiente de 135 graus entre `#fff6d2`, `#f6dc80` e `#c99a1e`. Só em figurinhas especiais: títulos, prêmios, conquistas e a figurinha de legado. É o único gradiente do sistema, e existe porque a figurinha brilhante é um material real do álbum.
+- **Brilho dourado** (`foil-*`): gradiente de 135 graus entre `#fff6d2`, `#f6dc80` e `#c99a1e`. Só em figurinhas especiais: títulos, prêmios, conquistas, a figurinha de legado e a figurinha do jogador a partir de 80 de overall. É o único gradiente do sistema, e existe porque a figurinha brilhante é um material real do álbum.
+
+### Raridade e edição
+
+- **Raridade pelo overall.** A moldura da figurinha (do jogador e da temporada) muda com o overall: papel branco até 59, **prata** (`#cdd3dc`) de 60 a 69, **ouro** (`#c9a24a`, ouro velho, fosco e puxado para o ocre) de 70 a 79 e **brilhante** (o gradiente dourado) a partir de 80. Prata e ouro são tintas chapadas, com um filete interno de 1px mais claro; o degradê fica só na brilhante. Estrelas brancas no canto da foto (uma, duas ou três) dizem a raridade sem depender só da cor. No ouro e na brilhante, o texto da faixa usa `#2a2000`.
+- **Cor de edição por temporada.** A face da figurinha de temporada ganha a cor de edição do ano, como as capas do álbum que mudam a cada Copa: cobalto (2026), verde `#0e6b4f`, vinho `#7a1f3d`, grafite `#33405a`, terracota `#8a3b12`, petróleo `#0d5c75`, roxo `#4b2a7a` e oliva `#5f5414`, e o ciclo recomeça. A cor vem do ano, nunca do clube.
 
 ### Neutral
 
@@ -412,6 +417,10 @@ O número da camisa é estampado no peito do avatar, em Barlow Condensed 800 cob
 **Troca de tela.** Tela, aba e nova semana usam transição de visualização: a página antiga some em 140ms e a nova chega subindo 8px em 280ms (180ms entre abas). A barra superior e a figurinha do jogador ficam no lugar. Sem suporte, a troca é seca.
 
 **Abertura do jogo.** A capa cobalto cobre a tela com o título e quatro espaços numerados, cada um com o nome de uma etapa real do carregamento. Quando a etapa termina, uma figurinha (bola, chuteira, camisa, taça) cola no espaço com o mesmo movimento assinatura, em 480ms e com 130ms entre uma e outra; o espaço da etapa em andamento tem a borda mais forte, sem animação em laço. A capa sai em 240ms por opacidade quando a última assenta (380ms), então numa internet boa a abertura toda leva cerca de 1 segundo. Depois de 2 segundos aparece uma dica, trocada a cada 7. Sem som.
+
+**Subir de raridade.** Quando o overall cruza 60, 70 ou 80, a figurinha vira como carta (giro em Y de -90 graus até assentar, 900ms) e o jogo avisa uma vez ("Sua figurinha agora é prata!").
+
+**O pacote da temporada.** O fim de temporada começa por um envelope cobalto com o ano em grande e quantas figurinhas vêm. "Abrir o pacote" faz as figurinhas saírem uma a uma, com 350ms entre elas, no movimento de colar: a sua figurinha com o overall novo (virando, se subiu de raridade), a da temporada e as brilhantes do ano. Depois vem o balanço. "Pular" vai direto ao balanço.
 
 **Jogar.** Ao abrir uma carreira, a figurinha dela levanta do álbum (escala 1,06, giro de -2 graus, 6px acima, sombra `lift`, 280ms) e fica no ar até a carreira chegar; a figurinha do jogador então cola no perfil.
 
