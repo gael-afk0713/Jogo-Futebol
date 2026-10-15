@@ -645,6 +645,7 @@ code {
   align-items: center;
   gap: 8px;
   flex: none;
+  min-height: 46px;
   padding: 12px 14px 13px;
   border: 0;
   background: none;
@@ -684,6 +685,20 @@ code {
   .tab::after {
     background: var(--accent);
   }
+}
+
+/* Pontos para gastar: um selo na aba Atributos. */
+.tab__badge {
+  min-width: 20px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--select);
+  color: var(--select-ink);
+  font-family: var(--font-cond);
+  font-weight: 800;
+  font-size: 0.85rem;
+  line-height: 1.1;
+  text-align: center;
 }
 
 /* No celular as cinco abas cabem sem rolar: sem ícone, menos respiro. */
@@ -2467,38 +2482,60 @@ code {
 }
 
 /* --------------------------------------------------------- atributos */
-.attrs {
+/* Atributos em blocos, como o verso da figurinha: a média do grupo é o título,
+   os atributos ficam numa lista curta e o +1 só aparece no grupo aberto. */
+.agroups {
   display: grid;
-  gap: 28px;
+  gap: 16px;
 }
 
-@media (min-width: 760px) {
-  .attrs {
+@media (min-width: 640px) {
+  .agroups {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 28px 40px;
+    align-items: start;
   }
 }
 
-.attrs__group h3 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+.agroup {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-surface);
+  background: var(--sheet);
 }
 
-.attrs__group h3 .icon {
+.agroup.is-open {
+  border-color: var(--cover-line);
+}
+
+.agroup__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.agroup__icon .icon {
+  width: 22px;
+  height: 22px;
   color: var(--cover-line);
 }
 
-@media (prefers-color-scheme: dark) {
-  .attrs__group h3 .icon {
-    color: var(--accent);
-  }
+.agroup__head h3 {
+  flex: 1;
+  font-size: 1.3rem;
 }
 
-.attrs__list {
+.agroup__avg {
+  font-family: var(--font-cond);
+  font-weight: 800;
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.agroup__list {
   display: grid;
-  gap: 12px;
+  gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -2506,19 +2543,28 @@ code {
 
 .attr {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 4px 10px;
+  gap: 2px 10px;
+  min-height: 30px;
+  border-top: 1px solid var(--rule);
+  padding-top: 4px;
+}
+
+.attr:first-child {
+  border-top: 0;
+  padding-top: 0;
 }
 
 .attr__label {
   font-size: 0.95rem;
   min-width: 0;
+  color: var(--ink-2);
 }
 
 .attr__bonus {
   margin-left: 4px;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--good);
 }
@@ -2527,21 +2573,39 @@ code {
   color: var(--ink);
   font-family: var(--font-cond);
   font-weight: 800;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   min-width: 2ch;
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-.attr .meter__track {
+/* grupo aberto: filete do nível (uma cor só) e o botão de +1 ao lado */
+.agroup.is-open .attr {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  padding: 6px 0;
+}
+
+.attr__bar {
   grid-column: 1 / 3;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--rule);
+  overflow: hidden;
+}
+
+.attr__bar span {
+  display: block;
+  height: 100%;
+  background: var(--cover-line);
+  transform-origin: left center;
+  transform: scaleX(var(--v, 0));
 }
 
 .attr__buy {
   grid-row: 1 / 3;
   grid-column: 3;
-  min-width: 52px;
-  height: 44px;
+  min-width: 56px;
+  height: 46px;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
@@ -2551,17 +2615,16 @@ code {
   border-radius: var(--r-control);
   background: transparent;
   color: var(--cover-line);
-  font: 700 0.85rem/1 var(--font-body);
+  font: 700 0.9rem/1 var(--font-body);
   cursor: pointer;
   font-variant-numeric: tabular-nums;
   transition: background-color 160ms var(--ease-out), transform 160ms var(--ease-press);
 }
 
 .attr__buy small {
-  margin-top: 2px;
-  font-size: 0.68rem;
+  margin-top: 3px;
+  font-size: 0.75rem;
   font-weight: 600;
-  opacity: 0.85;
 }
 
 .attr__buy:hover:not(:disabled) {
@@ -2578,29 +2641,95 @@ code {
   cursor: not-allowed;
 }
 
+.agroup__toggle {
+  justify-self: start;
+  min-height: 44px;
+}
+
+.agroup__toggle .icon {
+  width: 16px;
+  height: 16px;
+}
+
 @media (prefers-color-scheme: dark) {
   .attr__buy {
     border-color: var(--accent);
     color: var(--accent);
   }
+
+  .agroup__icon .icon {
+    color: var(--accent);
+  }
 }
 
-.points-pill {
+/* Pontos e dinheiro em conta: etiqueta de tinta (o amarelo é só da ação). */
+.points-badge {
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
   padding: 6px 12px;
+  border: 1px solid var(--rule-strong);
   border-radius: var(--r-control);
-  background: var(--accent);
-  color: var(--accent-ink);
+  color: var(--ink-2);
   font-weight: 600;
 }
 
-.points-pill strong {
+.points-badge strong {
   font-family: var(--font-cond);
   font-weight: 800;
   font-size: 1.4rem;
   line-height: 1;
+  color: var(--ink);
+}
+
+/* Vida: os indicadores que não estão na ficha, no mesmo formato dela. */
+.life-vitals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px 0;
+  margin: 8px 0 6px;
+}
+
+.life-vitals .vital:nth-child(4n + 1) {
+  border-left: 0;
+  padding-left: 0;
+}
+
+.vital__note {
+  color: var(--bad);
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+@media (max-width: 600px) {
+  .life-vitals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .life-vitals .vital:nth-child(4n + 1) {
+    border-left: 1px solid var(--rule);
+    padding-left: 14px;
+  }
+
+  .life-vitals .vital:nth-child(odd) {
+    border-left: 0;
+    padding-left: 0;
+  }
+}
+
+.store-link {
+  padding: 16px;
+  border: 1px dashed var(--rule-strong);
+  border-radius: var(--r-surface);
+}
+
+.store-link p {
+  margin: 0;
+}
+
+.store-link .icon {
+  width: 18px;
+  height: 18px;
 }
 
 /* ------------------------------------------------------------ traços */
@@ -2627,9 +2756,9 @@ code {
 }
 
 .trait-chip.is-current {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-ink);
+  background: var(--select);
+  border-color: var(--select);
+  color: var(--select-ink);
 }
 
 .trait-chip.is-current .icon {

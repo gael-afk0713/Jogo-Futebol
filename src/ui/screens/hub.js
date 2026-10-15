@@ -11,6 +11,7 @@ import { previewTraining, trainingOptionsFor } from '../../engine/training.js';
 import { upgradeCost, attributeCeiling, keyAttributesFor } from '../../engine/overall.js';
 import { careerTotals, experience, EXPERIENCE_LEVELS, LIFE_STATS } from '../../engine/player.js';
 import { objectiveProgress } from '../../engine/objectives.js';
+import { DISCIPLINE_RISK } from '../../engine/life.js';
 import { attributeLabel } from '../../data/attributes.js';
 import { expenseBreakdown, netWorth, weeklySponsors } from '../../engine/finance.js';
 import { marketValue, getRole } from '../../engine/transfers.js';
@@ -39,7 +40,6 @@ import {
   icon,
   initials,
   leagueTable,
-  lifeMeters,
   monogram,
   playerSticker,
   ratingBadge,
@@ -48,7 +48,7 @@ import {
   traitChips,
 } from '../components.js';
 
-const ui = { tab: 'semana', lastOverall: null, peek: null, lifeCat: 'lazer', affordOnly: false, allTraining: false };
+const ui = { tab: 'semana', lastOverall: null, peek: null, lifeCat: 'evolucao', affordOnly: false, allTraining: false, attrGroup: null };
 
 const TABS = [
   { id: 'semana', label: 'Semana', icon: 'calendar-blank' },
@@ -110,16 +110,27 @@ function profile(state, data, ctx) {
 
 const VITALS = ['happiness', 'fitness', 'managerRelation', 'fanRelation'];
 
+// Só fica vermelho o que atrapalha quando cai. Fama, reputação, inteligência e
+// carisma começam baixos num garoto de 16 anos, e isso é normal.
+const ALERT_STATS = new Set(['happiness', 'fitness', 'health', 'discipline', 'morale', 'managerRelation', 'fanRelation']);
+
 /** Um indicador da ficha: número grande e um filete do nível, que só fica vermelho quando pede atenção. */
-function vital(id, raw) {
+function vital(id, raw, note = '') {
   const stat = LIFE_STATS.find((item) => item.id === id);
   const value = Math.max(0, Math.min(100, Math.round(raw ?? 0)));
-  return `<div class="vital ${value < 40 ? 'is-low' : ''}" data-pulse="vital-${id}" data-value="${value}">
+  const low = value < 40 && ALERT_STATS.has(id);
+  return `<div class="vital ${low ? 'is-low' : ''}" data-pulse="vital-${id}" data-value="${value}">
     <span class="vital__label">${icon(stat.icon)}${esc(stat.label)}</span>
     <strong class="vital__value num">${value}</strong>
     <span class="vital__bar" role="meter" aria-label="${esc(stat.label)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${value}"><span style="--v:${value / 100}"></span></span>
+    ${note ? `<span class="vital__note">${esc(note)}</span>` : ''}
   </div>`;
 }
+
+// Recado embaixo de um indicador da Vida, só quando ele pede atenção.
+const LIFE_NOTES_HUB = {
+  discipline: (value) => (value < DISCIPLINE_RISK ? 'Risco de multa, banco e menos propostas' : ''),
+};
 
 /* ---------------------------------------------------------------- semana */
 
@@ -188,7 +199,7 @@ const pct = (value) => `${Math.round(value * 100)}%`;
 /** Detalhes exatos do treino (só com o tablet da loja). */
 function trainingPeek(player, option, insight) {
   if (!insight) {
-    return `<p class="peek__locked">${icon('lock-simple')}<span>Compre o <strong>Tablet de análise de treino</strong> na loja (aba Atributos) para ver exatamente o que cada treino vai te dar.</span></p>`;
+    return `<p class="peek__locked">${icon('lock-simple')}<span>Compre o <strong>Tablet de análise de treino</strong> na Loja (aba Vida, em Evolução) para ver exatamente o que cada treino vai te dar.</span></p>`;
   }
   const preview = previewTraining(player, option.id);
   if (!preview) return '';
@@ -804,34 +815,19 @@ function shopRow(player, item) {
   </li>`;
 }
 
-function shopSection(player) {
-  const items = shopItemsFor(player);
+/** Equipamento e equipe que fazem você evoluir: a primeira categoria da Loja. */
+function evolutionItems(player) {
+  const afford = (item) => !ui.affordOnly || ownsItem(player, item.id) || player.money >= upfrontCost(item);
+  const items = shopItemsFor(player).filter(afford);
   const mine = items.filter(isPositionItem).sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'equip' ? -1 : 1));
   const gear = items.filter((item) => item.kind === 'equip' && !isPositionItem(item));
   const staff = items.filter((item) => item.kind === 'staff' && !isPositionItem(item));
   const position = getPosition(player.position);
-  return `
-    <section class="sheet section" aria-labelledby="loja-titulo">
-      <div class="section__head">
-        <h2 id="loja-titulo">Investir na evolução</h2>
-        <span class="points-pill"><strong class="num">${esc(money(player.money))}</strong> em conta</span>
-      </div>
-      <p class="lede">Equipamento é compra única e vale para sempre. A equipe pessoal cobra por semana (entra nos seus gastos) e pode ser dispensada.</p>
-      <div class="train__groups shop__groups">
-        <div>
-          <h3 class="train__group">Da sua posição: ${esc(position.name)}</h3>
-          <ul class="shoplist">${mine.map((item) => shopRow(player, item)).join('')}</ul>
-        </div>
-        <div>
-          <h3 class="train__group">Equipamento para todos</h3>
-          <ul class="shoplist">${gear.map((item) => shopRow(player, item)).join('')}</ul>
-        </div>
-        <div>
-          <h3 class="train__group">Equipe pessoal para todos</h3>
-          <ul class="shoplist">${staff.map((item) => shopRow(player, item)).join('')}</ul>
-        </div>
-      </div>
-    </section>`;
+  const group = (title, list) => (list.length ? `<div><h3 class="train__group">${esc(title)}</h3><ul class="shoplist">${list.map((item) => shopRow(player, item)).join('')}</ul></div>` : '');
+  const body = [group(`Da sua posição: ${position.name}`, mine), group('Equipamento para todos', gear), group('Equipe pessoal para todos', staff)].join('');
+  return body
+    ? `<p class="store__note">${icon('info')}Equipamento é compra única e vale para sempre. A equipe pessoal cobra por semana e pode ser dispensada.</p><div class="train__groups shop__groups">${body}</div>`
+    : '<p class="muted store__empty">Nada aqui cabe no seu bolso por enquanto. Desligue o filtro para ver tudo.</p>';
 }
 
 /* -------------------------------------------------------------- atributos */
@@ -843,21 +839,24 @@ function profileTab(state) {
     <section class="section">
       <div class="section__head">
         <h2>Atributos</h2>
-        <span class="points-pill"><strong class="num">${player.skillPoints}</strong> pontos para gastar</span>
+        <span class="points-badge"><strong class="num">${player.skillPoints}</strong> ${player.skillPoints === 1 ? 'ponto para gastar' : 'pontos para gastar'}</span>
       </div>
       <p class="lede">
-        Cada botão <strong>+1</strong> mostra quantos pontos custa. O custo cresce conforme o atributo sobe.
+        Toque em <strong>Melhorar</strong> num grupo para gastar pontos; o custo de cada +1 cresce conforme o atributo sobe.
         Seu teto atual é <strong class="num">${ceiling}</strong>
         ${player.hiddenPotentialKnown ? `(potencial estimado <strong class="num">${player.potential}</strong>).` : '(o potencial aparece depois de 3 temporadas).'}
       </p>
     </section>
-    ${attributeList(player, { spendable: true, skillPoints: player.skillPoints, costOf: upgradeCost, ceiling })}
+    ${attributeList(player, { spendable: true, skillPoints: player.skillPoints, costOf: upgradeCost, ceiling, openGroup: ui.attrGroup })}
     <section class="section">
       <h3>Traços</h3>
       ${traitChips(player.traits)}
     </section>
     ${experienceSection(player)}
-    ${shopSection(player)}`;
+    <section class="section store-link">
+      <p>Equipamento e equipe pessoal que fazem você evoluir estão na <strong>Loja</strong>, na aba Vida.</p>
+      <div class="actions"><button class="btn" data-action="go-store">${icon('storefront')}Ir para a Loja</button></div>
+    </section>`;
 }
 
 /** Rodagem: o nível atual e o caminho até o próximo. */
@@ -955,10 +954,14 @@ const lifeOwned = (player, item) => item.kind !== 'experience' && ownsItem(playe
 /** A loja da vida: lazer, luxo, desempenho, casa, imagem, estudo, viagens e investimentos. */
 function lifeStore(player) {
   const mine = LIFESTYLE_ITEMS.filter((item) => lifeOwned(player, item));
-  const cat = ui.lifeCat === 'meus' || LIFESTYLE_CATEGORIES.some((entry) => entry.id === ui.lifeCat) ? ui.lifeCat : 'lazer';
+  const mineEvolution = shopItemsFor(player).filter((item) => ownsItem(player, item.id));
+  const known = ['meus', 'evolucao', ...LIFESTYLE_CATEGORIES.map((entry) => entry.id)];
+  const cat = known.includes(ui.lifeCat) ? ui.lifeCat : 'evolucao';
   let items = cat === 'meus' ? mine : LIFESTYLE_ITEMS.filter((item) => item.cat === cat);
   if (ui.affordOnly && cat !== 'meus') items = items.filter((item) => lifeOwned(player, item) || player.money >= upfrontCost(item));
-  items = [...items].sort((a, b) => upfrontCost(a) - upfrontCost(b));
+  // O que dá para comprar vem primeiro, do mais barato ao mais caro.
+  const canBuy = (item) => lifeOwned(player, item) || player.money >= upfrontCost(item);
+  items = [...items].sort((a, b) => Number(canBuy(b)) - Number(canBuy(a)) || upfrontCost(a) - upfrontCost(b));
 
   const chip = (id, label, iconName, count) =>
     `<button class="store__cat" data-action="life-cat" data-cat="${id}" aria-pressed="${cat === id}">${icon(iconName)}<span>${esc(label)}</span>${count ? `<small class="num">${count}</small>` : ''}</button>`;
@@ -967,23 +970,32 @@ function lifeStore(player) {
     cat === 'meus'
       ? 'Você ainda não comprou nada por aqui. Experiências não ficam guardadas: elas mudam a sua vida na hora.'
       : 'Nada aqui cabe no seu bolso por enquanto. Desligue o filtro para ver tudo.';
+  const list =
+    cat === 'evolucao'
+      ? evolutionItems(player)
+      : cat === 'meus' && (items.length || mineEvolution.length)
+        ? `<ul class="shoplist">${mineEvolution.map((item) => shopRow(player, item)).join('')}${items.map((item) => lifeRow(player, item)).join('')}</ul>`
+        : items.length
+          ? `<ul class="shoplist">${items.map((item) => lifeRow(player, item)).join('')}</ul>`
+          : `<p class="muted store__empty">${esc(empty)}</p>`;
 
   return `
     <section class="sheet section store" aria-labelledby="loja-vida-titulo">
       <div class="section__head">
-        <h2 id="loja-vida-titulo">Gastar o dinheiro</h2>
-        <span class="points-pill"><strong class="num">${esc(money(player.money))}</strong> em conta</span>
+        <h2 id="loja-vida-titulo">Loja</h2>
+        <span class="points-badge"><strong class="num">${esc(money(player.money))}</strong> em conta</span>
       </div>
-      <p class="lede">Compra única vale enquanto você tiver e pode ser revendida. Serviços cobram por semana. Experiências mudam a sua vida na hora e voltam depois de um tempo. Investimentos rendem (ou perdem) no fim da temporada.</p>
+      <p class="lede">Evolução traz equipamento e equipe para os treinos. Nas outras categorias, compra única pode ser revendida, serviços cobram por semana, experiências mudam a sua vida na hora e investimentos rendem (ou perdem) no fim da temporada.</p>
       <div class="store__cats" role="group" aria-label="Categorias" data-keep-scroll="loja-vida">
+        ${chip('evolucao', 'Evolução', 'barbell', mineEvolution.length)}
         ${LIFESTYLE_CATEGORIES.map((entry) => chip(entry.id, entry.label, entry.icon, ownedIn(entry.id))).join('')}
-        ${chip('meus', 'Seus itens', 'check', mine.length)}
+        ${chip('meus', 'Seus itens', 'check', mine.length + mineEvolution.length)}
       </div>
       <div class="store__bar">
         <button class="store__toggle" data-action="life-afford" aria-pressed="${ui.affordOnly}">${icon('wallet')}Só o que dá para comprar</button>
-        <span>${plural(items.length, 'item', 'itens')}, do mais barato ao mais caro</span>
+        ${cat === 'evolucao' ? '' : `<span>${plural(items.length, 'item', 'itens')}, primeiro o que dá para comprar</span>`}
       </div>
-      ${items.length ? `<ul class="shoplist">${items.map((item) => lifeRow(player, item)).join('')}</ul>` : `<p class="muted store__empty">${esc(empty)}</p>`}
+      ${list}
       <p class="store__note">${icon('info')}Os bônus de todos os itens somados têm limite: no máximo +${ITEM_CAPS.attribute} por atributo, +${ITEM_CAPS.weekly.happiness} de felicidade por semana e treinos rendendo até +${Math.round((ITEM_CAPS.xp - 1) * 100)}%.</p>
     </section>`;
 }
@@ -1000,7 +1012,12 @@ function lifeTab(state) {
   return `
     <section class="section">
       <h2>Vida</h2>
-      <div class="vitals vitals--grid">${lifeMeters(player)}</div>
+      <div class="life-vitals" aria-label="Como vai a sua vida">
+        ${LIFE_STATS.filter((stat) => !VITALS.includes(stat.id))
+          .map((stat) => vital(stat.id, player.life[stat.id], LIFE_NOTES_HUB[stat.id]?.(player.life[stat.id])))
+          .join('')}
+      </div>
+      <p class="muted">Felicidade, forma, técnico e torcida ficam na ficha, no topo.</p>
     </section>
 
     <section class="section">
@@ -1254,7 +1271,11 @@ export default {
             ${TABS.map(
               (tab) => `
               <button class="tab" role="tab" aria-selected="${ui.tab === tab.id}" data-action="hub-tab" data-tab="${tab.id}">
-                ${icon(tab.icon)}${esc(tab.label)}
+                ${icon(tab.icon)}${esc(tab.label)}${
+                  tab.id === 'perfil' && state.player.skillPoints > 0
+                    ? `<span class="tab__badge num" aria-label="${plural(state.player.skillPoints, 'ponto', 'pontos')} para gastar">${state.player.skillPoints}</span>`
+                    : ''
+                }
               </button>`,
             ).join('')}
           </nav>
@@ -1357,6 +1378,17 @@ export default {
       const result = ctx.game.sellItem(dataset.item);
       if (!result.ok) toast(result.reason, 'warn');
       else ctx.save.schedule(300);
+    },
+    'attr-group': (ctx, dataset) => {
+      ui.attrGroup = ui.attrGroup === dataset.group ? null : dataset.group;
+      ctx.sound.play(ui.attrGroup ? 'toque' : 'voltar');
+      ctx.rerender();
+    },
+    'go-store': (ctx) => {
+      ui.tab = 'vida';
+      ui.lifeCat = 'evolucao';
+      ctx.rerender();
+      document.getElementById('loja-vida-titulo')?.scrollIntoView({ block: 'start' });
     },
     'life-cat': (ctx, dataset) => {
       ui.lifeCat = dataset.cat;

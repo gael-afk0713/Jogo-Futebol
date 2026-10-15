@@ -345,6 +345,18 @@ As escolhas são botões grandes (`.choice`), um por linha, sem seta: o rótulo 
 
 Avisos e resultados (`.notice`) são recados de papel: folha com filete de 1px e um carimbo quadrado de ícone, que é a única parte colorida (verde, vermelho ou laranja conforme o tom). Nada de caixa inteira pintada. O que aconteceu na semana (o treino feito e o resultado do evento) entra num recado só (`.weeklog`), uma linha por fato; o tom da linha do evento vem dos números do resultado.
 
+### Atributos
+
+Seis blocos (`.agroup`), como o verso de uma figurinha: o ícone e o nome do grupo, e a média do grupo em número grande colorido pela escala de qualidade (a única cor de qualidade da aba). Dentro, os atributos numa lista curta (nome e número em tinta), sem barras e sem botões. "Melhorar" abre um grupo por vez: só então aparecem o filete do nível (cobalto, uma cor só) e o botão +1 com o custo. Os pontos para gastar aparecem numa etiqueta de tinta no título e num selo na aba Atributos.
+
+### Loja
+
+Uma loja só, na aba Vida: a primeira categoria é Evolução (equipamento e equipe da sua posição e para todos), depois as categorias da vida e "Seus itens". O que dá para comprar vem primeiro, do mais barato ao mais caro. A aba Atributos só aponta para a Loja. O dinheiro em conta fica numa etiqueta de tinta, não amarela.
+
+### Vida
+
+Os indicadores que não estão na ficha (Saúde, Disciplina, Inteligência, Carisma, Fama, Reputação, Vestiário), no mesmo formato da ficha. Só fica vermelho, abaixo de 40, o que atrapalha quando cai; fama, reputação, inteligência e carisma começam baixos e não acendem alarme.
+
 ### Opções de escolha
 
 Eventos, lances e traços usam a mesma linha de escolha (`.option`): ícone em círculo, título, descrição e a consequência. A lista completa de treinos também usa essa linha, com os efeitos (Forma +7, Felicidade -2). No lance a consequência é a chance real em número grande. A cor é relativa ao lance, não à escala de qualidade: 20% num chute já é uma grande chance. A melhor opção do lance fica verde, com "melhor chance" no lugar de "de chance"; as outras ficam em tinta. Empate no topo não destaca nenhuma.

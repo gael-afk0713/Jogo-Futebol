@@ -8,8 +8,6 @@ import { getPosition, isGoalkeeper } from '../data/positions.js';
 import { getClub, squadRating, YOUTH_TIERS } from '../data/clubs.js';
 import { money } from '../core/utils.js';
 import { getTrait } from '../data/traits.js';
-import { LIFE_STATS } from '../engine/player.js';
-import { DISCIPLINE_RISK } from '../engine/life.js';
 import { effectiveAttributes } from '../engine/overall.js';
 
 /* ------------------------------------------------------------------ ícones */
@@ -340,19 +338,6 @@ export function meter({ label, value, iconName = null, tier = null, suffix = '',
     </div>`;
 }
 
-// Recado curto embaixo de uma barra da vida, só quando ela pede atenção.
-const LIFE_NOTES = {
-  discipline: (value) => (value < DISCIPLINE_RISK ? 'Risco de multa, banco e menos propostas' : ''),
-};
-
-/** Atributos de vida (todos ou só alguns). */
-export function lifeMeters(player, ids = null) {
-  const stats = ids ? LIFE_STATS.filter((stat) => ids.includes(stat.id)) : LIFE_STATS;
-  return stats
-    .map((stat) => meter({ label: stat.label, value: player.life[stat.id], iconName: stat.icon, note: LIFE_NOTES[stat.id]?.(player.life[stat.id]) ?? '' }))
-    .join('');
-}
-
 export function ratingBadge(rating, { pulse = null } = {}) {
   if (!rating) return '<span class="rating rating--empty num">-</span>';
   const value = round(rating, 1).toFixed(1);
@@ -363,13 +348,21 @@ export function ratingBadge(rating, { pulse = null } = {}) {
 
 /* -------------------------------------------------------- atributos */
 
-export function attributeList(player, { spendable = false, skillPoints = 0, costOf = null, ceiling = 99 } = {}) {
+/**
+ * Atributos em blocos, como o verso de uma figurinha: cada grupo mostra a média
+ * em número grande e os atributos numa lista curta. O "+1" de cada atributo só
+ * aparece no grupo aberto, para a tela não virar uma planilha de botões.
+ */
+export function attributeList(player, { spendable = false, skillPoints = 0, costOf = null, ceiling = 99, openGroup = null } = {}) {
   const attrs = effectiveAttributes(player);
   const gk = isGoalkeeper(player.position);
   const groups = ATTRIBUTE_GROUPS.filter((group) => (group.goalkeeperOnly ? gk : true));
 
-  return `<div class="attrs">${groups
+  return `<div class="agroups">${groups
     .map((group) => {
+      const open = spendable && openGroup === group.id;
+      const values = group.attributes.map((attribute) => attrs[attribute.id] ?? player.attributes[attribute.id] ?? 0);
+      const average = Math.round(values.reduce((sum, value) => sum + value, 0) / Math.max(1, values.length));
       const rows = group.attributes
         .map((attribute) => {
           const base = player.attributes[attribute.id] ?? 0;
@@ -382,13 +375,13 @@ export function attributeList(player, { spendable = false, skillPoints = 0, cost
             ? `${attribute.label} já está no seu teto atual`
             : `Subir ${attribute.label} por ${plural(cost, 'ponto', 'pontos')}`;
           return `
-            <li class="attr ${tierClass(effective)}">
+            <li class="attr">
               <span class="attr__label">${esc(attribute.label)}${bonus ? `<span class="attr__bonus">+${bonus}</span>` : ''}</span>
-              <span class="attr__value">${effective}</span>
-              <div class="meter__track" aria-hidden="true"><div class="meter__fill" style="--v:${effective / 100}"></div></div>
+              <span class="attr__value" data-pulse="attr-${attribute.id}" data-value="${effective}">${effective}</span>
               ${
-                spendable
-                  ? `<button class="attr__buy" data-action="spend-point" data-attr="${attribute.id}" ${canBuy ? '' : 'disabled'}
+                open
+                  ? `<div class="attr__bar" aria-hidden="true"><span style="--v:${effective / 100}"></span></div>
+                     <button class="attr__buy" data-action="spend-point" data-attr="${attribute.id}" ${canBuy ? '' : 'disabled'}
                       aria-label="${esc(buyLabel)}" title="${esc(buyLabel)}">${atCeiling ? 'teto' : `+1<small>${cost} pt${cost > 1 ? 's' : ''}</small>`}</button>`
                   : ''
               }
@@ -396,9 +389,20 @@ export function attributeList(player, { spendable = false, skillPoints = 0, cost
         })
         .join('');
       return `
-        <section class="attrs__group">
-          <h3>${icon(group.icon)}${esc(group.label)}</h3>
-          <ul class="attrs__list">${rows}</ul>
+        <section class="agroup ${open ? 'is-open' : ''}" aria-labelledby="grupo-${group.id}">
+          <header class="agroup__head">
+            <span class="agroup__icon">${icon(group.icon)}</span>
+            <h3 id="grupo-${group.id}">${esc(group.label)}</h3>
+            <strong class="agroup__avg ${tierClass(average)} tier-text num" aria-label="Média ${average}">${average}</strong>
+          </header>
+          <ul class="agroup__list">${rows}</ul>
+          ${
+            spendable
+              ? `<button class="btn btn--sm ${open ? 'btn--quiet' : ''} agroup__toggle" data-action="attr-group" data-group="${group.id}" aria-expanded="${open}">${
+                  open ? 'Fechar' : `${icon('plus')}Melhorar ${esc(group.label.toLowerCase())}`
+                }</button>`
+              : ''
+          }
         </section>`;
     })
     .join('')}</div>`;
