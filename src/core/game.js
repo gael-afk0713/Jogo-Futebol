@@ -150,6 +150,8 @@ export class Game {
       if (moment) this.state.match.pending.raw = moment;
       else this.state.match.pending = null;
     }
+    // Save de antes da escalação divulgada: decide agora, antes do toque.
+    this.ensureLineup();
     this.notify();
     return true;
   }
@@ -243,31 +245,76 @@ export class Game {
     return week && !week.free ? week : null;
   }
 
+  /** O que pesa na escalação, em pontos (positivo ajuda). */
+  lineupFactors(week) {
+    const player = this.player;
+    const role = getRole(player.contract?.role);
+    const squad = squadRating(player.club);
+    const average = seasonRating(player.season);
+    const parts = {
+      level: (player.overall - squad) * 1.1,
+      contract: role.minutesBias * 9,
+      manager: (player.life.managerRelation - 50) * 0.11,
+      fitness: (player.life.fitness - 60) * 0.06,
+      form: ((average || 6.4) - 6.4) * 4,
+      rotation: [COMPETITIONS.CUP, COMPETITIONS.LEAGUE_CUP, COMPETITIONS.STATE].includes(week.competition) ? 3 : 0,
+      // Indisciplina pesa na escalação.
+      discipline: -Math.max(0, DISCIPLINE_RISK - player.life.discipline) * 0.13,
+    };
+    const score = Object.values(parts).reduce((sum, value) => sum + value, 0) - 5;
+    return { score, parts, squad, average, role };
+  }
+
   /** Define se você é titular, reserva ou fica no banco nesta partida. */
   decideRole(week) {
     const player = this.player;
     if (player.injury?.weeks > 0) return PLAYER_ROLE.OUT;
     if (player.suspension > 0) return PLAYER_ROLE.OUT;
 
-    const role = getRole(player.contract?.role);
-    const rating = squadRating(player.club);
-    const form = (seasonRating(player.season) || 6.4) - 6.4;
-    const rotation = [COMPETITIONS.CUP, COMPETITIONS.LEAGUE_CUP, COMPETITIONS.STATE].includes(week.competition) ? 3 : 0;
-    const score =
-      (player.overall - rating) * 1.1 +
-      role.minutesBias * 9 +
-      (player.life.managerRelation - 50) * 0.11 +
-      (player.life.fitness - 60) * 0.06 +
-      form * 4 +
-      rotation -
-      // Indisciplina pesa na escalação.
-      Math.max(0, DISCIPLINE_RISK - player.life.discipline) * 0.13 -
-      5;
-
+    const { score } = this.lineupFactors(week);
     const starterChance = clamp(logistic(score, 0, 5.5), 0.03, 0.97);
     if (this.rng.chance(starterChance)) return PLAYER_ROLE.STARTER;
     if (this.rng.chance(0.55)) return PLAYER_ROLE.SUB;
-    return PLAYER_ROLE.BENCH;
+    // Nos primeiros jogos num clube novo, o técnico quer ver você em campo.
+    return player.debutGames > 0 ? PLAYER_ROLE.SUB : PLAYER_ROLE.BENCH;
+  }
+
+  /** Por que você não começa jogando, e o que muda isso. */
+  lineupReason(week) {
+    const player = this.player;
+    const { parts, squad, average, role } = this.lineupFactors(week);
+    // Contrato comparado com quem é da rotação; o resto, com o neutro.
+    const weights = { ...parts, contract: parts.contract - 0.55 * 9, rotation: 0 };
+    const [worst, value] = Object.entries(weights).sort((a, b) => a[1] - b[1])[0];
+    const reasons = {
+      level: [`Seu overall (${player.overall}) está abaixo do nível do elenco (${squad}).`, 'Subir atributos no treino é o caminho mais direto.'],
+      contract: [`No contrato você é ${role.label.toLowerCase()}: quem chegou como titular tem a preferência.`, 'Boas notas quando entrar e um contrato melhor na próxima janela mudam isso.'],
+      manager: [`A relação com o técnico está em ${Math.round(player.life.managerRelation)}.`, 'Notas boas e escolhas que agradem o técnico nos eventos ajudam.'],
+      fitness: [`Você chega cansado, com forma ${Math.round(player.life.fitness)}.`, 'Descansar no treino da semana do jogo ajuda.'],
+      form: [`Sua média na temporada está em ${decimal(average || 6.4, 1)}.`, 'Notas melhores quando entrar em campo pesam na escalação.'],
+      discipline: ['A sua indisciplina pesa na escalação.', 'Ficar longe de confusão devolve a confiança do técnico.'],
+    };
+    if (value > -1 || !reasons[worst]) return { reason: 'O técnico preferiu outro jogador hoje.', tip: 'É rodízio: a próxima chance pode ser sua.' };
+    const [reason, tip] = reasons[worst];
+    return { reason, tip };
+  }
+
+  /**
+   * Escalação do jogo da semana: o técnico divulga antes de você entrar em
+   * campo, e ela não muda mais até o apito.
+   */
+  ensureLineup() {
+    const week = this.currentMatch;
+    if (!week || this.state.week.step !== WEEK_STEPS.MATCH || this.state.match) return null;
+    if (this.state.week.lineup) return this.state.week.lineup;
+    const player = this.player;
+    const debut = player.debutGames > 0;
+    const role = this.decideRole(week);
+    const lineup = { role, debut };
+    if (role === PLAYER_ROLE.SUB || role === PLAYER_ROLE.BENCH) Object.assign(lineup, this.lineupReason(week));
+    if (role !== PLAYER_ROLE.OUT && debut) player.debutGames -= 1;
+    this.state.week.lineup = lineup;
+    return lineup;
   }
 
   chooseTraining(optionId) {
@@ -299,6 +346,7 @@ export class Game {
     this.state.week.eventId = event?.id ?? null;
     this.state.week.eventResult = null;
     if (!event) this.state.week.step = WEEK_STEPS.MATCH;
+    this.ensureLineup();
     this.notify();
   }
 
@@ -308,6 +356,7 @@ export class Game {
     const event = drawLifeEventById(eventId);
     if (!event) {
       this.state.week.step = WEEK_STEPS.MATCH;
+      this.ensureLineup();
       this.notify();
       return null;
     }
@@ -316,6 +365,7 @@ export class Game {
     this.state.week.eventResult = { ...result, title: event.title, icon: event.icon };
     this.state.week.step = WEEK_STEPS.MATCH;
     if (result?.text) this.pushNews(result.text, 'info', event.icon);
+    this.ensureLineup();
     this.notify();
     return result;
   }
@@ -339,7 +389,8 @@ export class Game {
   startMatch() {
     const week = this.currentMatch;
     if (!week || !this.canPlayMatch()) return null;
-    const role = this.decideRole(week);
+    const lineup = this.ensureLineup();
+    const role = lineup.role;
 
     if (role === PLAYER_ROLE.OUT || role === PLAYER_ROLE.BENCH) {
       return this.resolveMatchWithoutPlaying(week, role);
@@ -398,7 +449,8 @@ export class Game {
   simulateMatch() {
     const week = this.currentMatch;
     if (!week || !this.canPlayMatch()) return null;
-    const role = this.decideRole(week);
+    const lineup = this.ensureLineup();
+    const role = lineup.role;
     if (role === PLAYER_ROLE.OUT || role === PLAYER_ROLE.BENCH) {
       return this.resolveMatchWithoutPlaying(week, role);
     }
@@ -434,6 +486,7 @@ export class Game {
           ? 'Você está no departamento médico.'
           : 'Você está suspenso.'
         : 'O técnico te deixou no banco e você não entrou.';
+    const lineup = this.state.week.lineup;
 
     this.player.season.benchedStreak += 1;
     if (role === PLAYER_ROLE.BENCH) adjustLife(this.player, 'happiness', -2);
@@ -449,6 +502,7 @@ export class Game {
       rating: 0,
       didNotPlay: true,
       reason,
+      ...(role === PLAYER_ROLE.BENCH && lineup?.reason ? { why: lineup.reason, tip: lineup.tip } : {}),
       minutesPlayed: 0,
       stats: { goals: 0, assists: 0, saves: 0, tackles: 0, shots: 0, yellowCards: 0, redCards: 0 },
       timeline: [{ minute: 0, text: reason, type: 'info' }],

@@ -456,6 +456,22 @@ function lifeStep(state, ctx) {
     </section>`;
 }
 
+/** A escalação que o técnico divulgou, com o motivo quando você não começa jogando. */
+function lineupNotice(lineup) {
+  if (!lineup) return '';
+  const debut = lineup.debut ? ' Nos 3 primeiros jogos num clube novo, o técnico sempre põe você em campo.' : '';
+  if (lineup.role === 'titular') {
+    return `<div class="notice notice--good lineup">${icon('clipboard-text')}<div><strong>Escalação: titular.</strong> Você começa jogando.</div></div>`;
+  }
+  if (lineup.role === 'reserva') {
+    return `<div class="notice lineup">${icon('clipboard-text')}<div><strong>Escalação: reserva.</strong> Você começa no banco e entra no segundo tempo.<small>${esc(lineup.reason ?? '')}${debut}</small></div></div>`;
+  }
+  if (lineup.role === 'banco') {
+    return `<div class="notice notice--warn lineup">${icon('clipboard-text')}<div><strong>Escalação: banco.</strong> O técnico não pretende usar você hoje.<small>${esc(lineup.reason ?? '')} ${esc(lineup.tip ?? '')}</small></div></div>`;
+  }
+  return '';
+}
+
 function matchStep(state, ctx) {
   const data = ctx.game.hubData();
   const fixture = data.fixturePreview;
@@ -471,6 +487,10 @@ function matchStep(state, ctx) {
   }
 
   const unavailable = player.injury?.weeks > 0 || player.suspension > 0;
+  // A escalação sai antes do toque: "Entrar em campo" só aparece para quem vai jogar.
+  const lineup = state.week.lineup;
+  const benched = !unavailable && lineup?.role === 'banco';
+  const watchOnly = unavailable || benched;
   const club = getClub(player.club);
   const gap = player.overall - fixture.opponentRating;
   const read =
@@ -497,10 +517,10 @@ function matchStep(state, ctx) {
         <span>Força do adversário <strong class="num">${fixture.opponentRating}</strong></span>
         <span>${esc(read)}</span>
       </div>
-      ${unavailable ? `<div class="notice notice--bad">${icon('prohibit')}<div>Você não pode jogar esta partida. Dá para ver o resultado.</div></div>` : ''}
+      ${unavailable ? `<div class="notice notice--bad">${icon('prohibit')}<div>Você não pode jogar esta partida. Dá para ver o resultado.</div></div>` : lineupNotice(lineup)}
       <div class="actions">
-        <button class="btn btn--primary" data-action="start-match">${unavailable ? 'Ver o resultado' : 'Entrar em campo'} ${icon('arrow-right')}</button>
-        ${unavailable ? '' : '<button class="btn" data-action="simulate-match">Simular partida</button>'}
+        <button class="btn btn--primary" data-action="start-match">${watchOnly ? 'Ver o resultado' : 'Entrar em campo'} ${icon('arrow-right')}</button>
+        ${watchOnly ? '' : '<button class="btn" data-action="simulate-match">Simular partida</button>'}
       </div>
     </section>`;
 }
@@ -512,6 +532,7 @@ function reportStep(state) {
     body = `
       <h2>Você não jogou</h2>
       <p class="lede">${esc(report.reason)}</p>
+      ${report.why ? `<div class="notice notice--warn">${icon('clipboard-text')}<div>${esc(report.why)}<small>${esc(report.tip ?? '')}</small></div></div>` : ''}
       <p>Resultado: <strong class="num">${report.score.team} x ${report.score.opponent}</strong> contra o ${esc(report.opponentName)}.</p>`;
   } else if (report) {
     const label = report.result === 'V' ? 'Vitória' : report.result === 'E' ? 'Empate' : 'Derrota';
@@ -1350,7 +1371,19 @@ export default {
       ctx.game.simulateWeeks(Number(dataset.count) || 4);
       ctx.save.schedule();
     },
-    'sim-season': (ctx) => {
+    'sim-season': async (ctx) => {
+      // Não tem volta: no iPad é fácil tocar sem querer.
+      const { season, week } = ctx.game.state;
+      const left = season.calendar
+        .slice(season.weekIndex + (week.step === WEEK_STEPS.DONE ? 1 : 0))
+        .filter((item) => !item.cancelled && !item.free).length;
+      const ok = await ctx.confirm({
+        title: 'Simular o resto da temporada?',
+        text: `${left ? `Faltam ${plural(left, 'jogo', 'jogos')}. ` : ''}Treinos, eventos e lances ficam por conta do jogo, e simulando os lances rendem um pouco menos do que jogando.`,
+        confirmLabel: 'Simular até o fim',
+        cancelLabel: 'Voltar',
+      });
+      if (!ok) return;
       ctx.game.simulateRestOfSeason();
       ctx.save.schedule();
     },

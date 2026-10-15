@@ -306,7 +306,7 @@ Não há cartão genérico. Os contêineres são:
 - **Figurinha de clube ou temporada** (`.card-sticker`): face cobalto com a sigla e um número grande, faixa com o nome, verso com os dados separado por linha tracejada.
 - **Espaço vazio** (`.slot`): borda de 1,5px, número impresso grande em `rule-strong`, rótulo do que falta. O conteúdo começa no topo, a 40px da borda, para que os números de espaços vizinhos fiquem na mesma linha de base, como no álbum impresso.
 - **Placar final** (`.final-card`): a placa de estádio fechada no pós-jogo. Capa cobalto com retícula, cabeçalho com a competição e "Fim de jogo", os dois times com monograma e artilheiros, o placar grande no centro, e um rodapé separado por linha tracejada com o resultado e a sua nota. Vitória pinta o resultado de amarelo.
-- **Ingresso** (`.ticket`): o próximo jogo é um ingresso. A folha leva o confronto acima do picote e a leitura do adversário abaixo dele.
+- **Ingresso** (`.ticket`): o próximo jogo é um ingresso. A folha leva o confronto acima do picote e, abaixo dele, a leitura do adversário e a escalação (`.lineup`), que o técnico divulga antes do toque. Titular é um recado verde; reserva, um recado neutro com o motivo em letra miúda; banco, um recado laranja com o motivo e o que fazer, e aí o botão vira "Ver o resultado", sem "Simular partida". "Entrar em campo" só aparece para quem vai jogar.
 
 ### Inputs / Fields
 
@@ -319,6 +319,8 @@ No retrato (iPad e celular) a prévia gruda no topo, logo abaixo da barra: figur
 ### Janelas de confirmação
 
 Até 440px de largura e nunca maiores que a tela. No celular os botões ficam um embaixo do outro, com a ação em cima.
+
+Pedem confirmação as decisões que não têm volta e ficam fáceis de tocar sem querer no iPad: começar com pontos sem usar, compra grande, dispensar, aposentar, simular até o fim da temporada, assinar (o aviso repete função, salário, contrato e luvas, e se você deixa o clube) e ficar no clube quando há proposta na mesa (o aviso diz o que é recusado). O título é a pergunta com o nome do clube; o botão de ação repete o verbo do botão tocado ("Assinar", "Renovar", "Simular até o fim"); o de voltar diz para onde volta ("Ver de novo", "Voltar").
 
 ### Navigation
 
@@ -392,7 +394,7 @@ A capa cobalto com retícula. Os gols ficam em placas de papel de figurinha (rai
 
 ### Súmula
 
-Lances em linha com ícone em círculo de 28px, verde ou vermelho conforme o lance foi bom ou ruim. Gol seu: ícone em amarelo e texto em negrito. Cartões aparecem como um cartão de verdade, 11 por 15px, levemente girado, nas cores do cartão. O apito final é um divisor: filetes dos dois lados do texto em Barlow Condensed, com ícone de cronômetro.
+Lances em linha com ícone em círculo de 28px, verde ou vermelho conforme o lance foi bom ou ruim. Gol seu: ícone em amarelo e texto em negrito. O lance que vira gol do time ocupa uma linha só, a do gol ("Gol do Flamengo. Kauã marca!"); a descrição do lance fica no quadro do resultado. A assistência que o companheiro desperdiça é contada como tal, sem "Assistência!". Cartões aparecem como um cartão de verdade, 11 por 15px, levemente girado, nas cores do cartão. O apito final é um divisor: filetes dos dois lados do texto em Barlow Condensed, com ícone de cronômetro.
 
 ### Avatar
 

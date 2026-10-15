@@ -299,11 +299,46 @@ export default {
       ctx.rerender();
       window.scrollTo({ top: 0, behavior: 'instant' });
     },
-    'accept-offer': (ctx, dataset) => {
-      ctx.game.acceptOffer(dataset.offer);
+    'accept-offer': async (ctx, dataset) => {
+      // Assinar não tem volta: a confirmação repete o que está sendo aceito.
+      const { offseason, player } = ctx.game.state;
+      const offer = [offseason?.renewal, ...(offseason?.offers ?? []), ...(offseason?.loans ?? [])].find((item) => item?.id === dataset.offer);
+      if (!offer) return;
+      const current = getClub(player.club)?.name;
+      const verb = offer.renewal ? 'Renovar com o' : offer.promotion ? 'Subir para o profissional do' : offer.loan ? 'Ir emprestado ao' : 'Assinar com o';
+      const leaving = offer.renewal || offer.promotion || !current ? '' : ` Você deixa o ${current}.`;
+      const ok = await ctx.confirm({
+        title: `${verb} ${offer.clubName}?`,
+        text: `${offer.roleLabel}, ${money(offer.weeklySalary)} por semana, contrato de ${plural(offer.years, 'temporada', 'temporadas')}${
+          offer.signingBonus ? `, luvas de ${money(offer.signingBonus)}` : ''
+        }.${leaving}`,
+        confirmLabel: offer.renewal ? 'Renovar' : offer.promotion ? 'Subir' : offer.loan ? 'Aceitar empréstimo' : 'Assinar',
+        cancelLabel: 'Ver de novo',
+      });
+      if (!ok) return;
+      ctx.game.acceptOffer(offer.id);
       ctx.save.schedule(300);
     },
-    'stay-club': (ctx) => {
+    'stay-club': async (ctx) => {
+      // Ficar recusa o que está na mesa: pergunta só quando há o que recusar.
+      const { offseason, player } = ctx.game.state;
+      const count = (offseason?.offers?.length ?? 0) + (offseason?.loans?.length ?? 0);
+      const refused = [
+        count === 1 ? 'a proposta desta janela' : count > 1 ? `as ${count} propostas desta janela` : '',
+        offseason?.renewal ? 'a renovação oferecida' : '',
+      ].filter(Boolean);
+      if (refused.length) {
+        const expired = offseason.contractExpired && !player.contract?.years;
+        const ok = await ctx.confirm({
+          title: `Ficar no ${getClub(player.club)?.name ?? 'clube atual'}?`,
+          text: `Você recusa ${refused.join(' e ')}. ${
+            expired ? 'Como o seu contrato terminou, você fica em condições modestas, com salário menor.' : 'Você segue com o contrato atual.'
+          }`,
+          confirmLabel: 'Ficar',
+          cancelLabel: 'Ver de novo',
+        });
+        if (!ok) return;
+      }
       ctx.game.stayAtClub();
       ctx.save.schedule(300);
     },

@@ -89,9 +89,16 @@ Cada semana tem três etapas:
    outros são loteria, e outros testam o seu carisma ou a sua inteligência.
 3. **Partida** — entrar em campo e decidir os lances, ou simular.
 
-Se você não for escalado (forma ruim, relação ruim com o técnico, lesão ou
-suspensão), você assiste do banco — e isso cobra o seu preço. Cada jogo inteiro
-custa 5 de forma física.
+O técnico divulga a escalação antes do jogo: o ingresso diz se você é titular,
+se começa no banco e entra no segundo tempo, ou se fica no banco sem entrar (aí
+o botão é "Ver o resultado", não "Entrar em campo"). Quando você não começa
+jogando, ele diz o que mais pesou (nível do elenco, contrato, relação com o
+técnico, forma, média da temporada ou indisciplina) e o que muda isso. Nos **3
+primeiros jogos em cada clube novo**, o técnico sempre põe você em campo, nem
+que seja no segundo tempo. Antes disso, 37% das carreiras ficavam no banco sem
+entrar em um dos 2 primeiros jogos; agora nenhuma (só lesão ou suspensão tiram
+você do jogo). Ficar no banco cobra o seu preço (felicidade e fama). Cada jogo
+inteiro custa 5 de forma física.
 
 #### Metas da temporada
 No começo de cada ano o clube combina três metas com você, e elas aparecem na
@@ -164,6 +171,22 @@ pode até subir no escanteio do último minuto) e mostra a **chance real de
 sucesso** de cada opção, calculada a partir dos seus atributos, dos seus traços,
 da sua energia naquele minuto e da força do adversário. Entre os seus lances, o
 resto do jogo é simulado.
+
+**Simular rende um pouco menos que jogar.** Na simulação, cada lance com a bola
+vai na opção que a tela marca como melhor chance, mas em 1 de cada 5 a leitura
+sai errada e vai outra opção qualquer (fora da bola, com juiz, torcida e briga,
+nada mudou). Medido em 1.500 jogos de um atacante titular:
+
+| Jeito de decidir | Gols por jogo | Nota média |
+| --- | --- | --- |
+| Simular (antes) | 0,99 | 7,30 |
+| Simular (agora) | 0,78 | 7,00 |
+| Sempre a melhor chance | 0,84 | 7,12 |
+| Pelo que cada opção vale (chance e ganho) | 0,93 | 7,21 |
+| Ao acaso | 0,51 | 6,40 |
+
+Antes, simular dava mais do que qualquer jeito de jogar. O aviso de "Simular
+até o fim da temporada" conta isso.
 
 Os seus lances são parte do jogo, não um extra: enquanto você está em campo, a
 simulação deixa de contar os gols que os seus lances representam. No nível do

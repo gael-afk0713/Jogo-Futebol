@@ -188,7 +188,7 @@ function fillText(template, match, player) {
     .replaceAll('{minute}', String(match.minute))
     .replaceAll('{opponent}', match.opponentName)
     .replaceAll('{club}', match.clubName)
-    .replaceAll('{teammate}', match.teammates[0])
+    .replaceAll('{teammate}', match.mate ?? match.teammates[0])
     .replaceAll('{player}', player.nickname)
     .replaceAll('{derby}', match.derby ?? 'clássico');
 }
@@ -313,6 +313,8 @@ function simulateBackground(match, player, rng, minutes) {
 /** Monta o lance (ou evento) pendente, com um dos textos sorteado. */
 function present(match, player, moment, rng, { offBall = false } = {}) {
   if (offBall) match.offBall += 1;
+  // O companheiro do lance: o mesmo no texto, no desfecho e no placar.
+  match.mate = rng.pick(match.teammates);
   match.pending = {
     id: moment.id,
     title: fillText(moment.title, match, player),
@@ -446,13 +448,18 @@ export function choose(match, player, optionIndex, rng) {
   } else {
     addRatingPoints(match, outcome?.rating ?? 0);
   }
-  log(match, resolution.text, success ? 'good' : 'bad', success ? 'check' : 'x');
 
+  const lineAt = match.timeline.length;
   const before = { ...match.score };
   applyKind(match, player, resolution.kind, rng, resolution);
   resolution.minute = match.minute;
   resolution.teamGoal = match.score.team > before.team;
   resolution.opponentGoal = match.score.opponent > before.opponent;
+  // Na narração, o lance que vira gol do time fica só na linha do gol. Os
+  // outros entram antes do que vier depois deles (gol sofrido, cartão).
+  if (!resolution.teamGoal) {
+    match.timeline.splice(lineAt, 0, { minute: match.minute, text: resolution.text, type: success ? 'good' : 'bad', icon: success ? 'check' : 'x' });
+  }
 
   // Depois do seu gol: às vezes o VAR chama, às vezes é hora de comemorar.
   if (resolution.kind === 'goal' && resolution.teamGoal) {
@@ -483,6 +490,12 @@ export function choose(match, player, optionIndex, rng) {
   return resolution;
 }
 
+const ASSIST_MISSED = [
+  'Passe na medida para {teammate}, mas a finalização sai para fora.',
+  'Você deixa {teammate} na cara do gol, mas o goleiro defende.',
+  'Bola redonda para {teammate}, que pega mal e manda por cima.',
+];
+
 function applyKind(match, player, kind, rng, resolution) {
   switch (kind) {
     case 'goal':
@@ -492,19 +505,20 @@ function applyKind(match, player, kind, rng, resolution) {
       break;
     case 'assist':
       // O passe saiu perfeito, mas ainda depende do companheiro acertar o gol.
+      // Se ele erra, o texto do lance conta isso (e não um gol que não houve).
       if (rng.chance(0.42)) {
         match.stats.assists += 1;
-        const scorer = rng.pick(match.teammates);
+        const scorer = match.mate ?? rng.pick(match.teammates);
         teamScores(match, `${scorer} finaliza após seu passe.`, match.minute, scorer);
       } else {
-        log(match, 'Passe perfeito, mas o companheiro desperdiçou a chance.', 'info');
+        resolution.text = fillText(pickText(ASSIST_MISSED, rng), match, player);
       }
       break;
     case 'chance':
       match.stats.shots += 1;
       if (rng.chance(0.45)) {
         if (rng.chance(0.6)) match.stats.assists += 1;
-        const scorer = rng.pick(match.teammates);
+        const scorer = match.mate ?? rng.pick(match.teammates);
         teamScores(match, `${scorer} aproveita a jogada que você criou.`, match.minute, scorer);
       } else {
         log(match, 'A chance criada não terminou em gol.', 'info');
@@ -697,9 +711,15 @@ export function finish(match, player, rng) {
   return match.report;
 }
 
+/** Na simulação, a parte dos lances com a bola em que a leitura sai errada. */
+const AUTO_MISREAD = 0.2;
+
 /**
- * Simulação automática (sem interação): resolve os lances escolhendo
- * a opção com melhor valor esperado.
+ * Simulação automática (sem interação). Com a bola, faz o que a tela marca
+ * como melhor chance, mas em 1 lance de cada 5 escolhe outra opção qualquer.
+ * Assim simular rende um pouco menos do que jogar seguindo essa marca, e bem
+ * menos do que jogar pensando no que cada opção vale. Fora da bola (juiz,
+ * torcida, briga) segue o valor esperado, como antes.
  */
 export function autoPlay(match, player, rng) {
   let guard = 0;
@@ -708,17 +728,22 @@ export function autoPlay(match, player, rng) {
     const step = advance(match, player, rng);
     if (step.type === 'finished') break;
     const moment = match.pending;
-    const best = moment.raw.options
-      .map((option, index) => {
-        const chance = successChance(player, option, match);
-        const upside = option.success?.rating ?? 0;
-        const downside = option.failure?.rating ?? 0;
-        // A simulação automática é levemente ambiciosa: prefere criar jogo
-        // a só tocar a bola de lado, mas sem rifar a partida.
-        return { index, value: chance * upside * 1.25 + (1 - chance) * downside * 0.85 };
-      })
-      .sort((a, b) => b.value - a.value)[0];
-    choose(match, player, best.index, rng);
+    const options = moment.raw.options;
+    let index;
+    if (!moment.offBall && options.length > 1 && rng.chance(AUTO_MISREAD)) {
+      index = rng.int(0, options.length - 1);
+    } else {
+      index = options
+        .map((option, i) => {
+          const chance = successChance(player, option, match);
+          if (!moment.offBall) return { i, value: chance };
+          const upside = option.success?.rating ?? 0;
+          const downside = option.failure?.rating ?? 0;
+          return { i, value: chance * upside * 1.25 + (1 - chance) * downside * 0.85 };
+        })
+        .sort((a, b) => b.value - a.value)[0].i;
+    }
+    choose(match, player, index, rng);
   }
   if (!match.finished) finish(match, player, rng);
   return match.report;

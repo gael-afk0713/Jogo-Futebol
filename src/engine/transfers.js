@@ -298,6 +298,8 @@ export function signContract(player, offer, { year }) {
     parentClub: offer.loan ? previousClub : null,
   };
   player.money += offer.signingBonus ?? 0;
+  // Clube novo: nos 3 primeiros jogos o técnico sempre põe você em campo.
+  if (previousClub !== offer.clubId) player.debutGames = 3;
 
   if (!offer.loan && previousClub !== offer.clubId) {
     player.career.transfers.push({
