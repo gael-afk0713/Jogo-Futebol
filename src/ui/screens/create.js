@@ -55,6 +55,16 @@ function missingSteps() {
   return missing;
 }
 
+/** Pontos de atributo ainda sem dono: não impedem começar, mas se perdem. */
+const freePoints = () => CREATION_POINT_POOL - groupPointsSpent(form.groupPoints);
+
+/** O recado do rodapé: o que falta, os pontos livres ou tudo pronto. */
+function statusText(missing = missingSteps()) {
+  if (missing.length) return `Falta: ${missing.join(', ')}.`;
+  const free = freePoints();
+  return free > 0 ? `Ainda ${free === 1 ? 'falta distribuir 1 ponto' : `faltam distribuir ${free} pontos`} de atributo.` : 'Tudo pronto.';
+}
+
 function selectOptions(list, current) {
   return list
     .map((item) => `<option value="${esc(item.id)}" ${item.id === current ? 'selected' : ''}>${esc(item.label)}</option>`)
@@ -76,7 +86,7 @@ function refreshLive() {
   const shirt = document.querySelector('.create__preview .avatar__kit');
   if (shirt) shirt.textContent = String(form.appearance.kitNumber);
   const status = document.querySelector('[data-live="status"]');
-  if (status) status.textContent = missing.length ? `Falta: ${missing.join(', ')}.` : 'Tudo pronto.';
+  if (status) status.textContent = statusText(missing);
   const button = document.querySelector('[data-action="confirm-create"]');
   if (button) button.disabled = missing.length > 0;
 }
@@ -107,14 +117,14 @@ export default {
 
         <div class="create">
           <aside class="create__preview" aria-label="Prévia da sua figurinha">
-            ${playerSticker(previewView, { size: 'lg', meta: `${nation.id} · ${position.name}` })}
+            ${playerSticker(previewView, { size: 'lg', meta: `${nation.id} · ${position.short}`, pulse: 'overall-criacao' })}
             <div class="create__summary">
               <span><strong data-live="name">${esc(form.firstName || 'Nome')} ${esc(form.lastName || 'Sobrenome')}</strong></span>
               <span>${esc(position.name)}, ${esc(nation.name)}, camisa <span class="num" data-live="kit">${esc(form.appearance.kitNumber)}</span></span>
               <span>Overall inicial <strong class="num">${player.overall}</strong></span>
             </div>
             <div class="create__bar">
-              <p data-live="status" aria-live="polite">${ready ? 'Tudo pronto.' : `Falta: ${esc(missing.join(', '))}.`}</p>
+              <p data-live="status" aria-live="polite" class="${ready && remaining > 0 ? 'is-warn' : ''}">${esc(statusText(missing))}</p>
               <div class="actions">
                 <button class="btn btn--quiet" data-action="back-auth">Voltar</button>
                 <button class="btn btn--primary" data-action="confirm-create" ${ready ? '' : 'disabled'}>Começar carreira ${icon('arrow-right')}</button>
@@ -352,11 +362,24 @@ export default {
     'back-auth': (ctx) => {
       ctx.game.setScreen('auth');
     },
-    'confirm-create': (ctx) => {
+    'confirm-create': async (ctx) => {
       const missing = missingSteps();
       if (missing.length) {
         toast(`Falta: ${missing.join(', ')}.`, 'warn');
         return;
+      }
+      const free = freePoints();
+      if (free > 0) {
+        const ok = await ctx.confirm({
+          title: `Começar com ${plural(free, 'ponto', 'pontos')} sem usar?`,
+          text: 'Os pontos de atributo da criação não ficam guardados: o que não for distribuído agora se perde.',
+          confirmLabel: 'Começar assim mesmo',
+          cancelLabel: 'Distribuir os pontos',
+        });
+        if (!ok) {
+          document.getElementById('c-pontos')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+          return;
+        }
       }
       ctx.game.rng = createRng(form.seed);
       ctx.game.createCareer({

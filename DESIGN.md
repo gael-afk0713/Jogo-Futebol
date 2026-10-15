@@ -305,7 +305,15 @@ Não há cartão genérico. Os contêineres são:
 
 ### Inputs / Fields
 
-Rótulo acima, 46px de altura, borda de 1,5px. Foco: borda cobalto e halo de 3px (amarelo à noite). Controles deslizantes usam a cor de destaque do tema.
+Rótulo acima, 46px de altura, borda de 1,5px. Foco: borda cobalto e halo de 3px (amarelo à noite). Controles deslizantes usam a cor de destaque do tema e têm 44px de área de toque.
+
+### Criação do jogador
+
+No retrato (iPad e celular) a prévia gruda no topo, logo abaixo da barra: figurinha de 92px, nome, posição e overall, que conta ao subir. Ela fica à vista enquanto você escolhe cabelo, pele, traços e pontos. O rodapé fixo diz o que falta; com nome e traços prontos e pontos de atributo sem dono, ele avisa em laranja quantos faltam distribuir, e "Começar carreira" pede confirmação ("Distribuir os pontos" ou "Começar assim mesmo"), porque os pontos da criação não ficam guardados.
+
+### Janelas de confirmação
+
+Até 440px de largura e nunca maiores que a tela. No celular os botões ficam um embaixo do outro, com a ação em cima.
 
 ### Navigation
 

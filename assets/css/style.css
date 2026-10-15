@@ -2965,9 +2965,13 @@ code {
   }
 }
 
+/* Controle deslizante com área de toque de 44px e um botão grande. */
 .range {
   width: 100%;
+  height: 44px;
+  margin: 0;
   accent-color: var(--cover-line);
+  cursor: pointer;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -3292,13 +3296,38 @@ code {
   }
 }
 
+/* No retrato a prévia gruda no topo enquanto você rola: a figurinha está
+   sempre à vista quando você escolhe cabelo, pele e pontos. */
 @media (max-width: 979px) {
+  .create__preview {
+    position: sticky;
+    top: 56px;
+    z-index: var(--z-sticky);
+    margin: 0 -16px;
+    padding: 10px 16px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+  }
+
   .create__preview .sticker {
-    --sticker-w: 120px;
+    --sticker-w: 92px;
+    padding: 4px;
   }
 
   .create__preview .sticker__number strong {
-    font-size: 1.9rem;
+    font-size: 1.7rem;
+  }
+
+  .create__preview .sticker__band,
+  .create__preview .sticker__meta {
+    display: none;
+  }
+}
+
+@media (min-width: 760px) and (max-width: 979px) {
+  .create__preview {
+    margin: 0 -28px;
+    padding: 10px 28px;
   }
 }
 
@@ -3320,6 +3349,11 @@ code {
 .create__bar p {
   font-size: 0.9rem;
   color: var(--ink-3);
+}
+
+.create__bar p.is-warn {
+  color: var(--warn);
+  font-weight: 600;
 }
 
 /* Celular e tablet: a ação fica presa ao rodapé, com espaço reservado no fim. */
@@ -4721,9 +4755,30 @@ code {
 
 .modal__actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
   margin-top: 20px;
+}
+
+.modal__actions .btn {
+  white-space: normal;
+}
+
+/* Celular: a janela nunca passa da tela; os botões ficam um embaixo do outro, a ação primeiro. */
+.modal {
+  min-width: 0;
+}
+
+@media (max-width: 520px) {
+  .modal {
+    padding: 20px;
+  }
+
+  .modal__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
 }
 
 /* ------------------------------------------------------------- futebol */
