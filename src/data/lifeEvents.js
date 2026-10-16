@@ -207,13 +207,13 @@ export const LIFE_EVENTS = [
     options: [
       {
         label: 'Elogiar o técnico e desviar',
-        effects: { managerRelation: 6, fame: 1, text: 'Resposta diplomática. O técnico viu e gostou.' },
+        effects: { managerRelation: 6, fame: 1, charisma: 1, text: 'Resposta diplomática. O técnico viu e gostou.' },
       },
       {
         label: 'Falar o que pensa',
         outcomes: [
-          { chance: 0.4, effects: { fame: 8, fanRelation: 6, managerRelation: -14, text: 'Manchete do dia! A torcida aplaude a sinceridade, o técnico não.' } },
-          { chance: 0.6, effects: { fame: 5, managerRelation: -18, morale: -6, text: 'Bomba no vestiário. Você foi multado internamente.' } },
+          { chance: 0.4, effects: { fame: 8, fanRelation: 6, managerRelation: -14, charisma: 2, text: 'Manchete do dia! A torcida aplaude a sinceridade, o técnico não.' } },
+          { chance: 0.6, effects: { fame: 5, managerRelation: -18, morale: -6, charisma: -2, text: 'Bomba no vestiário. Você foi multado internamente.' } },
         ],
       },
       {
@@ -233,13 +233,13 @@ export const LIFE_EVENTS = [
     options: [
       {
         label: 'Conteúdo de treino e dedicação',
-        effects: { fame: 3, reputation: 3, fanRelation: 3, text: 'Post sério, engajamento sólido. Imagem de profissional.' },
+        effects: { fame: 3, reputation: 3, fanRelation: 3, charisma: 1, text: 'Post sério, engajamento sólido. Imagem de profissional.' },
       },
       {
         label: 'Post ostentação',
         outcomes: [
           { chance: 0.55, effects: { fame: 9, fanRelation: -2, text: 'Milhões de visualizações. Fama em alta.' } },
-          { chance: 0.45, effects: { fame: 6, fanRelation: -10, reputation: -5, text: 'Chuva de críticas: "ganha bem e joga mal". A torcida se irritou.' } },
+          { chance: 0.45, effects: { fame: 6, fanRelation: -10, reputation: -5, charisma: -1, text: 'Chuva de críticas: "ganha bem e joga mal". A torcida se irritou.' } },
         ],
       },
       {
@@ -259,7 +259,7 @@ export const LIFE_EVENTS = [
     options: [
       {
         label: 'Aceitar (cachê de € 400 mil)',
-        effects: { money: 400000, fame: 14, fitness: -4, text: 'Câmeras no seu dia a dia. Exposição máxima e conta gorda.' },
+        effects: { money: 400000, fame: 14, fitness: -4, charisma: 2, text: 'Câmeras no seu dia a dia. Exposição máxima e conta gorda.' },
       },
       {
         label: 'Recusar e preservar a privacidade',
@@ -357,7 +357,7 @@ export const LIFE_EVENTS = [
     options: [
       {
         label: 'Financiar e aparecer nos treinos',
-        effects: { money: -80000, happiness: 14, reputation: 12, fanRelation: 10, fame: 4, text: 'Você vira ídolo no bairro. Isso vale mais que troféu.' },
+        effects: { money: -80000, happiness: 14, reputation: 12, fanRelation: 10, fame: 4, charisma: 2, text: 'Você vira ídolo no bairro. Isso vale mais que troféu.' },
       },
       {
         label: 'Doar sem divulgação',
@@ -387,13 +387,13 @@ export const LIFE_EVENTS = [
       {
         label: 'Rebater na frente de todos',
         outcomes: [
-          { chance: 0.45, effects: { morale: 6, reputation: 4, managerRelation: -6, text: 'Você se impôs e o grupo passou a te respeitar.' } },
-          { chance: 0.55, effects: { morale: -14, managerRelation: -12, happiness: -8, text: 'Vestiário rachado. Você virou o problema.' } },
+          { chance: 0.45, effects: { morale: 6, reputation: 4, managerRelation: -6, charisma: 1, text: 'Você se impôs e o grupo passou a te respeitar.' } },
+          { chance: 0.55, effects: { morale: -14, managerRelation: -12, happiness: -8, charisma: -2, text: 'Vestiário rachado. Você virou o problema.' } },
         ],
       },
       {
         label: 'Procurar o capitão depois, em particular',
-        effects: { morale: 10, reputation: 5, managerRelation: 4, text: 'Conversa de homem para homem resolveu. Liderança é isso.' },
+        effects: { morale: 10, reputation: 5, managerRelation: 4, charisma: 2, text: 'Conversa de homem para homem resolveu. Liderança é isso.' },
       },
     ],
   },
@@ -408,7 +408,7 @@ export const LIFE_EVENTS = [
     options: [
       {
         label: 'Assumir o manto',
-        effects: { fame: 8, fanRelation: 6, morale: 4, addFlag: 'camisa_pesada', text: 'Peso nas costas e holofote em cima. Você aceitou o desafio.' },
+        effects: { fame: 8, fanRelation: 6, morale: 4, charisma: 2, addFlag: 'camisa_pesada', text: 'Peso nas costas e holofote em cima. Você aceitou o desafio.' },
       },
       {
         label: 'Deixar para um companheiro mais experiente',
@@ -602,7 +602,7 @@ export const LIFE_EVENTS = [
         label: 'Ir conversar de frente',
         check: { stat: 'charisma', difficulty: 55 },
         success: { fanRelation: 18, reputation: 8, morale: 5, text: 'Você encarou, ouviu e prometeu entrega. Saiu aplaudido.' },
-        failure: { fanRelation: -10, happiness: -10, text: 'A conversa azedou. Hostilidade garantida nos próximos jogos.' },
+        failure: { fanRelation: -10, happiness: -10, charisma: -2, text: 'A conversa azedou. Hostilidade garantida nos próximos jogos.' },
       },
       {
         label: 'Deixar a diretoria resolver',
@@ -621,7 +621,7 @@ export const LIFE_EVENTS = [
     options: [
       {
         label: 'Retribuir com um vídeo emocionado',
-        effects: { fanRelation: 8, happiness: 12, morale: 6, fame: 4, text: 'Arrepio geral. Você virou símbolo do clube.' },
+        effects: { fanRelation: 8, happiness: 12, morale: 6, fame: 4, charisma: 2, text: 'Arrepio geral. Você virou símbolo do clube.' },
       },
       {
         label: 'Agradecer discretamente',
@@ -747,7 +747,7 @@ export const LIFE_EVENTS = [
       {
         label: 'Jogar uma pelada com a molecada',
         outcomes: [
-          { chance: 0.85, effects: { happiness: 12, morale: 4, reputation: 5, text: 'Duas horas de pelada e sorriso no rosto. Lembrou por que começou.' } },
+          { chance: 0.85, effects: { happiness: 12, morale: 4, reputation: 5, charisma: 1, text: 'Duas horas de pelada e sorriso no rosto. Lembrou por que começou.' } },
           { chance: 0.15, effects: { injuryWeeks: 2, happiness: -6, text: 'Torceu o tornozelo em buraco no campo. O clube não vai gostar.' } },
         ],
       },

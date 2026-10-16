@@ -4,7 +4,7 @@ import { clamp, money, plural } from '../core/utils.js';
 import { attributeLabel } from '../data/attributes.js';
 import { LIFE_EVENTS } from '../data/lifeEvents.js';
 import { lifeModifier } from '../data/traits.js';
-import { addFlag, adjustLife, hasFlag, removeFlag, seasonRating } from './player.js';
+import { addFlag, adjustLife, EXPERIENCE_LEVELS, experience, hasFlag, removeFlag, seasonRating } from './player.js';
 import { attributeCeiling } from './overall.js';
 
 /** Contexto que as condições dos eventos consultam. */
@@ -104,8 +104,15 @@ function applyEffects(player, effects = {}, rng) {
     if (key === 'fame' && delta > 0) delta *= 1 + lifeModifier(player.traits, 'fameGain');
     if (key === 'morale' && delta > 0) delta *= 1 + lifeModifier(player.traits, 'moraleGain');
     if (key === 'managerRelation' && delta > 0) delta *= 1 + lifeModifier(player.traits, 'managerGain');
+    if (key === 'charisma' && delta > 0) delta *= 1 + lifeModifier(player.traits, 'charismaGain');
     delta = Math.round(delta);
-    adjustLife(player, key, delta);
+    if (key === 'charisma') {
+      // O carisma que vem do jogo respeita o teto da rodagem: no teto, não aparece.
+      delta = gainCharisma(player, delta);
+      if (!delta) continue;
+    } else {
+      adjustLife(player, key, delta);
+    }
     notes.push(`${label} ${delta > 0 ? '+' : ''}${delta}`);
   }
 
@@ -159,11 +166,61 @@ export function resolveLifeOption(player, event, optionIndex, rng) {
     const chance = clamp(0.1 + (statValue - option.check.difficulty) / 100 + 0.4, 0.05, 0.95);
     const success = rng.chance(chance);
     effects = success ? option.success ?? {} : option.failure ?? {};
+    // Passar num teste de carisma ensina: +1 além do resultado.
+    if (success && option.check.stat === 'charisma') effects = { ...effects, charisma: (effects.charisma ?? 0) + CHARISMA_TEST_GAIN };
     text = effects.text ?? '';
   }
 
   const notes = applyEffects(player, effects, rng);
   return { text, notes, label: option.label };
+}
+
+/** Carisma ganho ao passar num teste de carisma (evento da semana ou da partida). */
+export const CHARISMA_TEST_GAIN = 1;
+
+// Teto oculto do carisma que vem do jogo (eventos, testes, liderança). Cresce
+// com a rodagem; a loja (cursos, media training) passa dele.
+const CHARISMA_CEILING = { estreante: 65, rodado: 72, experiente: 80, cascudo: 90 };
+
+export const charismaCeiling = (player) => CHARISMA_CEILING[experience(player).level.id] ?? CHARISMA_CEILING.estreante;
+
+/**
+ * Soma carisma vindo do jogo. Perdas entram sempre; ganhos só até o teto da
+ * rodagem (quem já passou dele pela loja não perde nada). Devolve o que entrou.
+ */
+export function gainCharisma(player, delta) {
+  const current = player.life.charisma ?? 50;
+  const target = delta > 0 ? Math.min(current + delta, Math.max(current, charismaCeiling(player))) : current + delta;
+  adjustLife(player, 'charisma', target - current);
+  return player.life.charisma - current;
+}
+
+// Liderança do fim da temporada (carisma pelo tempo de campo).
+const LEAD_PER_START = 0.06;
+const LEAD_PER_SUB = 0.02;
+const LEAD_LEVEL_BONUS = { experiente: 2, cascudo: 3 };
+
+/**
+ * Liderança da temporada: o carisma cresce com o tempo de campo, mais para
+ * quem é titular, e ganha um extra ao virar Experiente ou Cascudo.
+ */
+export function seasonLeadership(player, { minutesBefore, minutesAfter }) {
+  const season = player.season;
+  const subs = Math.max(0, season.apps - season.starts);
+  let raw = season.starts * LEAD_PER_START + subs * LEAD_PER_SUB;
+  const reasons = [];
+  if (season.starts) reasons.push(`${plural(season.starts, 'jogo', 'jogos')} como titular`);
+  if (subs) reasons.push(`${plural(subs, 'entrada', 'entradas')} durante o jogo`);
+  for (const level of EXPERIENCE_LEVELS) {
+    if (!LEAD_LEVEL_BONUS[level.id] || minutesBefore >= level.min || minutesAfter < level.min) continue;
+    raw += LEAD_LEVEL_BONUS[level.id];
+    reasons.push(`agora ${level.label.toLowerCase()}`);
+  }
+  const leader = lifeModifier(player.traits, 'leadershipGain');
+  raw *= 1 + leader;
+  if (leader > 0 && raw > 0) reasons.push('líder de vestiário');
+  const gain = Math.round(raw) > 0 ? gainCharisma(player, Math.round(raw)) : 0;
+  return { gain, reasons };
 }
 
 // Disciplina abaixo disto começa a custar caro: multa, banco e propostas.

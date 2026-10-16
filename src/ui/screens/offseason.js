@@ -83,7 +83,7 @@ function packView(state, specials) {
     </div>`;
 }
 
-function growthSection(growth, potential, player) {
+function growthSection(growth, potential, player, leadership) {
   const gains = Object.entries(growth.gains ?? {});
   const losses = Object.entries(growth.losses ?? {});
   const delta = growth.delta;
@@ -103,6 +103,11 @@ function growthSection(growth, potential, player) {
           : potential?.change < 0
             ? `<div class="notice notice--bad">${icon('arrow-down')}<div><strong>Potencial -1</strong> depois de uma temporada muito abaixo.</div></div>`
             : ''
+      }
+      ${
+        leadership?.gain > 0
+          ? `<div class="notice notice--good">${icon('megaphone')}<div><strong>Carisma +${leadership.gain}</strong> com a liderança do ano (${esc(leadership.reasons.join(', '))}).</div></div>`
+          : ''
       }
     </section>`;
 }
@@ -177,7 +182,7 @@ export default {
         }
 
         <div class="split">
-          ${growthSection(growth, offseason.potentialChange, player)}
+          ${growthSection(growth, offseason.potentialChange, player, offseason.leadership)}
           <section class="section">
             <h3>Copas e seleção</h3>
             <ul class="ledger">

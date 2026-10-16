@@ -307,6 +307,26 @@ fim da temporada.
 - **Fama**: cai 1 ponto a cada jogo em que você não entra em campo (banco,
   lesão ou suspensão), até o mínimo de 20, e acima de 80 volta devagar sozinha.
   Quem joga sempre e decide continua no alto.
+- **Carisma**: cresce com o que você faz, não só com a loja.
+  - Passar num teste de carisma ensina: +1, nos eventos da semana e nos da
+    partida (separar briga, assumir a braçadeira, pedir apoio à torcida...).
+  - Os eventos de comunicação rendem carisma nas boas escolhas: elogiar o técnico
+    na coletiva, post de treino, conversar com o capitão em particular, assumir a
+    camisa 10, retribuir o mosaico, aparecer no projeto social, a pelada no
+    campinho e o documentário (+1 ou +2).
+  - Falhar em público custa um pouco: a conversa com a organizada que azeda, a
+    bomba na coletiva, o post de ostentação criticado, rebater o capitão e rachar
+    o vestiário, pedir calma e ninguém ouvir, pedir apoio e a vaia continuar
+    (-1 ou -2).
+  - No fim da temporada, a liderança: carisma pelo tempo de campo (mais para o
+    titular) e um extra ao virar Experiente ou Cascudo.
+  - Tudo isso tem um teto que não aparece na tela e cresce com a rodagem:
+    Estreante 65, Rodado 72, Experiente 80 e Cascudo 90. A loja (cursos, media
+    training) passa do teto, até 100. Simulando 40 carreiras sem loja: escolhendo
+    bem, uns 87 aos 20 anos e 90 aos 22; escolhendo ao acaso, 68 aos 18, 80 aos
+    20 e 90 aos 25. O Cascudo chega por volta dos 21 ou 22 anos.
+  - Traços: **Líder de vestiário** ganha 50% a mais de liderança; **Midiático**,
+    50% a mais de carisma nos eventos.
 - **Disciplina**: abaixo de 40 começa a custar caro. O clube aplica multas de um
   salário semanal (raras perto de 40, uma semana em cada quatro perto de 10), o
   técnico pesa a indisciplina na escalação e os clubes fazem propostas piores.

@@ -20,7 +20,7 @@ import { playerOverall } from '../engine/overall.js';
 import { applyTraining, spendSkillPoint } from '../engine/training.js';
 import { recommendTraining } from '../engine/coach.js';
 import { applyWeeklyItems, buyItem, dismissStaff, sellItem } from '../engine/shop.js';
-import { drawLifeEvent, resolveLifeOption, weeklyDrift, lifeContext, availableOptions, DISCIPLINE_RISK } from '../engine/life.js';
+import { drawLifeEvent, resolveLifeOption, weeklyDrift, lifeContext, availableOptions, DISCIPLINE_RISK, gainCharisma, seasonLeadership } from '../engine/life.js';
 import {
   COMPETITIONS,
   applyResult,
@@ -553,7 +553,10 @@ export class Game {
     adjustLife(player, 'managerRelation', (report.rating - 6.5) * 2);
     adjustLife(player, 'happiness', (report.rating - 6.4) * 1.8 + (report.result === 'V' ? 2 : -1));
     adjustLife(player, 'reputation', report.motm ? 2 : report.rating >= 7.5 ? 1 : 0);
-    for (const [key, value] of Object.entries(report.lifeDelta ?? {})) adjustLife(player, key, value);
+    for (const [key, value] of Object.entries(report.lifeDelta ?? {})) {
+      if (key === 'charisma') gainCharisma(player, value);
+      else adjustLife(player, key, value);
+    }
 
     // Cartões e lesões
     if (report.stats.redCards) {
@@ -780,6 +783,9 @@ export class Game {
     // está nos totais: não pode ser somada de novo.
     player.season.counted = true;
 
+    // Liderança: o carisma cresce com o tempo de campo.
+    const leadership = seasonLeadership(player, { minutesBefore: totals.minutes - player.season.minutes, minutesAfter: totals.minutes });
+
     const record = {
       year: season.year,
       clubId: season.clubId,
@@ -848,6 +854,7 @@ export class Game {
       objectives,
       growth,
       potentialChange,
+      leadership,
       record,
       offers,
       loans,

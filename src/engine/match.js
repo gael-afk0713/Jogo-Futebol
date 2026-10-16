@@ -13,6 +13,7 @@ import { MOMENTS } from '../data/matchMoments.js';
 import { MATCH_EVENTS } from '../data/matchEvents.js';
 import { effectiveAttributes, playerOverall } from './overall.js';
 import { experience } from './player.js';
+import { CHARISMA_TEST_GAIN, charismaCeiling } from './life.js';
 
 export const PLAYER_ROLE = {
   STARTER: 'titular',
@@ -467,11 +468,19 @@ export function choose(match, player, optionIndex, rng) {
     else if (rng.chance(0.4)) match.queue.push('comemoracao');
   }
 
-  // Efeitos extras declarados no lance (vida e condições do jogo).
+  // Efeitos extras declarados no lance (vida e condições do jogo). Passar
+  // num teste de carisma ensina: +1 além do que o lance já dá.
+  const lifeGains = { ...outcome };
+  if (success && option.lifeCheck === 'charisma') lifeGains.charisma = (lifeGains.charisma ?? 0) + CHARISMA_TEST_GAIN;
+  if (lifeGains.charisma > 0) {
+    // O teto da rodagem é oculto: o que não vai entrar não aparece no lance.
+    const room = Math.max(0, charismaCeiling(player) - (player.life.charisma ?? 50) - Math.max(0, match.lifeDelta.charisma ?? 0));
+    lifeGains.charisma = Math.min(lifeGains.charisma, room);
+  }
   for (const [key, label] of Object.entries(LIFE_LABELS)) {
-    if (outcome?.[key]) {
-      match.lifeDelta[key] = (match.lifeDelta[key] ?? 0) + outcome[key];
-      resolution.extras.push(`${label} ${outcome[key] > 0 ? '+' : ''}${outcome[key]}`);
+    if (lifeGains[key]) {
+      match.lifeDelta[key] = (match.lifeDelta[key] ?? 0) + lifeGains[key];
+      resolution.extras.push(`${label} ${lifeGains[key] > 0 ? '+' : ''}${lifeGains[key]}`);
     }
   }
   if (outcome?.effect) applyEffect(match, outcome.effect, resolution);
@@ -593,6 +602,7 @@ const LIFE_LABELS = {
   fanRelation: 'Torcida',
   happiness: 'Felicidade',
   reputation: 'Reputação',
+  charisma: 'Carisma',
 };
 
 /** Muda as condições do jogo depois de um evento (confiança, chuva, tática). */

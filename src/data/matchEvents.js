@@ -13,7 +13,7 @@
 //                captain, tactic ('segurar' | 'pressionar'), stamina
 //   then      -> evento que vem logo depois (ex.: comemorar após o VAR)
 //   derbyBoost-> quanto o evento fica mais provável num clássico
-// Os efeitos na vida (morale, discipline, fame, managerRelation, fanRelation,
+// Os efeitos na vida (morale, discipline, fame, charisma, managerRelation, fanRelation,
 // happiness, reputation) entram no fim do jogo.
 
 export const MATCH_EVENTS = [
@@ -354,6 +354,7 @@ export const MATCH_EVENTS = [
           rating: 0,
           text: ['Ninguém te escuta, e o técnico ficou irritado.', 'O técnico grita seu nome. Ele não gostou nada.'],
           managerRelation: -4,
+          charisma: -1,
         },
       },
     ],
@@ -543,6 +544,7 @@ export const MATCH_EVENTS = [
           rating: 0,
           text: ['As vaias continuam. Hoje não é o seu dia com eles.', 'Ninguém comprou o gesto.'],
           fanRelation: -1,
+          charisma: -1,
         },
       },
       {
