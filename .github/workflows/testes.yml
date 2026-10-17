@@ -1,0 +1,57 @@
+# Roda os testes do jogo a cada push e pull request: o motor (sem navegador) e
+# as telas no Chromium e no WebKit (o motor do Safari, o mesmo do iPad).
+name: Testes
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testes-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  motor:
+    name: Motor do jogo
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+
+  navegador:
+    name: Navegador (${{ matrix.nome }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nome: Chromium
+            script: navegador
+            browser: chromium
+          - nome: WebKit, o motor do Safari
+            script: safari
+            browser: webkit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: npm run test:${{ matrix.script }}
+      - name: Guardar as capturas de tela se falhar
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas-${{ matrix.browser }}
+          path: tests/.saida/
+          retention-days: 7

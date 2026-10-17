@@ -1,0 +1,46 @@
+// Fim de temporada : o recado de liderança com o carisma ganho.
+import { BASE, launch, saida } from '../ajuda/navegador.mjs';
+import { mkdirSync } from 'node:fs';
+const OUT = saida('lideranca');
+mkdirSync(OUT, { recursive: true });
+const browser = await launch();
+const errors = [];
+const results = [];
+const ok = (cond, msg) => { results.push(`${cond ? 'ok' : 'FALHOU'} - ${msg}`); if (!cond) process.exitCode = 1; };
+for (const [name, opts] of [['ipad', {}], ['noite', { colorScheme: 'dark' }]]) {
+  const ctx = await browser.newContext({ viewport: { width: 820, height: 1180 }, hasTouch: true, isMobile: true, ...opts });
+  const page = await ctx.newPage();
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errors.push(`${m.type()}: ${m.text()}`); });
+  await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__jogo?.game);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__jogo?.game);
+  await page.waitForTimeout(700);
+  await page.click('[data-action="new-career"]');
+  await page.fill('[data-field="firstName"]', 'Kauã');
+  await page.fill('[data-field="lastName"]', 'Ribeiro');
+  await page.click('[data-action="pick-position"][data-position="PON"]');
+  await page.click('[data-action="toggle-trait"][data-trait="lider"]');
+  await page.click('[data-action="toggle-trait"][data-trait="driblador"]');
+  await page.click('[data-action="confirm-create"]');
+  await page.waitForTimeout(250);
+  if (await page.locator('.modal-overlay').count()) await page.click('[data-modal="ok"]');
+  await page.waitForTimeout(300);
+  await page.locator('[data-action="accept-trial"]').first().click();
+  await page.waitForTimeout(400);
+  await page.evaluate(() => { const g = window.__jogo.game; g.player.life.charisma = 50; g.simulateRestOfSeason(); });
+  await page.waitForTimeout(600);
+  if (await page.locator('[data-action="skip-pack"]').count()) await page.click('[data-action="skip-pack"]');
+  await page.waitForTimeout(600);
+  const info = await page.evaluate(() => ({ lead: window.__jogo.game.state.offseason?.leadership, text: [...document.querySelectorAll('.notice')].map((n) => n.innerText.replace(/\s+/g, ' ')).find((t) => t.includes('liderança')) ?? '' }));
+  const notice = page.locator('.notice', { hasText: 'liderança' });
+  if (await notice.count()) await notice.first().scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `${OUT}/${name}-lideranca.png` });
+  ok(info.lead && (info.lead.gain === 0 || info.text.includes(`Carisma +${info.lead.gain}`)), `${name}: recado de liderança (${JSON.stringify(info.lead)} / "${info.text}")`);
+  await ctx.close();
+}
+await browser.close();
+console.log(results.join('\n'));
+console.log(errors.length ? `AVISOS:\n${errors.join('\n')}` : 'sem erros nem avisos');

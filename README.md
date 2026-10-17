@@ -476,6 +476,35 @@ as carreiras lidas, então o botão já mostra "Continuar" quando é o caso. Ao
 tocar em Jogar, a figurinha da carreira levanta do álbum enquanto ela abre e
 cola no perfil do jogador.
 
+## Testes
+
+O jogo não precisa de nada instalado; os testes precisam do Node 22 e, para as
+telas, do Playwright.
+
+```
+npm test                 # verificação do código e motor do jogo (uns 50 segundos, sem navegador)
+npm install              # uma vez, para os testes no navegador
+npx playwright install --with-deps chromium webkit
+npm run test:navegador   # as telas no Chromium
+npm run test:safari      # as telas no WebKit, o motor do Safari (o mesmo do iPad)
+npm run test:tudo        # tudo isso
+node tests/rodar.mjs navegador escalacao   # só os arquivos com "escalacao" no nome
+```
+
+- `tests/verificacao.mjs`: todo módulo carrega, nenhum import sobra e todo botão
+  (`data-action`) tem quem trate.
+- `tests/motor/`: partida, narração, simular contra jogar, carisma, preparador,
+  loja, base, clássicos, goleiro e 40 carreiras inteiras da peneira à
+  aposentadoria (`CARREIRAS=150 npm test` para a rodada longa).
+- `tests/navegador/`: abertura, criação, escalação, confirmações, pacote e
+  raridade, liderança, sons, toque duplo e salvar ao sair. Cada teste sobe o jogo
+  num servidor local próprio e bloqueia a rede de fora: sem Firebase e sem
+  reCAPTCHA, nenhum token gasto. As capturas ficam em `tests/.saida/` (fora do
+  git).
+
+No GitHub, a verificação "Testes" roda tudo a cada push (motor, Chromium e
+WebKit). Se as telas falharem, as capturas ficam anexadas à execução por 7 dias.
+
 ## Estrutura do código
 
 ```
@@ -488,6 +517,8 @@ assets/sounds/             efeitos sonoros (CC0) e os créditos de cada um
 manifest.webmanifest       nome e ícones do atalho na tela de início
 DESIGN.md                  sistema visual: tokens, regras e componentes
 PRODUCT.md                 quem joga, para quê e o que não pode mudar
+tests/                     testes do motor e das telas (veja Testes)
+.github/workflows/         a verificação automática no GitHub
 src/
   main.js                  ponto de entrada
   core/

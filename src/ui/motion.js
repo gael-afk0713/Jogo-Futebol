@@ -104,8 +104,12 @@ export class Motion {
     const root = document.documentElement;
     root.dataset.vt = kind;
     const transition = document.startViewTransition(update);
-    transition.finished.finally(() => {
-      if (root.dataset.vt === kind) delete root.dataset.vt;
-    });
+    // Um toque rápido começa outra transição e pula esta: não é erro.
+    transition.ready.catch(() => {});
+    transition.finished
+      .catch(() => {})
+      .finally(() => {
+        if (root.dataset.vt === kind) delete root.dataset.vt;
+      });
   }
 }

@@ -22,3 +22,5 @@ dist/
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+# Capturas de tela dos testes no navegador (regeráveis)
+tests/.saida/
