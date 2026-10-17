@@ -54,4 +54,5 @@ jobs:
         with:
           name: capturas-${{ matrix.browser }}
           path: tests/.saida/
+          include-hidden-files: true
           retention-days: 7

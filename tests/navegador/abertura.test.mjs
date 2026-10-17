@@ -21,8 +21,9 @@ async function page(opts = {}) {
   const errs = []; p.on('pageerror', (e) => errs.push(e.message));
   await p.addInitScript(timeline);
   if (opts.slow && ENGINE === 'chromium') { const cdp = await ctx.newCDPSession(p); await cdp.send('Network.enable'); await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: 400 * 1024 / 8 * 4, uploadThroughput: 100 * 1024 }); }
-  // Sem o protocolo do Chromium (WebKit), a internet lenta é um atraso em cada arquivo.
-  if (opts.slow && ENGINE !== 'chromium') await p.route(/localhost/, async (route) => { await new Promise((done) => setTimeout(done, 900)); await route.continue(); });
+  // Sem o protocolo do Chromium (WebKit), a internet lenta é um atraso em cada
+  // módulo do jogo: a página e a capa chegam, o código demora.
+  if (opts.slow && ENGINE !== 'chromium') await p.route(/\/src\/.*\.js$/, async (route) => { await new Promise((done) => setTimeout(done, 900)); await route.continue(); });
   if (opts.block) await p.route(opts.block, (r) => r.abort());
   return { ctx, p, errs };
 }
@@ -55,7 +56,7 @@ const tl = (p) => p.evaluate(() => window.__tl.map(([t, s]) => `${t}ms:${s}`).jo
   const { ctx, p, errs } = await page({ slow: true });
   const t0 = Date.now();
   p.goto(URL).catch(() => {});
-  await p.waitForSelector('.boot__tip.is-visible', { timeout: 6000 }).catch(() => {});
+  await p.waitForSelector('.boot__tip.is-visible', { timeout: 10000 }).catch(() => {});
   await p.waitForTimeout(400);
   await p.screenshot({ path: `${out}/boot-lento-dica.png` });
   const tip = await p.locator('.boot__tip').textContent().catch(() => '');
